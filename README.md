@@ -2,18 +2,47 @@
 
 ## Setup and Configuration
 
-1. **Start the real Hydra CSV database locally:**
+1. **Start the real Hydra CSV database locally**
 
-   First, you need to have Hydra CSV database running locally. See the [Hydra repository](https://github.com/datagouv/hydra) for instructions on how to set it up. Make sure the Hydra CSV database is accessible on `localhost:5434`.
+   Make sure the Hydra CSV database is running on your machine. Follow the [Hydra repository](https://github.com/datagouv/hydra) instructions so the database is accessible on `localhost:5434`. The MCP server relies on these tables for some workflows.
 
-2. **Start the HTTP MCP server:**
+2. **Start PostgREST pointing to Hydra**
+   ```shell
+   docker compose --profile hydra up -d
+   ```
+   The `--profile hydra` target from this repo spins up PostgREST on port 8080 and connects it to your Hydra CSV database.
 
-   The port must be specified via the `MCP_PORT` environment variable:
+3. **Install dependencies**
    ```bash
-   MCP_PORT=8007 uv run main.py
+   uv sync
    ```
 
-> Note (production): For production deployments, run behind a TLS reverse proxy. Use environment variables to configure the host and port (e.g., `HOST=0.0.0.0 MCP_PORT=8007 uv run main.py`). Optionally restrict allowed origins and add token authentication at the proxy level.
+4. **Prepare the environment file**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Then edit `.env` and set the variables that matter for your run:
+
+   ```
+   MCP_PORT=8007
+   # Allowed values: demo | prod (defaults to demo when unset)
+   DATAGOUV_API_ENV=demo
+   ```
+
+   - `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
+   - `DATAGOUV_API_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and the URLs returned by the tools.
+
+   Load the variables with your preferred method, e.g.:
+   ```bash
+   set -a && source .env && set +a
+   ```
+
+5. **Start the HTTP MCP server**
+   ```bash
+   uv run main.py
+   ```
 
 ## 🚀 Quick Start
 
@@ -26,7 +55,7 @@
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-> **Note:** If you want to create or modify datasets/resources, you'll need a data.gouv.fr API key. You can get one from your [prod profile settings](https://www.data.gouv.fr/fr/account/) or your [demo profile settings](https://demo.data.gouv.fr/fr/account/). Add it to your client configuration as shown in the examples below.
+> **Note:** If you want to create or modify data.gouv.fr datasets/resources, you'll need a data.gouv.fr API key. You can get one from your [production profile settings](https://www.data.gouv.fr/fr/account/) or your [demo profile settings](https://demo.data.gouv.fr/fr/account/). Add it to your client configuration as shown in the examples below.
 
 ### Gemini CLI
 
@@ -160,14 +189,13 @@ Prerequisites:
 Steps:
 1. Start the MCP server (see above):
    ```bash
-   uv run api_tabular/mcp/server.py
+   uv run main.py
    ```
-2. In another terminal, launch the inspector with the provided config:
+2. In another terminal, launch the inspector:
    ```bash
-   npx @modelcontextprotocol/inspector --config ./api_tabular/mcp/mcp_config.json --server api-tabular
+   npx @modelcontextprotocol/inspector --http-url "http://127.0.0.1:${MCP_PORT}/mcp"
    ```
-   - This connects to `http://127.0.0.1:8007/mcp` as defined in `api_tabular/mcp/mcp_config.json`.
-   - If the server port changes, update the config file accordingly.
+   Adjust the URL if you exposed the server on another host/port.
 
 ## 🚚 Transport support
 

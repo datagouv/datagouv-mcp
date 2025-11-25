@@ -3,7 +3,7 @@ import os
 import aiohttp
 from mcp.server.fastmcp import FastMCP
 
-from helpers.datagouv_api_client import datagouv_api_client
+from helpers import datagouv_api_client
 
 # Create an MCP server
 mcp = FastMCP("data.gouv.fr MCP server")
@@ -26,7 +26,9 @@ async def search_datasets(query: str, page: int = 1, page_size: int = 20) -> str
     Returns:
         Formatted text with dataset information
     """
-    result = await datagouv_api_client.search_datasets(query=query, page=page, page_size=page_size)
+    result = await datagouv_api_client.search_datasets(
+        query=query, page=page, page_size=page_size
+    )
 
     # Format the result as text content
     datasets = result.get("data", [])
@@ -66,10 +68,8 @@ async def create_dataset(
     """
     Create a new dataset on data.gouv.fr.
 
-    Requires a data.gouv.fr API key. You can either:
-    - Provide it via the api_key parameter
-    - Set DATAGOUV_API_KEY environment variable
-    - Configure it in your MCP client settings
+    Requires a data.gouv.fr API key supplied by the MCP client via the `api_key` parameter.
+    Configure your MCP client to pass the key automatically (e.g., Cursor's `config.apiKey`).
 
     By default, datasets created via the API are public. Set private=True to create a draft.
 
@@ -78,7 +78,7 @@ async def create_dataset(
         description: Dataset description
         organization: Optional organization ID or slug
         private: If True, create as draft (private). Default: False (public)
-        api_key: Optional API key (if not provided, uses DATAGOUV_API_KEY env var)
+        api_key: API key forwarded by the MCP client (required)
 
     Returns:
         Formatted text with created dataset information including ID, slug, and URL
@@ -88,12 +88,15 @@ async def create_dataset(
     # when calling the tool, based on the client's MCP configuration (config.apiKey)
     final_api_key = api_key
 
+    current_env = datagouv_api_client.get_current_environment()
+    expected_host = "demo.data.gouv.fr" if current_env == "demo" else "www.data.gouv.fr"
+
     print(f"final_api_key: {final_api_key}")
     if not final_api_key:
         return (
             "Error: API key required. "
             "Provide it via the api_key parameter, or configure it in your MCP client settings (as 'apiKey' or 'api_key' in the client configuration). "
-            "Note: The API key must be valid for demo.data.gouv.fr (demo environment uses different API keys than production)."
+            f"Note: The API key must be valid for {expected_host}. Set DATAGOUV_API_ENV to switch environments."
         )
 
     try:
@@ -118,7 +121,9 @@ async def create_dataset(
 
         if slug:
             content_parts.append(f"Slug: {slug}")
-            content_parts.append(f"URL: https://www.data.gouv.fr/datasets/{slug}/")
+            content_parts.append(
+                f"URL: {datagouv_api_client.frontend_base_url()}datasets/{slug}/"
+            )
 
         if private:
             content_parts.append("")
@@ -137,9 +142,8 @@ async def create_dataset(
             return (
                 f"Error: Authentication failed (401). Please check your API key.\n"
                 f"Details: {error_message}\n"
-                f"Note: The API key must be valid for demo.data.gouv.fr. "
-                f"Demo environment uses different API keys than production. "
-                f"Make sure you're using a key generated from https://demo.data.gouv.fr/fr/account/."
+                f"Note: The API key must be valid for {expected_host}. "
+                f"Environments use different API keys, so adjust DATAGOUV_API_ENV or pick a key from https://{expected_host}/fr/account/."
             )
         elif e.status == 400:
             return f"Error: Invalid request (400). {error_message}"
@@ -273,7 +277,9 @@ async def get_resource_resource(resource_id: str) -> str:
         content_parts.append(f"Dataset ID: {dataset.get('id')}")
         content_parts.append(f"Dataset URI: datagouv://dataset/{dataset.get('id')}")
         if dataset.get("description_short"):
-            content_parts.append(f"Dataset description: {dataset.get('description_short')}")
+            content_parts.append(
+                f"Dataset description: {dataset.get('description_short')}"
+            )
         content_parts.append("")
 
     return "\n".join(content_parts)
@@ -284,17 +290,13 @@ if __name__ == "__main__":
     import os
     import sys
 
-    # Get port from environment variable
-    if "MCP_PORT" not in os.environ:
-        print("Error: MCP_PORT environment variable must be set", file=sys.stderr)
-        print("Usage: MCP_PORT=8007 uv run api_tabular/mcp/server.py", file=sys.stderr)
-        sys.exit(1)
-
+    # Get port from environment variable; default to 8000 for local dev
+    port_str = os.getenv("MCP_PORT", "8000")
     try:
-        port = int(os.environ["MCP_PORT"])
+        port = int(port_str)
     except ValueError:
         print(
-            f"Error: Invalid MCP_PORT environment variable: {os.environ['MCP_PORT']}",
+            f"Error: Invalid MCP_PORT environment variable: {port_str}",
             file=sys.stderr,
         )
         sys.exit(1)

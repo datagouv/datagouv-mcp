@@ -1,13 +1,54 @@
+import os
 from typing import Any
 
 import aiohttp
 
-from api_tabular import config
+_ENV_TARGETS = {
+    "demo": {
+        "api": "https://demo.data.gouv.fr/api/",
+        "site": "https://demo.data.gouv.fr/",
+    },
+    "prod": {
+        "api": "https://www.data.gouv.fr/api/",
+        "site": "https://www.data.gouv.fr/",
+    },
+}
+
+
+def _normalize_env(value: str | None) -> str:
+    if not value:
+        return "demo"
+    value = value.strip().lower()
+    if value in _ENV_TARGETS:
+        return value
+    return "demo"
+
+
+def get_current_environment() -> str:
+    """
+    Return the environment name selected via DATAGOUV_API_ENV (demo|prod), defaulting to demo.
+    """
+    return _normalize_env(os.getenv("DATAGOUV_API_ENV"))
+
+
+def api_base_url() -> str:
+    """
+    Return the API base URL for the currently selected environment.
+    """
+    env_name = get_current_environment()
+    return _ENV_TARGETS[env_name]["api"]
+
+
+def frontend_base_url() -> str:
+    """
+    Return the public site base URL matching the current environment (demo or prod).
+    """
+    env_name = get_current_environment()
+    return _ENV_TARGETS[env_name]["site"]
 
 
 def _base_url() -> str:
-    base = config.DATAGOUV_API_BASE_URL or "https://www.data.gouv.fr/api/"
-    return str(base).rstrip("/") + "/"
+    return api_base_url()
 
 
 async def _fetch_json(session: aiohttp.ClientSession, url: str) -> dict[str, Any]:
@@ -138,7 +179,9 @@ async def search_datasets(
             "page": page,
             "page_size": min(page_size, 100),  # API limit
         }
-        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+        async with session.get(
+            url, params=params, timeout=aiohttp.ClientTimeout(total=15)
+        ) as resp:
             resp.raise_for_status()
             data = await resp.json()
 
@@ -166,7 +209,7 @@ async def search_datasets(
                     else None,
                     "tags": tags,
                     "resources_count": len(ds.get("resources", [])),
-                    "url": f"https://www.data.gouv.fr/datasets/{ds.get('slug', ds.get('id', ''))}",
+                    "url": f"{frontend_base_url()}datasets/{ds.get('slug', ds.get('id', ''))}",
                 }
             )
 
