@@ -33,7 +33,13 @@ Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and reso
 
   - `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
   - `DATAGOUV_API_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and the URLs returned by the tools.
-  - `HYDRA_DB_*`: connection settings for the Hydra CSV Postgres database (used by helpers that need direct SQL access). Defaults target the local Docker compose stack.
+  - `HYDRA_DB_HOST`: hostname for the Hydra CSV Postgres database (defaults to `127.0.0.1`).
+  - `HYDRA_DB_PORT`: port for the Hydra CSV Postgres database (defaults to `5434`).
+  - `HYDRA_DB_USER`: username for the Hydra CSV Postgres database (defaults to `postgres`).
+  - `HYDRA_DB_PASSWORD`: password for the Hydra CSV Postgres database (defaults to `postgres`).
+  - `HYDRA_DB_NAME`: database name for the Hydra CSV Postgres database (defaults to `postgres`).
+  
+  The `HYDRA_DB_*` variables configure connection settings for the Hydra CSV Postgres database (used by helpers that need direct SQL access). Defaults target the local Docker compose stack.
 
   Load the variables with your preferred method, e.g.:
   ```bash
@@ -202,6 +208,25 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
   - `query` (required): Search query string (searches in title, description, tags)
   - `page` (optional, default: 1): Page number
   - `page_size` (optional, default: 20, max: 100): Number of results per page
+
+- **`create_dataset`** - Create a new dataset on data.gouv.fr. Requires a data.gouv.fr API key supplied by the MCP client via the `api_key` parameter. Configure your MCP client to pass the key automatically (e.g., Cursor's `config.apiKey`). By default, datasets created via the API are public. Set `private=True` to create a draft.
+
+  Parameters:
+  - `title` (required): Dataset title
+  - `description` (required): Dataset description
+  - `organization` (optional): Optional organization ID or slug
+  - `private` (optional, default: False): If True, create as draft (private). Default: False (public)
+  - `api_key` (optional): API key forwarded by the MCP client (required for creating datasets)
+
+- **`query_dataset_data`** - Query data from a dataset by exploring its resources stored in the Hydra CSV database. This tool finds a dataset (by ID or by searching), retrieves its resources, and explores the corresponding tables in the Hydra database to answer questions about the data.
+
+  Parameters:
+  - `question` (required): The question or description of what data you're looking for
+  - `dataset_id` (optional): Dataset ID if you already know which dataset to query
+  - `dataset_query` (optional): Search query to find the dataset if `dataset_id` is not provided
+  - `limit_per_resource` (optional, default: 100): Maximum number of rows to retrieve per resource table
+
+  Note: Either `dataset_id` or `dataset_query` must be provided. The tool requires the Hydra CSV database to be running and accessible (configured via `HYDRA_DB_*` environment variables).
 
 ## 🧪 Tests
 
