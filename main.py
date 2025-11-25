@@ -97,7 +97,7 @@ async def create_dataset(
         return (
             "Error: API key required. "
             "Provide it via the api_key parameter, or configure it in your MCP client settings (as 'apiKey' or 'api_key' in the client configuration). "
-            f"Note: The API key must be valid for {expected_host}. Set DATAGOUV_API_ENV to switch environments."
+            f"Note: The API key must be valid for {expected_host}. Set DATAGOUV_ENV to switch environments."
         )
 
     try:
@@ -144,7 +144,7 @@ async def create_dataset(
                 f"Error: Authentication failed (401). Please check your API key.\n"
                 f"Details: {error_message}\n"
                 f"Note: The API key must be valid for {expected_host}. "
-                f"Environments use different API keys, so adjust DATAGOUV_API_ENV or pick a key from https://{expected_host}/fr/account/."
+                f"Environments use different API keys, so adjust DATAGOUV_ENV or pick a key from https://{expected_host}/fr/account/."
             )
         elif e.status == 400:
             return f"Error: Invalid request (400). {error_message}"

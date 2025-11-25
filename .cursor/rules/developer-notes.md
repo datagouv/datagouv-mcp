@@ -15,7 +15,7 @@ This file contains implementation details that future contributors (human or LLM
 
 ## Configuration
 
-- `DATAGOUV_API_ENV` selects the target platform (`demo` by default, `prod` when exposing real data). The helpers derive both API and public-site URLs from this variable.
+- `DATAGOUV_ENV` selects the target platform (`demo` by default, `prod` when exposing real data). The helpers derive both API and public-site URLs from this variable.
 - `MCP_PORT` defaults to 8000 if not set. Example: `MCP_PORT=8007 uv run main.py` to use a custom port.
 - `HYDRA_DB_HOST/PORT/USER/PASSWORD/NAME` control how `helpers/hydra_db.py` connects to the Hydra CSV Postgres database (defaults match the local Docker compose stack at `127.0.0.1:5434`, user/password `postgres`).
 - A `.env.example` template exists so you can `cp .env.example .env` and tweak values locally (including Hydra/PostgREST settings if needed).
@@ -60,5 +60,3 @@ Implementation tips:
 - Streamable HTTP is the only supported transport today. If you need STDIO, you must wrap `FastMCP` differently.
 - Session stickiness: removing `stateless_http=True` eliminated `ClosedResourceError` when clients connect/disconnect rapidly. Keep the default behavior unless FastMCP introduces a fix.
 - API keys: the server does not store them; each request must provide it explicitly. This avoids mixing credentials when multiple clients connect.
-
-

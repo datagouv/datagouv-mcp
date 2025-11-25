@@ -18,11 +18,11 @@ Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and reso
   ```
   MCP_PORT=8007
   # Allowed values: demo | prod (defaults to demo when unset)
-  DATAGOUV_API_ENV=demo
+  DATAGOUV_ENV=demo
   ```
 
   - `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
-  - `DATAGOUV_API_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.preprod.data.gouv.fr/api/` for demo, `https://tabular-api.data.gouv.fr/api/` for prod).
+  - `DATAGOUV_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.preprod.data.gouv.fr/api/` for demo, `https://tabular-api.data.gouv.fr/api/` for prod).
 
   Load the variables with your preferred method, e.g.:
   ```bash
@@ -152,8 +152,6 @@ Add the following to your `~/.codeium/mcp_config.json`:
 - The API key is only required for tools that create or modify datasets/resources. Read-only operations (like `search_datasets`) work without an API key.
 - For Cursor, use the `API_KEY` header name. For other clients, you can use either `Authorization: Bearer <token>` or `API_KEY: <token>` format.
 
-The MCP server relies on the official data.gouv.fr APIs (dataset API + Tabular API) and therefore does **not** require any local Postgres/Hydra instance.
-
 ## 🧭 Test with MCP Inspector
 
 Use the official MCP Inspector to interactively test the server tools and resources.
@@ -212,6 +210,27 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
 
   Note: Either `dataset_id` or `dataset_query` must be provided. Data availability depends on whether the resource is ingested in the Tabular API (CSV/XLS resources within the documented size limits).
 
+## 🧪 Tests
+
+Run tests with pytest:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_tabular_api.py
+
+# Run with custom resource ID
+RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabular_api.py
+
+# Run with prod environment
+DATAGOUV_ENV=prod uv run pytest
+```
+
 ## 🤝 Contributing
 
 ### 🧹 Code Linting and Formatting
@@ -237,24 +256,3 @@ The pre-commit hook that automatically:
 - Remove trailing whitespace
 - Check for large files
 - Run Ruff linting and formatting
-
-## 🧪 Tests
-
-Run tests with pytest:
-
-```bash
-# Run all tests
-uv run pytest
-
-# Run with verbose output
-uv run pytest -v
-
-# Run specific test file
-uv run pytest tests/test_tabular_api.py
-
-# Run with custom resource ID
-RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabular_api.py
-
-# Run with prod environment
-DATAGOUV_API_ENV=prod uv run pytest
-```

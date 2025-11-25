@@ -7,7 +7,7 @@ This document captures the key concepts behind the `api_tabular/mcp` implementat
 - Provide a Model Context Protocol (MCP) server that exposes data.gouv.fr datasets and resources to LLM clients such as Cursor, Windsurf, Claude Desktop, Gemini CLI, etc.
 - Offer a small set of tools that a chatbot can call to (a) discover datasets and (b) create datasets programmatically.
 - Expose MCP dynamic resources so the client can fetch dataset/resource metadata via `resources/read`.
-- Rely either on the **demo** environment or the **prod** environment: the base URL automatically switches between `https://demo.data.gouv.fr/api/` and `https://www.data.gouv.fr/api/` using the `DATAGOUV_API_ENV` environment variable (defaults to demo). A `.env.example` template is included so you can copy/edit env vars quickly.
+- Rely either on the **demo** environment or the **prod** environment: the base URL automatically switches between `https://demo.data.gouv.fr/api/` and `https://www.data.gouv.fr/api/` using the `DATAGOUV_ENV` environment variable (defaults to demo). A `.env.example` template is included so you can copy/edit env vars quickly.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ Both dynamic resources rely on helper functions in `datagouv_api_client.py` that
 - `helpers/datagouv_api_client.py` wraps all calls to data.gouv.fr API (demo or prod).
 - Dataset search + metadata rely on API **v1**; resource metadata relies on API **v2**.
 - Sessions are created ad hoc if not provided, and always closed in `finally` blocks to avoid unclosed connector warnings.
-- `DATAGOUV_API_ENV` picks between the demo/prod hosts.
+- `DATAGOUV_ENV` picks between the demo/prod hosts.
 
 ## Running locally
 
@@ -71,7 +71,7 @@ The server logs each tool call (`Processing request of type ...`). When `create_
 - Clients must send requests via the Streamable HTTP transport (`POST/GET /mcp`).
 - `resources/list` will show the static resource; dynamic resources are discoverable through `resources/templates/list`.
 - To call `create_dataset`, clients must supply `api_key` in the tool arguments. In Cursor this is achieved by adding `"config": {"apiKey": "..."}` under the MCP server definition.
-- Keys must belong to the environment selected via `DATAGOUV_API_ENV`. Demo mode rejects production keys and vice-versa.
+- Keys must belong to the environment selected via `DATAGOUV_ENV`. Demo mode rejects production keys and vice-versa.
 
 ## Adding new capabilities
 
@@ -81,9 +81,7 @@ The server logs each tool call (`Processing request of type ...`). When `create_
 
 ## Deployment checklist
 
-- Ensure `DATAGOUV_API_ENV` is set correctly for the environment you deploy to so dataset links keep pointing to the right public site.
+- Ensure `DATAGOUV_ENV` is set correctly for the environment you deploy to so dataset links keep pointing to the right public site.
 - Expose `MCP_PORT` and optionally `MCP_HOST` via the surrounding process manager; the FastMCP app itself is stateless.
 - Front the service with HTTPS if exposed publicly. Clients such as Cursor expect HTTPS in production.
 - If moving to a dedicated repository, keep `/mcp/docs` with this document and any client-specific instructions so future contributors (human or LLM) understand the constraints.
-
-

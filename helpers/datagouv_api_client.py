@@ -28,9 +28,9 @@ def _normalize_env(value: str | None) -> str:
 
 def get_current_environment() -> str:
     """
-    Return the environment name selected via DATAGOUV_API_ENV (demo|prod), defaulting to demo.
+    Return the environment name selected via DATAGOUV_ENV (demo|prod), defaulting to demo.
     """
-    return _normalize_env(os.getenv("DATAGOUV_API_ENV"))
+    return _normalize_env(os.getenv("DATAGOUV_ENV"))
 
 
 def api_base_url() -> str:
