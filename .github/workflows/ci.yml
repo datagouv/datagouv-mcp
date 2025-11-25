@@ -1,4 +1,4 @@
-name: Test and Lint
+name: Lint code and run tests
 
 on:
   push:
@@ -8,9 +8,64 @@ env:
   PYTHON_VERSION: "3.13"
 
 jobs:
-  test-and-lint:
-    name: Run tests and linting
+  setup:
+    name: Setup and install dependencies
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for setuptools-scm to read git tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-deps-${{ hashFiles('uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    needs: setup
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-deps-${{ hashFiles('uv.lock') }}
+
+      - name: Run linting
+        run: uv run ruff check --select I && uv run ruff format --check
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: setup
 
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +82,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
-        run: uv sync --frozen
+      - name: Restore dependencies from cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-deps-${{ hashFiles('uv.lock') }}
 
       - name: Run tests
         run: uv run pytest -v
-
-      - name: Run linting
-        run: uv run ruff check --select I && uv run ruff format --check
