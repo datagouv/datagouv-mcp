@@ -1,0 +1,18 @@
+services:
+  datagouv-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: datagouv-mcp:latest
+    ports:
+      - "${MCP_PORT:-8000}:${MCP_PORT:-8000}"
+    environment:
+      - MCP_PORT=${MCP_PORT:-8000}
+      - DATAGOUV_API_ENV=${DATAGOUV_API_ENV:-demo}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; port = os.getenv('MCP_PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/mcp')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

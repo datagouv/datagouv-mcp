@@ -1,6 +1,25 @@
 Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and resources via LLM chatbots, built using the [the official Python SDK for MCP servers and clients](https://github.com/modelcontextprotocol/python-sdk) and the Streamable HTTP transport protocol.
 
-## Setup and Configuration
+## 1. Run the MCP server
+
+### 🐳 With Docker (Recommended)
+
+```bash
+# With default settings (port 8000, demo environment)
+docker compose up -d
+
+# With custom environment variables
+MCP_PORT=8007 DATAGOUV_ENV=prod docker compose up -d
+
+# Stop
+docker compose down
+```
+
+**Environment variables:**
+- `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
+- `DATAGOUV_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.preprod.data.gouv.fr/api/` for demo, `https://tabular-api.data.gouv.fr/api/` for prod).
+
+### Manual Installation
 
 1. **Install dependencies**
   ```bash
@@ -21,9 +40,6 @@ Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and reso
   DATAGOUV_ENV=demo
   ```
 
-  - `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
-  - `DATAGOUV_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.preprod.data.gouv.fr/api/` for demo, `https://tabular-api.data.gouv.fr/api/` for prod).
-
   Load the variables with your preferred method, e.g.:
   ```bash
   set -a && source .env && set +a
@@ -34,14 +50,7 @@ Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and reso
    uv run main.py
    ```
 
-## 🚀 Quick Start
-
-1. **Test the server:**
-   ```bash
-   curl -X POST http://127.0.0.1:8000/mcp -H "Accept: application/json" -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}'
-   ```
-
-## 🔧 MCP client configuration
+## 2. Connect your chatbot to the MCP server
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
@@ -160,10 +169,7 @@ Prerequisites:
 - Node.js with `npx` available
 
 Steps:
-1. Start the MCP server (see above):
-   ```bash
-   uv run main.py
-   ```
+1. Start the MCP server (see above)
 2. In another terminal, launch the inspector:
    ```bash
    npx @modelcontextprotocol/inspector --http-url "http://127.0.0.1:${MCP_PORT}/mcp"
@@ -172,8 +178,8 @@ Steps:
 
 ## 🚚 Transport support
 
-This MCP server uses FastMCP and implements the Streamable HTTP transport only.
-STDIO and SSE are not supported.
+This MCP server uses FastMCP and implements the **Streamable HTTP transport only**.
+**STDIO and SSE are not supported**.
 
 ## 📋 Available Endpoints
 
