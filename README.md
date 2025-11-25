@@ -218,7 +218,9 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
 
 ## 🧪 Tests
 
-Run tests with pytest:
+1. Tests in `test_mcp_server.py` require the MCP server to be running. Start it in another terminal with `uv run python main.py` or `docker-compose up -d` before running these tests.
+
+2. Then run the tests with pytest:
 
 ```bash
 # Run all tests

@@ -58,9 +58,12 @@ async def send_mcp_request(
     if params:
         payload["params"] = params
 
-    async with session.post(
-        url, json=payload, headers={"Content-Type": "application/json"}
-    ) as resp:
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream",
+    }
+
+    async with session.post(url, json=payload, headers=headers) as resp:
         resp.raise_for_status()
         return await resp.json()
 
