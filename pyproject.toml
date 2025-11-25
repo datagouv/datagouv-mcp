@@ -1,7 +1,7 @@
 [project]
 name = "datagouv-mcp"
-version = "0.1.0"
-description = "Add your description here"
+dynamic = ["version"]
+description = "Model Context Protocol (MCP) server for interacting with data.gouv.fr datasets and resources via LLM chatbots"
 authors = [
     {name = "data.gouv.fr", email = "opendatateam@data.gouv.fr"}
 ]
@@ -9,13 +9,17 @@ readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
     "aiohttp>=3.13.2",
-    "httpx>=0.28.1",
     "mcp>=1.22.0",
 ]
 
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
 [dependency-groups]
 dev = [
-    "dotenv>=0.9.9",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.14.0",

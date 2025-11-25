@@ -1,4 +1,4 @@
-Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and resources with LLM chatbots, built using the [the official Python SDK for MCP servers and clients](https://github.com/modelcontextprotocol/python-sdk) and the Streamable HTTP transport protocol.
+Model Context Protocol (MCP) for interacting with data.gouv.fr datasets and resources via LLM chatbots, built using the [the official Python SDK for MCP servers and clients](https://github.com/modelcontextprotocol/python-sdk) and the Streamable HTTP transport protocol.
 
 ## Setup and Configuration
 
