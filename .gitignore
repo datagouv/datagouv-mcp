@@ -65,7 +65,10 @@ coverage.xml
 # Translations
 *.mo
 
-# Mr Developer
+# IDEs
+.vscode
+.cursor
+.idea
 .mr.developer.cfg
 .project
 .pydevproject
@@ -74,9 +77,6 @@ coverage.xml
 !.gitignore
 .noseids
 Procfile
-
-# PyCharm
-.idea
 
 # Env file
 .env
