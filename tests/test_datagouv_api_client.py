@@ -202,31 +202,3 @@ class TestAsyncFunctions:
         # Should not crash, may return empty or some results
         assert "data" in result
         assert isinstance(result["data"], list)
-
-
-@pytest.mark.asyncio
-class TestCreateDataset:
-    """Tests for dataset creation (requires API key)."""
-
-    async def test_create_dataset_requires_api_key(self):
-        """Test that create_dataset requires a valid API key."""
-        # This test will fail if no API key is provided
-        api_key = os.getenv("DATAGOUV_API_KEY", "")
-        if not api_key:
-            pytest.skip("DATAGOUV_API_KEY not set, skipping create_dataset test")
-
-        # Try to create a test dataset
-        try:
-            result = await datagouv_api_client.create_dataset(
-                title="Test Dataset",
-                description="Test description",
-                api_key=api_key,
-                private=True,  # Create as private to avoid polluting
-            )
-            assert "id" in result
-            assert result["title"] == "Test Dataset"
-        except Exception as e:
-            # If it fails due to auth, that's expected without valid key
-            if "401" in str(e) or "UNAUTHORIZED" in str(e):
-                pytest.skip("API key invalid or expired")
-            raise

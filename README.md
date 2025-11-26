@@ -54,13 +54,11 @@ docker compose down
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-> **Note:** If you want to create or modify data.gouv.fr datasets/resources, you'll need a data.gouv.fr API key. You can get one from your [production profile settings](https://www.data.gouv.fr/fr/account/) or your [demo profile settings](https://demo.data.gouv.fr/fr/account/). The API key must be passed via HTTP headers in your MCP client configuration.
-
 ### Cursor
 
 Cursor supports MCP servers through its settings. To configure the server:
 
-1. Open Cursor Settings (Cmd/Ctrl + ,)
+1. Open Cursor Settings
 2. Search for "MCP" or "Model Context Protocol"
 3. Add a new MCP server with the following configuration:
 
@@ -69,10 +67,7 @@ Cursor supports MCP servers through its settings. To configure the server:
   "mcpServers": {
     "datagouv": {
       "url": "http://127.0.0.1:8000/mcp",
-      "transport": "http",
-      "headers": {
-        "API_KEY": "your-datagouv-api-key-here"
-      }
+      "transport": "http"
     }
   }
 }
@@ -87,10 +82,7 @@ Add the following to your `~/.gemini/settings.json` file:
   "mcpServers": {
     "datagouv": {
       "transport": "http",
-      "httpUrl": "http://127.0.0.1:8000/mcp",
-      "headers": {
-        "Authorization": "Bearer your-datagouv-api-key-here"
-      }
+      "httpUrl": "http://127.0.0.1:8000/mcp"
     }
   }
 }
@@ -98,7 +90,7 @@ Add the following to your `~/.gemini/settings.json` file:
 
 ### Claude Desktop
 
-Add the following to your Claude Desktop configuration file (typically `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+Add the following to your Claude Desktop configuration file (typically `~/Library/Application Support/Claude/claude_desktop_config.json` on MacOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
@@ -107,9 +99,7 @@ Add the following to your Claude Desktop configuration file (typically `~/Librar
       "command": "npx",
       "args": [
         "mcp-remote",
-        "http://127.0.0.1:8000/mcp",
-        "--header",
-        "Authorization: Bearer your-datagouv-api-key-here"
+        "http://127.0.0.1:8000/mcp"
       ]
     }
   }
@@ -125,10 +115,7 @@ Add the following to your VS Code `settings.json`:
   "servers": {
     "datagouv": {
       "url": "http://127.0.0.1:8000/mcp",
-      "type": "http",
-      "headers": {
-        "authorization": "Bearer your-datagouv-api-key-here"
-      }
+      "type": "http"
     }
   }
 }
@@ -146,9 +133,7 @@ Add the following to your `~/.codeium/mcp_config.json`:
       "args": [
         "-y",
         "mcp-remote",
-        "http://127.0.0.1:8000/mcp",
-        "--header",
-        "Authorization: Bearer your-datagouv-api-key-here"
+        "http://127.0.0.1:8000/mcp"
       ]
     }
   }
@@ -157,9 +142,7 @@ Add the following to your `~/.codeium/mcp_config.json`:
 
 **Note:**
 - Replace `http://127.0.0.1:8000/mcp` with your actual server URL if running on a different host or port. For production deployments, use `https://` and configure the appropriate hostname.
-- Replace `your-datagouv-api-key-here` with your actual API key from [data.gouv.fr account settings](https://www.data.gouv.fr/fr/account/).
-- The API key is only required for tools that create or modify datasets/resources. Read-only operations (like `search_datasets`) work without an API key.
-- For Cursor, use the `API_KEY` header name. For other clients, you can use either `Authorization: Bearer <token>` or `API_KEY: <token>` format.
+- This MCP server only exposes read-only tools for now, so no API key is required.
 
 ## 🧭 Test with MCP Inspector
 
@@ -193,10 +176,6 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
 - **`search_datasets`** - Search for datasets by keywords. Returns datasets with metadata (title, description, organization, tags, resource count).
 
   Parameters: `query` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
-
-- **`create_dataset`** - Create a new dataset. Requires an API key via the `api_key` parameter.
-
-  Parameters: `title` (required), `description` (required), `organization` (optional), `private` (optional, default: False), `api_key` (required)
 
 - **`get_dataset_info`** - Get detailed information about a specific dataset (metadata, organization, tags, dates, license, etc.).
 
