@@ -19,16 +19,16 @@ _ENV_TARGETS = {
 
 def _normalize_env(value: str | None) -> str:
     if not value:
-        return "demo"
+        return "prod"
     value = value.strip().lower()
     if value in _ENV_TARGETS:
         return value
-    return "demo"
+    return "prod"
 
 
 def get_current_environment() -> str:
     """
-    Return the environment name selected via DATAGOUV_ENV (demo|prod), defaulting to demo.
+    Return the environment name selected via DATAGOUV_ENV (demo|prod), defaulting to prod.
     """
     return _normalize_env(os.getenv("DATAGOUV_ENV"))
 

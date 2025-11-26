@@ -14,11 +14,11 @@ Docker is required for the recommended setup. Install it via [Docker Desktop](ht
 ### 🐳 With Docker (Recommended)
 
 ```bash
-# With default settings (port 8000, demo environment)
+# With default settings (port 8000, prod environment)
 docker compose up -d
 
 # With custom environment variables
-MCP_PORT=8007 DATAGOUV_ENV=prod docker compose up -d
+MCP_PORT=8007 DATAGOUV_ENV=demo docker compose up -d
 
 # Stop
 docker compose down
@@ -26,7 +26,9 @@ docker compose down
 
 **Environment variables:**
 - `MCP_PORT`: port for the FastMCP HTTP server (defaults to `8000` when unset).
-- `DATAGOUV_ENV`: `demo` (default) or `prod`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.preprod.data.gouv.fr/api/` for demo, `https://tabular-api.data.gouv.fr/api/` for prod).
+- `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr API/website the helpers call and automatically picks the appropriate Tabular API endpoint (`https://tabular-api.data.gouv.fr/api/` for prod, `https://tabular-api.preprod.data.gouv.fr/api/` for demo).
+
+By default the MCP server talks to the production data.gouv.fr API and Tabular API. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
 
 ### Manual Installation
 
@@ -45,8 +47,8 @@ docker compose down
   Then optionnaly edit `.env` and set the variables that matter for your run:
   ```
   MCP_PORT=8007
-  # Allowed values: demo | prod (defaults to demo when unset)
-  DATAGOUV_ENV=demo
+  # Allowed values: demo | prod (defaults to prod when unset)
+  DATAGOUV_ENV=prod
   ```
 
   Load the variables with your preferred method, e.g.:

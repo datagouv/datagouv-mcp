@@ -7,7 +7,7 @@ This document captures the key concepts behind the `api_tabular/mcp` implementat
 - Provide a Model Context Protocol (MCP) server that exposes data.gouv.fr datasets and resources to LLM clients such as Cursor, Windsurf, Claude Desktop, Gemini CLI, etc.
 - Offer a small set of tools that a chatbot can call to (a) discover datasets and (b) create datasets programmatically.
 - Expose MCP dynamic resources so the client can fetch dataset/resource metadata via `resources/read`.
-- Rely either on the **demo** environment or the **prod** environment: the base URL automatically switches between `https://demo.data.gouv.fr/api/` and `https://www.data.gouv.fr/api/` using the `DATAGOUV_ENV` environment variable (defaults to demo). A `.env.example` template is included so you can copy/edit env vars quickly.
+- Rely either on the **demo** environment or the **prod** environment: the base URL automatically switches between `https://demo.data.gouv.fr/api/` and `https://www.data.gouv.fr/api/` using the `DATAGOUV_ENV` environment variable (defaults to **prod**). A `.env.example` template is included so you can copy/edit env vars quickly.
 
 ## Architecture
 

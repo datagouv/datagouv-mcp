@@ -5,6 +5,7 @@
 - docs: improve docs
 - feat: remove edition tool "create_dataset" which needs API key auth
 - Revert "ci: separate CI into parallel jobs"
+- feat: default DATAGOUV_ENV to prod and update README
 
 
 ## 0.2.0 (2025-11-25)

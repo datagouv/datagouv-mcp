@@ -15,10 +15,11 @@ This file contains implementation details that future contributors (human or LLM
 
 ## Configuration
 
-- `DATAGOUV_ENV` selects the target platform (`demo` by default, `prod` when exposing real data). The helpers derive both API and public-site URLs from this variable.
+- `DATAGOUV_ENV` selects the target platform (`prod` by default; set to `demo` only when testing against the staging APIs). The helpers derive both API and public-site URLs from this variable.
 - `MCP_PORT` defaults to 8000 if not set. Example: `MCP_PORT=8007 uv run main.py` to use a custom port.
 - `HYDRA_DB_HOST/PORT/USER/PASSWORD/NAME` control how `helpers/hydra_db.py` connects to the Hydra CSV Postgres database (defaults match the local Docker compose stack at `127.0.0.1:5434`, user/password `postgres`).
 - A `.env.example` template exists so you can `cp .env.example .env` and tweak values locally (including Hydra/PostgREST settings if needed).
+- The `CHANGELOG.md` file is generated automatically by `tag_version.sh` when creating a release tag—do not edit it manually between releases.
 
 ## datagouv_api_client helpers
 

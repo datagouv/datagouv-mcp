@@ -10,7 +10,7 @@ from helpers import datagouv_api_client
 @pytest.fixture
 def known_dataset_id() -> str:
     """Fixture providing a known dataset ID for testing."""
-    # Dataset ID for "Transports" (known to exist in demo)
+    # Dataset ID for "Transports" (known to exist in demo and prod)
     return os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
 
 
@@ -25,9 +25,9 @@ class TestEnvironmentFunctions:
     """Tests for environment-related utility functions."""
 
     def test_get_current_environment_default(self, monkeypatch):
-        """Test that get_current_environment defaults to demo."""
+        """Test that get_current_environment defaults to prod."""
         monkeypatch.delenv("DATAGOUV_ENV", raising=False)
-        assert datagouv_api_client.get_current_environment() == "demo"
+        assert datagouv_api_client.get_current_environment() == "prod"
 
     def test_get_current_environment_demo(self, monkeypatch):
         """Test that get_current_environment returns demo when set."""
@@ -44,10 +44,10 @@ class TestEnvironmentFunctions:
         monkeypatch.setenv("DATAGOUV_ENV", "PROD")
         assert datagouv_api_client.get_current_environment() == "prod"
 
-    def test_get_current_environment_invalid_defaults_to_demo(self, monkeypatch):
-        """Test that invalid environment defaults to demo."""
+    def test_get_current_environment_invalid_defaults_to_prod(self, monkeypatch):
+        """Test that invalid environment defaults to prod."""
         monkeypatch.setenv("DATAGOUV_ENV", "invalid")
-        assert datagouv_api_client.get_current_environment() == "demo"
+        assert datagouv_api_client.get_current_environment() == "prod"
 
 
 class TestURLFunctions:
