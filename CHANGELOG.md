@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 (2025-11-26)
+
+- docs: update README
+- feat: add "get_metrics" MCP tool
+- feat: add metrics api client
+- feat: default DATAGOUV_ENV to prod and update README
+- refactor: refactor API clients to share a common env_config
+
+
 ## 0.2.1 (2025-11-26)
 
 - docs: improve docs
