@@ -120,6 +120,14 @@ Add the following to your Claude Desktop configuration file (typically `~/Librar
 }
 ```
 
+### Claude Code
+
+Use the `claude mcp` command to add the MCP server:
+
+```shell
+claude mcp add --transport http datagouv http://127.0.0.1:8000/mcp
+```
+
 ### VS Code
 
 Add the following to your VS Code `settings.json`:
