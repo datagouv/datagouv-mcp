@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any
 
 import httpx
@@ -7,20 +6,6 @@ import httpx
 from helpers import env_config
 
 logger = logging.getLogger(__name__)
-
-
-def metric_api_base_url() -> str:
-    """
-    Return the Metrics API base URL.
-    The Metrics API only has a production endpoint (no demo/preprod).
-    A METRIC_API_BASE_URL env var can override the default.
-    """
-    custom = os.getenv("METRIC_API_BASE_URL")
-    if custom:
-        return custom.rstrip("/") + "/"
-
-    config = env_config.get_env_config()
-    return config["metrics_api"]
 
 
 async def _get_session(
@@ -61,18 +46,20 @@ async def get_metrics(
     # Validate and clean id_value
     if not id_value:
         raise ValueError("id_value cannot be empty")
-    id_value = str(id_value).strip()
+    id_value: str = str(id_value).strip()
     if not id_value:
         raise ValueError("id_value cannot be empty after cleaning")
 
     if id_field is None:
         # Auto-generate field name: "datasets" -> "dataset_id", "resources" -> "resource_id", etc.
-        id_field = f"{model.rstrip('s')}_id" if model.endswith("s") else f"{model}_id"
+        id_field: str = (
+            f"{model.rstrip('s')}_id" if model.endswith("s") else f"{model}_id"
+        )
 
-    time_field = f"metric_{time_granularity}"
+    time_field: str = f"metric_{time_granularity}"
     sess, owns_session = await _get_session(session)
     try:
-        base_url = metric_api_base_url()
+        base_url: str = env_config.get_base_url("metrics_api")
         url = f"{base_url}{model}/data/"
         params = {
             f"{id_field}__exact": id_value,
@@ -86,7 +73,7 @@ async def get_metrics(
         resp = await sess.get(url, params=params, timeout=20.0)
         resp.raise_for_status()
         payload = resp.json()
-        data = payload.get("data", [])
+        data: list[dict[str, Any]] = payload.get("data", [])
         logger.debug(f"Received {len(data)} metric entries from API")
         return data
     finally:
@@ -124,18 +111,20 @@ async def get_metrics_csv(
     # Validate and clean id_value
     if not id_value:
         raise ValueError("id_value cannot be empty")
-    id_value = str(id_value).strip()
+    id_value: str = str(id_value).strip()
     if not id_value:
         raise ValueError("id_value cannot be empty after cleaning")
 
     if id_field is None:
         # Auto-generate field name: "datasets" -> "dataset_id", "resources" -> "resource_id", etc.
-        id_field = f"{model.rstrip('s')}_id" if model.endswith("s") else f"{model}_id"
+        id_field: str = (
+            f"{model.rstrip('s')}_id" if model.endswith("s") else f"{model}_id"
+        )
 
-    time_field = f"metric_{time_granularity}"
+    time_field: str = f"metric_{time_granularity}"
     sess, owns_session = await _get_session(session)
     try:
-        base_url = metric_api_base_url()
+        base_url: str = env_config.get_base_url("metrics_api")
         url = f"{base_url}{model}/data/csv/"
         params = {
             f"{id_field}__exact": id_value,

@@ -21,14 +21,6 @@ async def _get_session(
     return new_session, True
 
 
-def tabular_api_base_url() -> str:
-    """
-    Return the Tabular API base URL matching the current environment.
-    """
-    config = env_config.get_env_config()
-    return config["tabular_api"]
-
-
 async def fetch_resource_data(
     resource_id: str,
     *,
@@ -42,7 +34,7 @@ async def fetch_resource_data(
     """
     sess, owns_session = await _get_session(session)
     try:
-        base_url = tabular_api_base_url()
+        base_url: str = env_config.get_base_url("tabular_api")
         url = f"{base_url}resources/{resource_id}/data/"
         query_params = {
             "page": max(page, 1),
@@ -89,7 +81,7 @@ async def fetch_resource_profile(
 
     sess, owns_session = await _get_session(session)
     try:
-        base_url = tabular_api_base_url()
+        base_url: str = env_config.get_base_url("tabular_api")
         url = f"{base_url}resources/{resource_id}/profile/"
         logger.debug(
             f"Tabular API: Fetching resource profile - URL: {url}, "

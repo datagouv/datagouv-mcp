@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from helpers import datagouv_api_client, env_config
+from helpers import datagouv_api_client
 
 
 @pytest.fixture
@@ -19,79 +19,6 @@ def known_resource_id() -> str:
     """Fixture providing a known resource ID for testing."""
     # Resource ID from the "Élus locaux" dataset
     return "3b6b2281-b9d9-4959-ae9d-c2c166dff118"
-
-
-class TestEnvironmentFunctions:
-    """Tests for environment-related utility functions."""
-
-    def test_get_current_environment_default(self, monkeypatch):
-        """Test that get_current_environment defaults to prod."""
-        monkeypatch.delenv("DATAGOUV_ENV", raising=False)
-        assert env_config.get_current_environment() == "prod"
-
-    def test_get_current_environment_demo(self, monkeypatch):
-        """Test that get_current_environment returns demo when set."""
-        monkeypatch.setenv("DATAGOUV_ENV", "demo")
-        assert env_config.get_current_environment() == "demo"
-
-    def test_get_current_environment_prod(self, monkeypatch):
-        """Test that get_current_environment returns prod when set."""
-        monkeypatch.setenv("DATAGOUV_ENV", "prod")
-        assert env_config.get_current_environment() == "prod"
-
-    def test_get_current_environment_case_insensitive(self, monkeypatch):
-        """Test that get_current_environment is case insensitive."""
-        monkeypatch.setenv("DATAGOUV_ENV", "PROD")
-        assert env_config.get_current_environment() == "prod"
-
-    def test_get_current_environment_invalid_defaults_to_prod(self, monkeypatch):
-        """Test that invalid environment defaults to prod."""
-        monkeypatch.setenv("DATAGOUV_ENV", "invalid")
-        assert env_config.get_current_environment() == "prod"
-
-
-class TestURLFunctions:
-    """Tests for URL generation functions."""
-
-    def test_datagouv_api_base_url_demo(self, monkeypatch):
-        """Test datagouv_api_base_url returns demo URL."""
-        monkeypatch.setenv("DATAGOUV_ENV", "demo")
-        url = datagouv_api_client.datagouv_api_base_url()
-        assert url == "https://demo.data.gouv.fr/api/"
-
-    def test_datagouv_api_base_url_prod(self, monkeypatch):
-        """Test datagouv_api_base_url returns prod URL."""
-        monkeypatch.setenv("DATAGOUV_ENV", "prod")
-        url = datagouv_api_client.datagouv_api_base_url()
-        assert url == "https://www.data.gouv.fr/api/"
-
-    def test_frontend_base_url_demo(self, monkeypatch):
-        """Test frontend_base_url returns demo URL."""
-        monkeypatch.setenv("DATAGOUV_ENV", "demo")
-        url = env_config.frontend_base_url()
-        assert url == "https://demo.data.gouv.fr/"
-
-    def test_frontend_base_url_prod(self, monkeypatch):
-        """Test frontend_base_url returns prod URL."""
-        monkeypatch.setenv("DATAGOUV_ENV", "prod")
-        url = env_config.frontend_base_url()
-        assert url == "https://www.data.gouv.fr/"
-
-    def test_tabular_api_base_url_demo(self, monkeypatch):
-        """Test tabular_api_base_url returns demo URL."""
-        from helpers import tabular_api_client
-
-        monkeypatch.setenv("DATAGOUV_ENV", "demo")
-        url = tabular_api_client.tabular_api_base_url()
-        assert url == "https://tabular-api.preprod.data.gouv.fr/api/"
-
-    def test_tabular_api_base_url_prod(self, monkeypatch):
-        """Test tabular_api_base_url returns prod URL."""
-        from helpers import tabular_api_client
-
-        monkeypatch.setenv("DATAGOUV_ENV", "prod")
-        url = tabular_api_client.tabular_api_base_url()
-        assert url == "https://tabular-api.data.gouv.fr/api/"
 
 
 @pytest.mark.asyncio

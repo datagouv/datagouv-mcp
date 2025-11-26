@@ -5,14 +5,6 @@ import httpx
 from helpers import env_config
 
 
-def datagouv_api_base_url() -> str:
-    """
-    Return the data.gouv.fr API base URL for the currently selected environment.
-    """
-    config = env_config.get_env_config()
-    return config["datagouv_api"]
-
-
 async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
     resp = await client.get(url, timeout=15.0)
     resp.raise_for_status()
@@ -27,11 +19,12 @@ async def get_resource_metadata(
         session = httpx.AsyncClient()
     assert session is not None
     try:
+        base_url: str = env_config.get_base_url("datagouv_api")
         # Use API v2 for resources
-        url = f"{datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
+        url = f"{base_url}2/datasets/resources/{resource_id}/"
         data = await _fetch_json(session, url)
         # API v2 returns nested structure
-        resource = data.get("resource", {})
+        resource: dict[str, Any] = data.get("resource", {})
         return {
             "id": resource.get("id") or resource_id,
             "title": resource.get("title") or resource.get("name"),
@@ -51,8 +44,9 @@ async def get_dataset_metadata(
         session = httpx.AsyncClient()
     assert session is not None
     try:
+        base_url: str = env_config.get_base_url("datagouv_api")
         # Use API v1 for datasets
-        url = f"{datagouv_api_base_url()}1/datasets/{dataset_id}/"
+        url = f"{base_url}1/datasets/{dataset_id}/"
         data = await _fetch_json(session, url)
         return {
             "id": data.get("id"),
@@ -97,11 +91,12 @@ async def get_resources_for_dataset(
         session = httpx.AsyncClient()
     try:
         ds = await get_dataset_metadata(dataset_id, session=session)
+        base_url: str = env_config.get_base_url("datagouv_api")
         # Fetch resources from API v1
-        url = f"{datagouv_api_base_url()}1/datasets/{dataset_id}/"
+        url = f"{base_url}1/datasets/{dataset_id}/"
         data = await _fetch_json(session, url)
-        resources = data.get("resources", [])
-        res_list = [
+        resources: list[dict[str, Any]] = data.get("resources", [])
+        res_list: list[tuple[str, str]] = [
             (res.get("id"), res.get("title", "") or res.get("name", ""))
             for res in resources
             if res.get("id")
@@ -134,8 +129,9 @@ async def search_datasets(
         session = httpx.AsyncClient()
     assert session is not None
     try:
+        base_url: str = env_config.get_base_url("datagouv_api")
         # Use API v1 for dataset search
-        url = f"{datagouv_api_base_url()}1/datasets/"
+        url = f"{base_url}1/datasets/"
         params = {
             "q": query,
             "page": page,
@@ -145,12 +141,12 @@ async def search_datasets(
         resp.raise_for_status()
         data = resp.json()
 
-        datasets = data.get("data", [])
+        datasets: list[dict[str, Any]] = data.get("data", [])
         # Extract relevant fields for each dataset
-        results = []
+        results: list[dict[str, Any]] = []
         for ds in datasets:
             # Handle tags - can be strings or objects with "name" field
-            tags = []
+            tags: list[str] = []
             for tag in ds.get("tags", []):
                 if isinstance(tag, str):
                     tags.append(tag)
@@ -169,7 +165,7 @@ async def search_datasets(
                     else None,
                     "tags": tags,
                     "resources_count": len(ds.get("resources", [])),
-                    "url": f"{env_config.frontend_base_url()}datasets/{ds.get('slug', ds.get('id', ''))}",
+                    "url": f"{env_config.get_base_url('site')}datasets/{ds.get('slug', ds.get('id', ''))}",
                 }
             )
 

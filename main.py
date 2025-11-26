@@ -266,7 +266,7 @@ async def get_dataset_info(dataset_id: str) -> str:
     """
     try:
         # Get full dataset data from API
-        url = f"{datagouv_api_client.datagouv_api_base_url()}1/datasets/{dataset_id}/"
+        url = f"{env_config.get_base_url('datagouv_api')}1/datasets/{dataset_id}/"
         async with httpx.AsyncClient() as session:
             resp = await session.get(url, timeout=15.0)
             if resp.status_code == 404:
@@ -281,7 +281,7 @@ async def get_dataset_info(dataset_id: str) -> str:
         if data.get("slug"):
             content_parts.append(f"Slug: {data.get('slug')}")
             content_parts.append(
-                f"URL: {env_config.frontend_base_url()}datasets/{data.get('slug')}/"
+                f"URL: {env_config.get_base_url('site')}datasets/{data.get('slug')}/"
             )
 
         if data.get("description_short"):
@@ -389,7 +389,7 @@ async def list_dataset_resources(dataset_id: str) -> str:
 
                 try:
                     # Get full resource metadata
-                    url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
+                    url = f"{env_config.get_base_url('datagouv_api')}2/datasets/resources/{resource_id}/"
                     resp = await session.get(url, timeout=15.0)
                     if resp.status_code == 200:
                         resource_data = resp.json()
@@ -461,7 +461,7 @@ async def get_resource_info(resource_id: str) -> str:
         ]
 
         # Get full resource data from API v2
-        url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
+        url = f"{env_config.get_base_url('datagouv_api')}2/datasets/resources/{resource_id}/"
         async with httpx.AsyncClient() as session:
             resp = await session.get(url, timeout=15.0)
             if resp.status_code == 404:
@@ -520,9 +520,7 @@ async def get_resource_info(resource_id: str) -> str:
         content_parts.append("")
         try:
             # Try to get profile to check if it's tabular
-            from helpers import tabular_api_client
-
-            profile_url = f"{tabular_api_client.tabular_api_base_url()}resources/{resource_id}/profile/"
+            profile_url = f"{env_config.get_base_url('tabular_api')}resources/{resource_id}/profile/"
             async with httpx.AsyncClient() as session:
                 resp = await session.get(profile_url, timeout=10.0)
                 if resp.status_code == 200:
@@ -725,7 +723,7 @@ async def download_and_parse_resource(
             return f"Error: Resource with ID '{resource_id}' not found."
 
         # Get full resource data to get URL
-        url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
+        url = f"{env_config.get_base_url('datagouv_api')}2/datasets/resources/{resource_id}/"
         async with httpx.AsyncClient() as session:
             resp = await session.get(url, timeout=15.0)
             if resp.status_code == 404:

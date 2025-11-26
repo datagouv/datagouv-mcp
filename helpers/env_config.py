@@ -16,37 +16,29 @@ _ENV_TARGETS = {
 }
 
 
-def get_current_environment() -> str:
+def get_base_url(api_name: str) -> str:
     """
-    Return the environment name selected via DATAGOUV_ENV (demo|prod), defaulting to prod.
-    """
-    value = os.getenv("DATAGOUV_ENV")
-    if not value:
-        return "prod"
-    value = value.strip().lower()
-    if value in _ENV_TARGETS:
-        return value
-    return "prod"
+    Get the base URL for a specific API in the current environment.
 
-
-def get_env_config(env_name: str | None = None) -> dict[str, str]:
-    """
-    Get the configuration for a specific environment.
+    Reads DATAGOUV_ENV environment variable (demo|prod). Defaults to prod if not set or invalid.
 
     Args:
-        env_name: Environment name (demo|prod). If None, uses current environment.
+        api_name: API name to get the endpoint for.
+                  Valid values: "datagouv_api", "site", "tabular_api", "metrics_api"
 
     Returns:
-        Dictionary with API endpoints for the environment.
-    """
-    if env_name is None:
-        env_name = get_current_environment()
-    return _ENV_TARGETS.get(env_name, _ENV_TARGETS["prod"])
+        The API endpoint URL as a string.
 
-
-def frontend_base_url() -> str:
+    Raises:
+        KeyError: If api_name is not a valid API name.
     """
-    Return the public site base URL matching the current environment (demo or prod).
-    """
-    config = get_env_config()
-    return config["site"]
+    env_name: str = os.getenv("DATAGOUV_ENV", "prod").strip().lower()
+    if env_name not in _ENV_TARGETS:
+        env_name = "prod"
+    config: dict = _ENV_TARGETS[env_name]
+    if api_name not in config:
+        raise KeyError(
+            f"Invalid api_name: {api_name}. "
+            f"Valid values are: {', '.join(config.keys())}"
+        )
+    return config[api_name]
