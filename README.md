@@ -216,6 +216,12 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
 
   Supported formats: CSV, CSV.GZ, JSON, JSONL. Useful for files exceeding Tabular API limits or formats not supported by Tabular API.
 
+- **`get_metrics`** - Get metrics (visits, downloads) for a dataset and/or a resource.
+
+  Parameters: `dataset_id` (optional), `resource_id` (optional), `limit` (optional, default: 12, max: 100)
+
+  Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_ENV=prod`). The Metrics API does not have a demo/preprod environment.
+
 ## 🧪 Tests
 
 Run the tests with pytest:
