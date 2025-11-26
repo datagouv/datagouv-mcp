@@ -7,7 +7,7 @@ import os
 import sys
 from typing import Any
 
-import aiohttp
+import httpx
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
@@ -222,10 +222,10 @@ async def query_dataset_data(
             except tabular_api_client.ResourceNotAvailableError as e:
                 logger.warning(f"Resource not available: {resource_id} - {str(e)}")
                 content_parts.append(f"  ⚠️  {str(e)}")
-            except aiohttp.ClientResponseError as e:
-                error_details = f"HTTP {e.status}: {e.message}"
-                if hasattr(e, "request_info") and e.request_info:
-                    error_details += f" - URL: {e.request_info.url}"
+            except httpx.HTTPStatusError as e:
+                error_details = f"HTTP {e.response.status_code}: {str(e)}"
+                if e.request:
+                    error_details += f" - URL: {e.request.url}"
                 logger.error(
                     f"Tabular API HTTP error for resource {resource_id}: {error_details}"
                 )
@@ -244,8 +244,8 @@ async def query_dataset_data(
 
         return "\n".join(content_parts)
 
-    except aiohttp.ClientResponseError as e:
-        return f"Error: HTTP {e.status} - {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -267,14 +267,12 @@ async def get_dataset_info(dataset_id: str) -> str:
     try:
         # Get full dataset data from API
         url = f"{datagouv_api_client.datagouv_api_base_url()}1/datasets/{dataset_id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=15)
-            ) as resp:
-                if resp.status == 404:
-                    return f"Error: Dataset with ID '{dataset_id}' not found."
-                resp.raise_for_status()
-                data = await resp.json()
+        async with httpx.AsyncClient() as session:
+            resp = await session.get(url, timeout=15.0)
+            if resp.status_code == 404:
+                return f"Error: Dataset with ID '{dataset_id}' not found."
+            resp.raise_for_status()
+            data = resp.json()
 
         content_parts = [f"Dataset Information: {data.get('title', 'Unknown')}", ""]
 
@@ -342,8 +340,8 @@ async def get_dataset_info(dataset_id: str) -> str:
 
         return "\n".join(content_parts)
 
-    except aiohttp.ClientResponseError as e:
-        return f"Error: HTTP {e.status} - {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -384,7 +382,7 @@ async def list_dataset_resources(dataset_id: str) -> str:
             return "\n".join(content_parts)
 
         # Get detailed info for each resource
-        async with aiohttp.ClientSession() as session:
+        async with httpx.AsyncClient() as session:
             for i, (resource_id, resource_title) in enumerate(resources, 1):
                 content_parts.append(f"{i}. {resource_title or 'Untitled'}")
                 content_parts.append(f"   Resource ID: {resource_id}")
@@ -392,40 +390,34 @@ async def list_dataset_resources(dataset_id: str) -> str:
                 try:
                     # Get full resource metadata
                     url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
-                    async with session.get(
-                        url, timeout=aiohttp.ClientTimeout(total=15)
-                    ) as resp:
-                        if resp.status == 200:
-                            resource_data = await resp.json()
-                            resource = resource_data.get("resource", {})
+                    resp = await session.get(url, timeout=15.0)
+                    if resp.status_code == 200:
+                        resource_data = resp.json()
+                        resource = resource_data.get("resource", {})
 
-                            if resource.get("format"):
-                                content_parts.append(
-                                    f"   Format: {resource.get('format')}"
-                                )
-                            if resource.get("filesize"):
-                                size = resource.get("filesize")
-                                if isinstance(size, int):
-                                    # Format size in human-readable format
-                                    if size < 1024:
-                                        size_str = f"{size} B"
-                                    elif size < 1024 * 1024:
-                                        size_str = f"{size / 1024:.1f} KB"
-                                    elif size < 1024 * 1024 * 1024:
-                                        size_str = f"{size / (1024 * 1024):.1f} MB"
-                                    else:
-                                        size_str = (
-                                            f"{size / (1024 * 1024 * 1024):.1f} GB"
-                                        )
-                                    content_parts.append(f"   Size: {size_str}")
-                            if resource.get("mime"):
-                                content_parts.append(
-                                    f"   MIME type: {resource.get('mime')}"
-                                )
-                            if resource.get("type"):
-                                content_parts.append(f"   Type: {resource.get('type')}")
-                            if resource.get("url"):
-                                content_parts.append(f"   URL: {resource.get('url')}")
+                        if resource.get("format"):
+                            content_parts.append(f"   Format: {resource.get('format')}")
+                        if resource.get("filesize"):
+                            size = resource.get("filesize")
+                            if isinstance(size, int):
+                                # Format size in human-readable format
+                                if size < 1024:
+                                    size_str = f"{size} B"
+                                elif size < 1024 * 1024:
+                                    size_str = f"{size / 1024:.1f} KB"
+                                elif size < 1024 * 1024 * 1024:
+                                    size_str = f"{size / (1024 * 1024):.1f} MB"
+                                else:
+                                    size_str = f"{size / (1024 * 1024 * 1024):.1f} GB"
+                                content_parts.append(f"   Size: {size_str}")
+                        if resource.get("mime"):
+                            content_parts.append(
+                                f"   MIME type: {resource.get('mime')}"
+                            )
+                        if resource.get("type"):
+                            content_parts.append(f"   Type: {resource.get('type')}")
+                        if resource.get("url"):
+                            content_parts.append(f"   URL: {resource.get('url')}")
                 except Exception as e:
                     logger.warning(
                         f"Could not fetch details for resource {resource_id}: {e}"
@@ -435,8 +427,8 @@ async def list_dataset_resources(dataset_id: str) -> str:
 
         return "\n".join(content_parts)
 
-    except aiohttp.ClientResponseError as e:
-        return f"Error: HTTP {e.status} - {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -470,14 +462,12 @@ async def get_resource_info(resource_id: str) -> str:
 
         # Get full resource data from API v2
         url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=15)
-            ) as resp:
-                if resp.status == 404:
-                    return f"Error: Resource with ID '{resource_id}' not found."
-                resp.raise_for_status()
-                data = await resp.json()
+        async with httpx.AsyncClient() as session:
+            resp = await session.get(url, timeout=15.0)
+            if resp.status_code == 404:
+                return f"Error: Resource with ID '{resource_id}' not found."
+            resp.raise_for_status()
+            data = resp.json()
 
         resource = data.get("resource", {})
 
@@ -533,25 +523,23 @@ async def get_resource_info(resource_id: str) -> str:
             from helpers import tabular_api_client
 
             profile_url = f"{tabular_api_client.tabular_api_base_url()}resources/{resource_id}/profile/"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    profile_url, timeout=aiohttp.ClientTimeout(total=10)
-                ) as resp:
-                    if resp.status == 200:
-                        content_parts.append(
-                            "✅ Available via Tabular API (can be queried)"
-                        )
-                    else:
-                        content_parts.append(
-                            "⚠️  Not available via Tabular API (may not be tabular data)"
-                        )
+            async with httpx.AsyncClient() as session:
+                resp = await session.get(profile_url, timeout=10.0)
+                if resp.status_code == 200:
+                    content_parts.append(
+                        "✅ Available via Tabular API (can be queried)"
+                    )
+                else:
+                    content_parts.append(
+                        "⚠️  Not available via Tabular API (may not be tabular data)"
+                    )
         except Exception:
             content_parts.append("⚠️  Could not check Tabular API availability")
 
         return "\n".join(content_parts)
 
-    except aiohttp.ClientResponseError as e:
-        return f"Error: HTTP {e.status} - {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -605,42 +593,40 @@ async def _download_resource(
     Returns:
         (content, filename, content_type)
     """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            resource_url, timeout=aiohttp.ClientTimeout(total=300)
-        ) as resp:
-            resp.raise_for_status()
+    async with httpx.AsyncClient() as session:
+        resp = await session.get(resource_url, timeout=300.0)
+        resp.raise_for_status()
 
-            # Check content length if available
-            content_length = resp.headers.get("Content-Length")
-            if content_length:
-                size = int(content_length)
-                if size > max_size:
-                    raise ValueError(
-                        f"File too large: {size / (1024 * 1024):.1f} MB "
-                        f"(max: {max_size / (1024 * 1024):.1f} MB)"
-                    )
+        # Check content length if available
+        content_length = resp.headers.get("Content-Length")
+        if content_length:
+            size = int(content_length)
+            if size > max_size:
+                raise ValueError(
+                    f"File too large: {size / (1024 * 1024):.1f} MB "
+                    f"(max: {max_size / (1024 * 1024):.1f} MB)"
+                )
 
-            # Download with size limit
-            content = b""
-            async for chunk in resp.content.iter_chunked(8192):
-                content += chunk
-                if len(content) > max_size:
-                    raise ValueError(
-                        f"File too large: exceeds {max_size / (1024 * 1024):.1f} MB limit"
-                    )
+        # Download with size limit
+        content = b""
+        async for chunk in resp.aiter_bytes(chunk_size=8192):
+            content += chunk
+            if len(content) > max_size:
+                raise ValueError(
+                    f"File too large: exceeds {max_size / (1024 * 1024):.1f} MB limit"
+                )
 
-            # Get filename from Content-Disposition or URL
-            filename = "resource"
-            content_disposition = resp.headers.get("Content-Disposition", "")
-            if "filename=" in content_disposition:
-                filename = content_disposition.split("filename=")[1].strip("\"'")
-            elif "/" in resource_url:
-                filename = resource_url.split("/")[-1].split("?")[0]
+        # Get filename from Content-Disposition or URL
+        filename = "resource"
+        content_disposition = resp.headers.get("Content-Disposition", "")
+        if "filename=" in content_disposition:
+            filename = content_disposition.split("filename=")[1].strip("\"'")
+        elif "/" in resource_url:
+            filename = resource_url.split("/")[-1].split("?")[0]
 
-            content_type = resp.headers.get("Content-Type", "").split(";")[0]
+        content_type = resp.headers.get("Content-Type", "").split(";")[0]
 
-            return content, filename, content_type
+        return content, filename, content_type
 
 
 def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]:
@@ -740,14 +726,12 @@ async def download_and_parse_resource(
 
         # Get full resource data to get URL
         url = f"{datagouv_api_client.datagouv_api_base_url()}2/datasets/resources/{resource_id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=15)
-            ) as resp:
-                if resp.status == 404:
-                    return f"Error: Resource with ID '{resource_id}' not found."
-                resp.raise_for_status()
-                data = await resp.json()
+        async with httpx.AsyncClient() as session:
+            resp = await session.get(url, timeout=15.0)
+            if resp.status_code == 404:
+                return f"Error: Resource with ID '{resource_id}' not found."
+            resp.raise_for_status()
+            data = resp.json()
 
         resource = data.get("resource", {})
         resource_url = resource.get("url")
@@ -870,8 +854,8 @@ async def download_and_parse_resource(
 
         return "\n".join(content_parts)
 
-    except aiohttp.ClientResponseError as e:
-        return f"Error: HTTP {e.status} - {str(e)}"
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 

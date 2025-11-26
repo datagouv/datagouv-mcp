@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Any
 
-import aiohttp
+import httpx
 
 from helpers import env_config
 
@@ -24,11 +24,11 @@ def metric_api_base_url() -> str:
 
 
 async def _get_session(
-    session: aiohttp.ClientSession | None,
-) -> tuple[aiohttp.ClientSession, bool]:
+    session: httpx.AsyncClient | None,
+) -> tuple[httpx.AsyncClient, bool]:
     if session is not None:
         return session, False
-    new_session = aiohttp.ClientSession()
+    new_session = httpx.AsyncClient()
     return new_session, True
 
 
@@ -40,7 +40,7 @@ async def get_metrics(
     time_granularity: str = "month",
     limit: int = 12,
     sort_order: str = "desc",
-    session: aiohttp.ClientSession | None = None,
+    session: httpx.AsyncClient | None = None,
 ) -> list[dict[str, Any]]:
     """
     Fetch metrics for a given model and ID with specified time granularity.
@@ -53,7 +53,7 @@ async def get_metrics(
             supported by the API, but this parameter allows for future extensibility (e.g. "day", "week", "year").
         limit: Maximum number of records to return (default: 12, max: 100).
         sort_order: Sort order for time field ("asc" or "desc", default: "desc").
-        session: Optional aiohttp session for reuse across calls.
+        session: Optional httpx session for reuse across calls.
 
     Returns:
         List of metric records, sorted by the time field in the specified order.
@@ -83,19 +83,15 @@ async def get_metrics(
             f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "
             f"{time_field}__sort={sort_order}, page_size={params['page_size']}"
         )
-        async with sess.get(
-            url,
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=20),
-        ) as resp:
-            resp.raise_for_status()
-            payload = await resp.json()
-            data = payload.get("data", [])
-            logger.debug(f"Received {len(data)} metric entries from API")
-            return data
+        resp = await sess.get(url, params=params, timeout=20.0)
+        resp.raise_for_status()
+        payload = resp.json()
+        data = payload.get("data", [])
+        logger.debug(f"Received {len(data)} metric entries from API")
+        return data
     finally:
         if owns_session:
-            await sess.close()
+            await sess.aclose()
 
 
 async def get_metrics_csv(
@@ -105,7 +101,7 @@ async def get_metrics_csv(
     id_field: str | None = None,
     time_granularity: str = "month",
     sort_order: str = "desc",
-    session: aiohttp.ClientSession | None = None,
+    session: httpx.AsyncClient | None = None,
 ) -> str:
     """
     Fetch metrics as CSV for a given model and ID with specified time granularity.
@@ -120,7 +116,7 @@ async def get_metrics_csv(
         time_granularity: Time granularity for metrics (default: "month"). Currently only "month" is
             supported by the API, but this parameter allows for future extensibility (e.g. "day", "week", "year").
         sort_order: Sort order for time field ("asc" or "desc", default: "desc").
-        session: Optional aiohttp session for reuse across calls.
+        session: Optional httpx session for reuse across calls.
 
     Returns:
         CSV content as a string, including header row.
@@ -149,13 +145,9 @@ async def get_metrics_csv(
             f"Fetching metrics CSV from {url} with params: {id_field}__exact={id_value}, "
             f"{time_field}__sort={sort_order}"
         )
-        async with sess.get(
-            url,
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=30),
-        ) as resp:
-            resp.raise_for_status()
-            return await resp.text()
+        resp = await sess.get(url, params=params, timeout=30.0)
+        resp.raise_for_status()
+        return resp.text
     finally:
         if owns_session:
-            await sess.close()
+            await sess.aclose()

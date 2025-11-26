@@ -1,6 +1,6 @@
 from typing import Any
 
-import aiohttp
+import httpx
 
 from helpers import env_config
 
@@ -13,18 +13,18 @@ def datagouv_api_base_url() -> str:
     return config["datagouv_api"]
 
 
-async def _fetch_json(session: aiohttp.ClientSession, url: str) -> dict[str, Any]:
-    async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
-        resp.raise_for_status()
-        return await resp.json()
+async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
+    resp = await client.get(url, timeout=15.0)
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def get_resource_metadata(
-    resource_id: str, session: aiohttp.ClientSession | None = None
+    resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     own = session is None
     if own:
-        session = aiohttp.ClientSession()
+        session = httpx.AsyncClient()
     assert session is not None
     try:
         # Use API v2 for resources
@@ -40,15 +40,15 @@ async def get_resource_metadata(
         }
     finally:
         if own:
-            await session.close()
+            await session.aclose()
 
 
 async def get_dataset_metadata(
-    dataset_id: str, session: aiohttp.ClientSession | None = None
+    dataset_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     own = session is None
     if own:
-        session = aiohttp.ClientSession()
+        session = httpx.AsyncClient()
     assert session is not None
     try:
         # Use API v1 for datasets
@@ -62,15 +62,15 @@ async def get_dataset_metadata(
         }
     finally:
         if own:
-            await session.close()
+            await session.aclose()
 
 
 async def get_resource_and_dataset_metadata(
-    resource_id: str, session: aiohttp.ClientSession | None = None
+    resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     own = session is None
     if own:
-        session = aiohttp.ClientSession()
+        session = httpx.AsyncClient()
     try:
         res: dict[str, Any] = await get_resource_metadata(resource_id, session=session)
         ds: dict[str, Any] = {}
@@ -80,11 +80,11 @@ async def get_resource_and_dataset_metadata(
         return {"resource": res, "dataset": ds}
     finally:
         if own and session:
-            await session.close()
+            await session.aclose()
 
 
 async def get_resources_for_dataset(
-    dataset_id: str, session: aiohttp.ClientSession | None = None
+    dataset_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """
     Get all resources for a given dataset.
@@ -94,7 +94,7 @@ async def get_resources_for_dataset(
     """
     own = session is None
     if own:
-        session = aiohttp.ClientSession()
+        session = httpx.AsyncClient()
     try:
         ds = await get_dataset_metadata(dataset_id, session=session)
         # Fetch resources from API v1
@@ -109,14 +109,14 @@ async def get_resources_for_dataset(
         return {"dataset": ds, "resources": res_list}
     finally:
         if own and session:
-            await session.close()
+            await session.aclose()
 
 
 async def search_datasets(
     query: str,
     page: int = 1,
     page_size: int = 20,
-    session: aiohttp.ClientSession | None = None,
+    session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
     Search for datasets on data.gouv.fr.
@@ -131,7 +131,7 @@ async def search_datasets(
     """
     own = session is None
     if own:
-        session = aiohttp.ClientSession()
+        session = httpx.AsyncClient()
     assert session is not None
     try:
         # Use API v1 for dataset search
@@ -141,11 +141,9 @@ async def search_datasets(
             "page": page,
             "page_size": min(page_size, 100),  # API limit
         }
-        async with session.get(
-            url, params=params, timeout=aiohttp.ClientTimeout(total=15)
-        ) as resp:
-            resp.raise_for_status()
-            data = await resp.json()
+        resp = await session.get(url, params=params, timeout=15.0)
+        resp.raise_for_status()
+        data = resp.json()
 
         datasets = data.get("data", [])
         # Extract relevant fields for each dataset
@@ -183,4 +181,4 @@ async def search_datasets(
         }
     finally:
         if own:
-            await session.close()
+            await session.aclose()

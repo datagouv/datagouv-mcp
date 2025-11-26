@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-import aiohttp
+import httpx
 
 from helpers import env_config
 
@@ -13,11 +13,11 @@ class ResourceNotAvailableError(Exception):
 
 
 async def _get_session(
-    session: aiohttp.ClientSession | None,
-) -> tuple[aiohttp.ClientSession, bool]:
+    session: httpx.AsyncClient | None,
+) -> tuple[httpx.AsyncClient, bool]:
     if session is not None:
         return session, False
-    new_session = aiohttp.ClientSession()
+    new_session = httpx.AsyncClient()
     return new_session, True
 
 
@@ -35,7 +35,7 @@ async def fetch_resource_data(
     page: int = 1,
     page_size: int = 100,
     params: dict[str, Any] | None = None,
-    session: aiohttp.ClientSession | None = None,
+    session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
     Fetch data for a resource via the Tabular API.
@@ -57,33 +57,31 @@ async def fetch_resource_data(
             f"resource_id: {resource_id}"
         )
 
-        async with sess.get(
-            url, params=query_params, timeout=aiohttp.ClientTimeout(total=30)
-        ) as resp:
-            if resp.status == 404:
-                logger.warning(f"Tabular API: Resource {resource_id} not found (404)")
-                raise ResourceNotAvailableError(
-                    f"Resource {resource_id} not available via Tabular API"
-                )
+        resp = await sess.get(url, params=query_params, timeout=30.0)
+        if resp.status_code == 404:
+            logger.warning(f"Tabular API: Resource {resource_id} not found (404)")
+            raise ResourceNotAvailableError(
+                f"Resource {resource_id} not available via Tabular API"
+            )
 
-            if resp.status >= 400:
-                error_body = await resp.text()
-                logger.error(
-                    f"Tabular API: Error {resp.status} for resource {resource_id} - "
-                    f"Response: {error_body[:500]}"
-                )
+        if resp.status_code >= 400:
+            error_body = resp.text
+            logger.error(
+                f"Tabular API: Error {resp.status_code} for resource {resource_id} - "
+                f"Response: {error_body[:500]}"
+            )
 
-            resp.raise_for_status()
-            return await resp.json()
+        resp.raise_for_status()
+        return resp.json()
     finally:
         if owns_session:
-            await sess.close()
+            await sess.aclose()
 
 
 async def fetch_resource_profile(
     resource_id: str,
     *,
-    session: aiohttp.ClientSession | None = None,
+    session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
     Fetch the profile metadata for a resource via the Tabular API.
@@ -98,24 +96,24 @@ async def fetch_resource_profile(
             f"resource_id: {resource_id}"
         )
 
-        async with sess.get(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-            if resp.status == 404:
-                logger.warning(
-                    f"Tabular API: Resource profile {resource_id} not found (404)"
-                )
-                raise ResourceNotAvailableError(
-                    f"Resource {resource_id} profile not available via Tabular API"
-                )
+        resp = await sess.get(url, timeout=30.0)
+        if resp.status_code == 404:
+            logger.warning(
+                f"Tabular API: Resource profile {resource_id} not found (404)"
+            )
+            raise ResourceNotAvailableError(
+                f"Resource {resource_id} profile not available via Tabular API"
+            )
 
-            if resp.status >= 400:
-                error_body = await resp.text()
-                logger.error(
-                    f"Tabular API: Profile error {resp.status} for resource {resource_id} - "
-                    f"Response: {error_body[:500]}"
-                )
+        if resp.status_code >= 400:
+            error_body = resp.text
+            logger.error(
+                f"Tabular API: Profile error {resp.status_code} for resource {resource_id} - "
+                f"Response: {error_body[:500]}"
+            )
 
-            resp.raise_for_status()
-            return await resp.json()
+        resp.raise_for_status()
+        return resp.json()
     finally:
         if owns_session:
-            await sess.close()
+            await sess.aclose()
