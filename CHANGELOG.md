@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 (2025-11-26)
+
+- docs: improve docs
+- feat: remove edition tool "create_dataset" which needs API key auth
+- Revert "ci: separate CI into parallel jobs"
+
+
 ## 0.2.0 (2025-11-25)
 
 - build: add a Dockerfile and docker compose file
