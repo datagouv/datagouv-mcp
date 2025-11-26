@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 (2025-11-26)
+
+- docs: fix README to add "get_metrics in tools list
+- feat: add automatic CSV delimiter detection
+
+
 ## 0.2.2 (2025-11-26)
 
 - docs: update README
