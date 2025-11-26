@@ -644,12 +644,37 @@ async def _download_resource(
 
 
 def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]:
-    """Parse CSV content."""
+    """Parse CSV content with automatic delimiter detection."""
     if is_gzipped:
         content = gzip.decompress(content)
 
     text = content.decode("utf-8-sig")  # Handle BOM
-    reader = csv.DictReader(io.StringIO(text))
+
+    # Detect delimiter automatically
+    # Try to sniff the delimiter from the first few lines
+    sample_lines = text.split("\n")[:5]  # Use first 5 lines for detection
+    sample_text = "\n".join(sample_lines)
+
+    delimiter = ","
+    try:
+        sniffer = csv.Sniffer()
+        delimiter = sniffer.sniff(sample_text, delimiters=",;\t|").delimiter
+    except (csv.Error, AttributeError):
+        # If sniffing fails, try common delimiters in order of likelihood
+        # Count occurrences of each delimiter in the sample
+        delimiter_counts = {
+            ",": sample_text.count(","),
+            ";": sample_text.count(";"),
+            "\t": sample_text.count("\t"),
+            "|": sample_text.count("|"),
+        }
+        # Use the delimiter with the most occurrences (but at least 2 to avoid false positives)
+        if delimiter_counts:
+            best_delimiter = max(delimiter_counts.items(), key=lambda x: x[1])
+            if best_delimiter[1] >= 2:
+                delimiter = best_delimiter[0]
+
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
     return list(reader)
 
 
