@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.4 (2025-11-27)
+
+- chore: stop tracking .python-version file
+- chore: update dependencies
+- clean: use absolute imports
+- docs: add docs for Claude code
+- docs: minor README improvements
+- docs: update README
+- fix: fix docker-compose.yaml file for default DATAGOUV_ENV
+- fix: fix get_metrics get_env logic
+- refactor: merge branch related to refactor into separate files for each mcp tool
+- refactor: one single logegr instance for the whole codebase
+- refactor: replace aiohttp with httpx, which supports HTTP/2 and simplifies the code
+- refactor: simplify get_env logic
+
+
 ## 0.2.3 (2025-11-26)
 
 - docs: fix README to add "get_metrics in tools list
