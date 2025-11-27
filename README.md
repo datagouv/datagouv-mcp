@@ -176,6 +176,7 @@ This MCP server uses FastMCP and implements the **Streamable HTTP transport only
 
 **Streamable HTTP transport (standards-compliant):**
 - `POST /mcp` - JSON-RPC messages (client → server)
+- `GET /health` - Simple JSON health probe (`{"status":"ok","timestamp":"..."}`)
 
 ## 🛠️ Available Tools
 

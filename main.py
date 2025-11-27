@@ -1,6 +1,9 @@
+import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
+from typing import Awaitable, Callable
 
 import uvicorn
 from mcp.server.fastmcp import FastMCP
@@ -20,6 +23,31 @@ mcp = FastMCP("data.gouv.fr MCP server")
 register_tools(mcp)
 
 
+def with_health_endpoint(
+    inner_app: Callable[[dict, Callable, Callable], Awaitable[None]],
+):
+    async def app(scope, receive, send):
+        if scope["type"] == "http" and scope.get("path") == "/health":
+            timestamp = datetime.now(timezone.utc).isoformat()
+            body = json.dumps({"status": "ok", "timestamp": timestamp}).encode("utf-8")
+            headers = [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(body)).encode("utf-8")),
+            ]
+            await send(
+                {"type": "http.response.start", "status": 200, "headers": headers}
+            )
+            await send({"type": "http.response.body", "body": body})
+            return
+
+        await inner_app(scope, receive, send)
+
+    return app
+
+
+asgi_app = with_health_endpoint(mcp.streamable_http_app())
+
+
 # Run with streamable HTTP transport
 if __name__ == "__main__":
     port_str = os.getenv("MCP_PORT", "8000")
@@ -31,4 +59,4 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         sys.exit(1)
-    uvicorn.run(mcp.streamable_http_app(), host="0.0.0.0", port=port, log_level="info")
+    uvicorn.run(asgi_app, host="0.0.0.0", port=port, log_level="info")
