@@ -1,14 +1,22 @@
+import logging
 from typing import Any
 
 import httpx
 
 from helpers import env_config
 
+logger = logging.getLogger("datagouv_mcp")
+
 
 async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
-    resp = await client.get(url, timeout=15.0)
-    resp.raise_for_status()
-    return resp.json()
+    logger.debug("datagouv API GET %s", url)
+    try:
+        resp = await client.get(url, timeout=15.0)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPError as exc:
+        logger.error("datagouv API request failed for %s: %s", url, exc)
+        raise
 
 
 async def get_resource_details(

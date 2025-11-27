@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, metrics_api_client
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("datagouv_mcp")
 
 
 def register_get_metrics_tool(mcp: FastMCP) -> None:

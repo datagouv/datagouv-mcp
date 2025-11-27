@@ -8,14 +8,13 @@ from mcp.server.fastmcp import FastMCP
 from tools import register_tools
 
 # Configure logging
+LOGGER_NAME = "datagouv_mcp"
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-
-# Ensure helpers loggers are also at DEBUG level
-logging.getLogger("helpers.tabular_api_client").setLevel(logging.DEBUG)
-logging.getLogger("helpers.datagouv_api_client").setLevel(logging.DEBUG)
+logger = logging.getLogger(LOGGER_NAME)
+logger.setLevel(logging.DEBUG)
 
 mcp = FastMCP("data.gouv.fr MCP server")
 register_tools(mcp)

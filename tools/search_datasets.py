@@ -4,7 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("datagouv_mcp")
 
 
 def register_search_datasets_tool(mcp: FastMCP) -> None:

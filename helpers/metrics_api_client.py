@@ -5,7 +5,7 @@ import httpx
 
 from helpers import env_config
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("datagouv_mcp")
 
 
 async def _get_session(
