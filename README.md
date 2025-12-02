@@ -72,25 +72,6 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-### Cursor
-
-Cursor supports MCP servers through its settings. To configure the server:
-
-1. Open Cursor Settings
-2. Search for "MCP" or "Model Context Protocol"
-3. Add a new MCP server with the following configuration:
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "url": "http://127.0.0.1:8000/mcp",
-      "transport": "http"
-    }
-  }
-}
-```
-
 ### Gemini CLI
 
 Add the following to your `~/.gemini/settings.json` file:
@@ -142,6 +123,25 @@ Add the following to your VS Code `settings.json`:
     "datagouv": {
       "url": "http://127.0.0.1:8000/mcp",
       "type": "http"
+    }
+  }
+}
+```
+
+### Cursor
+
+Cursor supports MCP servers through its settings. To configure the server:
+
+1. Open Cursor Settings
+2. Search for "MCP" or "Model Context Protocol"
+3. Add a new MCP server with the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "http://127.0.0.1:8000/mcp",
+      "transport": "http"
     }
   }
 }
