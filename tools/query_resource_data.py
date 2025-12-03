@@ -13,27 +13,29 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
     async def query_resource_data(
         question: str,
         resource_id: str,
-        limit: int = 100,
+        page: int = 1,
     ) -> str:
         """
         Query data from a specific resource via the Tabular API.
 
         This tool fetches rows from a specific resource (file) using the data.gouv.fr
-        Tabular API. Use this tool after identifying the resource you want to query
-        via list_dataset_resources.
+        Tabular API. Each call retrieves up to 200 rows (the maximum allowed by the API).
+        Use this tool after identifying the resource you want to query via list_dataset_resources.
 
         Recommended workflow:
         1. Use search_datasets to find the appropriate dataset
         2. Use list_dataset_resources to see available resources in the dataset
         3. Use query_resource_data with the chosen resource_id to fetch data
+        4. If the answer is not in the first page, use query_resource_data with page=2, page=3, etc.
 
         Args:
-            question: The question or description of what data you're looking for
+            question: The question or description of what data you're looking for (for context)
             resource_id: Resource ID (use list_dataset_resources to find resource IDs)
-            limit: Maximum number of rows to retrieve (default: 100, max: 200)
+            page: Page number to retrieve (default: 1). Use this to navigate through large datasets.
+                  Each page contains up to 200 rows.
 
         Returns:
-            Formatted text with the data found from the resource
+            Formatted text with the data found from the resource, including pagination info
         """
         try:
             # Get resource metadata to display context
@@ -71,16 +73,16 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
                 ]
             )
 
-            # Fetch data via the Tabular API
-            page_size = max(1, min(limit, 200))
+            # Fetch data via the Tabular API (always use max page size of 200)
+            page_size = 200
             logger.info(
                 f"Querying Tabular API for resource: {resource_title} "
-                f"(ID: {resource_id}), page_size: {page_size}"
+                f"(ID: {resource_id}), page: {page}, page_size: {page_size}"
             )
 
             try:
                 tabular_data = await tabular_api_client.fetch_resource_data(
-                    resource_id, page=1, page_size=page_size
+                    resource_id, page=page, page_size=page_size
                 )
                 rows = tabular_data.get("data", [])
                 meta = tabular_data.get("meta", {})
@@ -96,11 +98,17 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
 
                 if total_count is not None:
                     content_parts.append(f"Total rows (Tabular API): {total_count}")
-                content_parts.append(f"Retrieved: {len(rows)} row(s)")
-                if page_info is not None and page_size_meta is not None:
-                    content_parts.append(
-                        f"Page info: page {page_info} (page size {page_size_meta})"
-                    )
+                    # Calculate total pages
+                    if page_size_meta and page_size_meta > 0:
+                        total_pages = (
+                            total_count + page_size_meta - 1
+                        ) // page_size_meta
+                        content_parts.append(
+                            f"Total pages: {total_pages} (page size: {page_size_meta})"
+                        )
+                content_parts.append(
+                    f"Retrieved: {len(rows)} row(s) from page {page_info or page}"
+                )
 
                 # Show column names
                 if rows:
@@ -124,9 +132,20 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
 
                 links = tabular_data.get("links", {})
                 if links.get("next"):
+                    next_page = page + 1
+                    content_parts.append("")
                     content_parts.append(
-                        "More data available via Tabular API (next page link provided)."
+                        f"📄 More data available! To see the next page, call query_resource_data "
+                        f"again with page={next_page} (and the same resource_id and question)."
                     )
+                    if total_count and page_size_meta:
+                        remaining_pages = (
+                            (total_count + page_size_meta - 1) // page_size_meta
+                        ) - page
+                        if remaining_pages > 1:
+                            content_parts.append(
+                                f"   There are {remaining_pages} more page(s) available after this one."
+                            )
 
             except tabular_api_client.ResourceNotAvailableError as e:
                 logger.warning(f"Resource not available: {resource_id} - {str(e)}")
