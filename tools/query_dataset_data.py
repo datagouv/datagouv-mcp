@@ -12,53 +12,32 @@ def register_query_dataset_data_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def query_dataset_data(
         question: str,
-        dataset_id: str | None = None,
-        dataset_query: str | None = None,
+        dataset_id: str,
         limit_per_resource: int = 100,
     ) -> str:
         """
         Query data from a dataset by exploring its resources via the Tabular API.
 
-        This tool finds a dataset (by ID or by searching), retrieves its resources, and uses
-        the data.gouv.fr Tabular API to access tabular content.
+        This tool retrieves a dataset's resources and uses the data.gouv.fr Tabular API
+        to access tabular content. Use the search_datasets tool first to find the
+        appropriate dataset ID.
 
         Args:
             question: The question or description of what data you're looking for
-            dataset_id: Optional dataset ID if you already know which dataset to query
-            dataset_query: Optional search query to find the dataset if dataset_id is not provided
+            dataset_id: Dataset ID (use search_datasets tool to find the appropriate dataset)
             limit_per_resource: Maximum number of rows to retrieve per resource table (default: 100)
 
         Returns:
             Formatted text with the data found, organized by resource
         """
         try:
-            # Step 1: Find the dataset
-            if dataset_id:
-                # Use provided dataset ID
-                dataset_result = await datagouv_api_client.get_resources_for_dataset(
-                    dataset_id
-                )
-                dataset = dataset_result.get("dataset", {})
-                if not dataset.get("id"):
-                    return f"Error: Dataset with ID '{dataset_id}' not found."
-            elif dataset_query:
-                # Search for dataset
-                search_result = await datagouv_api_client.search_datasets(
-                    query=dataset_query, page=1, page_size=1
-                )
-                datasets = search_result.get("data", [])
-                if not datasets:
-                    return f"Error: No dataset found for query '{dataset_query}'."
-                dataset_id = datasets[0].get("id")
-                dataset_result = await datagouv_api_client.get_resources_for_dataset(
-                    dataset_id
-                )
-                dataset = dataset_result.get("dataset", {})
-            else:
-                return (
-                    "Error: Either 'dataset_id' or 'dataset_query' must be provided.\n"
-                    "Use dataset_id if you know the exact dataset ID, or dataset_query to search for a dataset."
-                )
+            # Step 1: Get the dataset and its resources
+            dataset_result = await datagouv_api_client.get_resources_for_dataset(
+                dataset_id
+            )
+            dataset = dataset_result.get("dataset", {})
+            if not dataset.get("id"):
+                return f"Error: Dataset with ID '{dataset_id}' not found."
 
             dataset_title = dataset.get("title", "Unknown")
             dataset_id = dataset.get("id", dataset_id)
@@ -78,7 +57,7 @@ def register_query_dataset_data_tool(mcp: FastMCP) -> None:
                 f"Found {len(resources)} resource(s) to explore\n",
             ]
 
-            # Step 3 & 4: For each resource, fetch data via the Tabular API
+            # Step 3: For each resource, fetch data via the Tabular API
             found_data = False
             for resource_id, resource_title in resources:
                 content_parts.append(
