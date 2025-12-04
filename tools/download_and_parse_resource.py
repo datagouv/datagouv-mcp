@@ -23,10 +23,24 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
         """
         Download and parse a resource that is not accessible via Tabular API.
 
+        The Tabular API is data.gouv.fr's API for parsing tabular files (CSV, XLSX, etc.)
+        without downloading them. However, it has limitations. This tool downloads and
+        parses resources directly when the Tabular API cannot be used.
+
         This tool is useful for:
         - Files larger than Tabular API limits (CSV > 100 MB, XLSX > 12.5 MB)
         - Formats not supported by Tabular API (JSON, XML, etc.)
         - Files with external URLs
+
+        For smaller tabular files, prefer using query_resource_data with the Tabular API
+        as it's faster and more efficient. Use get_resource_info to check if a resource
+        is available via Tabular API before choosing which tool to use.
+
+        Typical workflow:
+        1. Use list_dataset_resources to find resources in a dataset
+        2. Use get_resource_info to check Tabular API availability
+        3. If not available via Tabular API, use download_and_parse_resource
+        4. If available via Tabular API, use query_resource_data instead
 
         Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX (if openpyxl available)
 

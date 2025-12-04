@@ -11,14 +11,24 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
         Get detailed information about a specific resource (file).
 
         Returns comprehensive metadata including format, size, MIME type, URL,
-        and associated dataset information. Useful for understanding a resource
-        before querying its data.
+        and associated dataset information. Also checks if the resource is available
+        via the Tabular API (data.gouv.fr's API for parsing tabular files without
+        downloading them).
+
+        Use this tool to determine which data querying tool to use:
+        - If available via Tabular API: use query_resource_data (faster, no download needed)
+        - If not available or too large: use download_and_parse_resource
+
+        Typical workflow:
+        1. Use list_dataset_resources to find resources in a dataset
+        2. Use get_resource_info to check resource details and Tabular API availability
+        3. Use query_resource_data or download_and_parse_resource based on availability
 
         Args:
-            resource_id: The ID of the resource to get information about
+            resource_id: The ID of the resource to get information about (obtained from list_dataset_resources)
 
         Returns:
-            Formatted text with detailed resource information
+            Formatted text with detailed resource information, including Tabular API availability status
         """
         try:
             # Get full resource data from API v2

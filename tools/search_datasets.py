@@ -13,9 +13,12 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         """
         Search for datasets on data.gouv.fr by keywords.
 
-        Returns a list of datasets matching the search query with their metadata,
-        including title, description, organization, tags, and resource count.
-        Use this to discover datasets before querying their data.
+        This is typically the first step in exploring data.gouv.fr. Returns a list of
+        datasets matching the search query with their metadata, including title,
+        description, organization, tags, and resource count.
+
+        After finding relevant datasets, use get_dataset_info to get more details, or
+        list_dataset_resources to see what files are available in a dataset.
 
         Args:
             query: Search query string (searches in title, description, tags)
@@ -23,7 +26,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
             page_size: Number of results per page (default: 20, max: 100)
 
         Returns:
-            Formatted text with dataset information
+            Formatted text with dataset information, including dataset IDs for further queries
         """
         result = await datagouv_api_client.search_datasets(
             query=query, page=page, page_size=page_size

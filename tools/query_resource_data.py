@@ -16,17 +16,25 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         page: int = 1,
     ) -> str:
         """
-        Query data from a specific resource via the Tabular API.
+        Query data from a specific resource (file) via the Tabular API.
 
-        This tool fetches rows from a specific resource (file) using the data.gouv.fr
-        Tabular API. Each call retrieves up to 200 rows (the maximum allowed by the API).
-        Use this tool after identifying the resource you want to query via list_dataset_resources.
+        The Tabular API is data.gouv.fr's API for parsing and querying the content of
+        resources (files) on the platform. It allows you to access structured data from
+        tabular files (CSV, XLSX, etc.) without downloading the entire file. This tool
+        fetches rows from a specific resource using this API.
+
+        Each call retrieves up to 200 rows (the maximum allowed by the API).
+
+        Note: The Tabular API has size limits (CSV > 100 MB, XLSX > 12.5 MB are not
+        supported). For larger files or unsupported formats, use download_and_parse_resource.
+        You can use get_resource_info to check if a resource is available via Tabular API.
 
         Recommended workflow:
         1. Use search_datasets to find the appropriate dataset
-        2. Use list_dataset_resources to see available resources in the dataset
-        3. Use query_resource_data with the chosen resource_id to fetch data
-        4. If the answer is not in the first page, use query_resource_data with page=2, page=3, etc.
+        2. Use list_dataset_resources to see available resources (files) in the dataset
+        3. (Optional) Use get_resource_info to verify Tabular API availability
+        4. Use query_resource_data with the chosen resource_id to fetch data
+        5. If the answer is not in the first page, use query_resource_data with page=2, page=3, etc.
 
         Args:
             question: The question or description of what data you're looking for (for context)

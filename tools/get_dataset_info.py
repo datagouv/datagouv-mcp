@@ -11,10 +11,17 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
         Get detailed information about a specific dataset.
 
         Returns comprehensive metadata including title, description, organization,
-        tags, resource count, creation/update dates, and other details.
+        tags, resource count, creation/update dates, license, and other details.
+        Use this after finding a dataset with search_datasets to get more context
+        before exploring its resources.
+
+        Typical workflow:
+        1. Use search_datasets to find datasets of interest
+        2. Use get_dataset_info to get detailed information about a specific dataset
+        3. Use list_dataset_resources to see what files are available in the dataset
 
         Args:
-            dataset_id: The ID of the dataset to get information about
+            dataset_id: The ID of the dataset to get information about (obtained from search_datasets)
 
         Returns:
             Formatted text with detailed dataset information

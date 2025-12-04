@@ -15,14 +15,19 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
         List all resources (files) in a dataset with their metadata.
 
         Returns information about each resource including ID, title, format, size,
-        and type. Useful for understanding what data files are available in a dataset
-        before querying them.
+        and type. This is a key step before querying data from resources.
+
+        Typical workflow:
+        1. Use search_datasets to find datasets
+        2. Use list_dataset_resources to see what files are in a dataset
+        3. Use get_resource_info to check if a resource is available via Tabular API
+        4. Use query_resource_data (for Tabular API) or download_and_parse_resource (for large/unsupported files)
 
         Args:
-            dataset_id: The ID of the dataset to list resources from
+            dataset_id: The ID of the dataset to list resources from (obtained from search_datasets or get_dataset_info)
 
         Returns:
-            Formatted text listing all resources with their metadata
+            Formatted text listing all resources with their metadata, including resource IDs for data queries
         """
         try:
             result = await datagouv_api_client.get_resources_for_dataset(dataset_id)

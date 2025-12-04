@@ -19,11 +19,21 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
         Get metrics (visits, downloads) for a dataset and/or a resource.
 
         Returns monthly statistics including visits and downloads, sorted by month
-        in descending order (most recent first).
+        in descending order (most recent first). This tool is useful for analyzing
+        the popularity and usage of datasets and resources, but is optional in the
+        data exploration workflow.
+
+        Typical use cases:
+        - Analyze which datasets/resources are most popular
+        - Track usage trends over time
+        - Understand data consumption patterns
+
+        Note: This is separate from the main data querying workflow. Use this after
+        exploring datasets/resources if you need usage statistics.
 
         Args:
-            dataset_id: Optional dataset ID to get metrics for
-            resource_id: Optional resource ID to get metrics for
+            dataset_id: Optional dataset ID to get metrics for (obtained from search_datasets or get_dataset_info)
+            resource_id: Optional resource ID to get metrics for (obtained from list_dataset_resources or get_resource_info)
             limit: Maximum number of monthly records to return (default: 12, max: 100)
 
         Returns:
