@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.2.6 (2025-12-04)
+
+- fix: fix tag_version.sh to work with MacOS
+- docs: improve docstrings
+
+- refactor!: add page parameter and remove limit from query_resource_data
+  Add page parameter to enable pagination through large datasets. Remove
+  limit parameter and always use maximum page size (200 rows) for better
+  efficiency. This simplifies the API and reduces the number of calls
+  needed to explore datasets.
+
+  BREAKING CHANGE: limit parameter removed, page parameter added.
+  Always returns up to 200 rows per page.
+
+- **refactor!: rename query_dataset_data to query_resource_data, require resource_id
+  Rename query_dataset_data to query_resource_data and change parameter
+  from dataset_id to resource_id. This enforces a clearer workflow where
+  the LLM must explicitly:
+  1. Use search_datasets to find datasets
+  2. Use list_dataset_resources to explore available resources
+  3. Use query_resource_data with a specific resource_id
+
+  This improves separation of concerns and forces better decision-making
+  by the LLM when selecting which resource to query.
+
+  BREAKING CHANGE: query_dataset_data renamed to query_resource_data.
+  Parameter changed from dataset_id to resource_id. Use list_dataset_resources
+  first to find resource IDs.
+
+- refactor!: remove dataset_query parameter from query_dataset_data
+  Remove the dataset_query parameter to enforce a two-step workflow:
+  1. Use search_datasets to find and compare datasets
+  2. Use query_dataset_data with the chosen dataset_id
+
+  This improves separation of concerns and gives LLMs better control
+  over dataset selection by allowing them to compare multiple options
+  before querying data.
+
+  BREAKING CHANGE: dataset_query parameter removed. dataset_id is now
+  required. Use search_datasets tool first to find the appropriate
+  dataset ID.
+
+- docs: add doc for AnythingLLM
+- docs: update README.md
+
 ## 0.2.5 (2025-12-01)
 
 - build: fix optional dependencies
