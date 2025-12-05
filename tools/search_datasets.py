@@ -66,6 +66,11 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         datasets matching the search query with their metadata, including title,
         description, organization, tags, and resource count.
 
+        The upstream API uses strict AND logic: too many generic words can lead to
+        zero results. The tool automatically strips generic stop words (e.g. "données",
+        "fichier", "csv") and, if needed, retries with the original query. Prefer short,
+        specific queries; if you get no results, try again with fewer generic terms.
+
         After finding relevant datasets, use get_dataset_info to get more details, or
         list_dataset_resources to see what files are available in a dataset.
 
