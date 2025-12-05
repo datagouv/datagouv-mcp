@@ -13,7 +13,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies and dev dependencies
-          command: uv sync --frozen --extra dev
+          command: uv sync --frozen
       - run:
           name: Lint and format code and sort imports
           # ruff check --select I . : check linting and imports sorting without fixing (to fix, use --fix)
@@ -29,7 +29,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies and dev dependencies
-          command: uv sync --frozen --extra dev
+          command: uv sync --frozen
       - run:
           name: Run tests
           command: |
