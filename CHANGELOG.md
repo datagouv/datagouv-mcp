@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.7 (2025-12-09)
+
+- build: use Python 3.14 instead of 3.13 in docker container
+- chore: remove wrong logs for tag_version.sh
+- chore: update dependencies
+- chore: use [dependency-groups] for dev dependencies
+- docs: clarify dataset search stop-word handling
+- docs: improve README
+- docs: improve README
+- docs: update README
+- feat: search_datasets cleans query and removes stop words before querying API
+- fix: fix tag_version.sh for MacOS
+
+
 ## 0.2.6 (2025-12-04)
 
 - fix: fix tag_version.sh to work with MacOS
