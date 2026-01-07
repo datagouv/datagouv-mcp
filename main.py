@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version
 from typing import Awaitable, Callable
 
 import uvicorn
@@ -29,7 +30,16 @@ def with_health_endpoint(
     async def app(scope, receive, send):
         if scope["type"] == "http" and scope.get("path") == "/health":
             timestamp = datetime.now(timezone.utc).isoformat()
-            body = json.dumps({"status": "ok", "timestamp": timestamp}).encode("utf-8")
+
+            # Get version from package metadata (managed by setuptools-scm)
+            try:
+                app_version = version("datagouv-mcp")
+            except PackageNotFoundError:
+                app_version = "unknown"
+
+            body = json.dumps(
+                {"status": "ok", "timestamp": timestamp, "version": app_version}
+            ).encode("utf-8")
             headers = [
                 (b"content-type", b"application/json"),
                 (b"content-length", str(len(body)).encode("utf-8")),

@@ -14,3 +14,5 @@ async def test_health_endpoint_returns_ok_status():
     payload = response.json()
     assert payload.get("status") == "ok"
     assert "timestamp" in payload
+    assert "version" in payload
+    assert isinstance(payload.get("version"), str)
