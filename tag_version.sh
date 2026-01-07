@@ -132,7 +132,7 @@ REGULAR_COMMITS_RAW=""
 
 while IFS= read -r hash; do
     # Get subject and body
-    subject=$(git log -1 --pretty=format:"%s" "$hash")
+    subject=$(git log -1 --pretty=format:"%s" "$hash" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     body=$(git log -1 --pretty=format:"%b" "$hash")
 
     # Convert PR numbers to links if we have a repo URL
