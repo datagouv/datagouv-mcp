@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.8 (2026-01-07)
+
+- chore: fix tag_version.sh for trailing slashes in CHANGELOG
+- docs: add Mistral Vibe CLI in README
+- docs: update README
+- feat: add version in health check
+
+
 ## 0.2.7 (2025-12-09)
 
 - build: use Python 3.14 instead of 3.13 in docker container
