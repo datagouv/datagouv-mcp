@@ -25,9 +25,9 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
 
         Each call retrieves up to 200 rows (the maximum allowed by the API).
 
-        Note: The Tabular API has size limits (CSV > 100 MB, XLSX > 12.5 MB are not
-        supported). For larger files or unsupported formats, use download_and_parse_resource.
-        You can use get_resource_info to check if a resource is available via Tabular API.
+        Note: The Tabular API has default size limits (CSV > 100 MB, XLSX > 12.5 MB),
+        but some large files are exceptions and remain available. Use get_resource_info
+        to check actual availability before choosing which tool to use.
 
         Recommended workflow:
         1. Use search_datasets to find the appropriate dataset

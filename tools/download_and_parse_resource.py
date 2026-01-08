@@ -28,13 +28,14 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
         parses resources directly when the Tabular API cannot be used.
 
         This tool is useful for:
-        - Files larger than Tabular API limits (CSV > 100 MB, XLSX > 12.5 MB)
+        - Files larger than Tabular API limits (CSV > 100 MB, XLSX > 12.5 MB) that are
+          not in the exceptions list
         - Formats not supported by Tabular API (JSON, XML, etc.)
         - Files with external URLs
 
-        For smaller tabular files, prefer using query_resource_data with the Tabular API
-        as it's faster and more efficient. Use get_resource_info to check if a resource
-        is available via Tabular API before choosing which tool to use.
+        For tabular files, prefer using query_resource_data with the Tabular API as it's
+        faster and more efficient. Use get_resource_info to check if a resource is
+        available via Tabular API before choosing which tool to use.
 
         Typical workflow:
         1. Use list_dataset_resources to find resources in a dataset

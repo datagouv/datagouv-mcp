@@ -1,7 +1,7 @@
 import httpx
 from mcp.server.fastmcp import FastMCP
 
-from helpers import datagouv_api_client, env_config
+from helpers import crawler_api_client, datagouv_api_client, env_config
 
 
 def register_get_resource_info_tool(mcp: FastMCP) -> None:
@@ -92,15 +92,26 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
 
             # Check if resource is available via Tabular API
             content_parts.append("")
+            content_parts.append("Tabular API availability:")
             try:
+                # Check if resource is in the exceptions list (large files with special support)
+                is_exception = await crawler_api_client.is_in_exceptions_list(
+                    resource_id
+                )
+
                 # Try to get profile to check if it's tabular
                 profile_url = f"{env_config.get_base_url('tabular_api')}resources/{resource_id}/profile/"
                 async with httpx.AsyncClient() as session:
                     resp = await session.get(profile_url, timeout=10.0)
                     if resp.status_code == 200:
-                        content_parts.append(
-                            "✅ Available via Tabular API (can be queried)"
-                        )
+                        if is_exception:
+                            content_parts.append(
+                                "✅ Available via Tabular API (large file exception)"
+                            )
+                        else:
+                            content_parts.append(
+                                "✅ Available via Tabular API (can be queried)"
+                            )
                     else:
                         content_parts.append(
                             "⚠️  Not available via Tabular API (may not be tabular data)"

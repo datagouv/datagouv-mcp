@@ -6,12 +6,14 @@ _ENV_TARGETS = {
         "site": "https://demo.data.gouv.fr/",
         "tabular_api": "https://tabular-api.preprod.data.gouv.fr/api/",
         "metrics_api": "https://metric-api.data.gouv.fr/api/",  # No demo/preprod for Metrics API
+        "crawler_api": "https://demo-crawler.data.gouv.fr/api/",
     },
     "prod": {
         "datagouv_api": "https://www.data.gouv.fr/api/",
         "site": "https://www.data.gouv.fr/",
         "tabular_api": "https://tabular-api.data.gouv.fr/api/",
         "metrics_api": "https://metric-api.data.gouv.fr/api/",
+        "crawler_api": "https://crawler.data.gouv.fr/api/",
     },
 }
 
@@ -24,7 +26,7 @@ def get_base_url(api_name: str) -> str:
 
     Args:
         api_name: API name to get the endpoint for.
-                  Valid values: "datagouv_api", "site", "tabular_api", "metrics_api"
+                  Valid values: "datagouv_api", "site", "tabular_api", "metrics_api", "crawler_api"
 
     Returns:
         The API endpoint URL as a string.

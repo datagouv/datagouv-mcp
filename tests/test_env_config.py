@@ -37,6 +37,8 @@ class TestGetBaseUrl:
             ("tabular_api", "prod", "https://tabular-api.data.gouv.fr/api/"),
             ("metrics_api", "demo", "https://metric-api.data.gouv.fr/api/"),
             ("metrics_api", "prod", "https://metric-api.data.gouv.fr/api/"),
+            ("crawler_api", "demo", "https://demo-crawler.data.gouv.fr/api/"),
+            ("crawler_api", "prod", "https://crawler.data.gouv.fr/api/"),
         ],
     )
     def test_get_base_url_for_api_and_env(
