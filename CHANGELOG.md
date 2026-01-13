@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.11 (2026-01-13)
+
+- docs: streamline tool docstrings for better LLM efficiency
+- fix: add page_size argument for query_resource_data tool with 20 as a default, so that the LLM can preview the resource
+
+
 ## 0.2.10 (2026-01-13)
 
 - chore: revert mcp to 1.22 and update other dependencies
