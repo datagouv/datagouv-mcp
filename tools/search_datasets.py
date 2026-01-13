@@ -62,25 +62,12 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         """
         Search for datasets on data.gouv.fr by keywords.
 
-        This is typically the first step in exploring data.gouv.fr. Returns a list of
-        datasets matching the search query with their metadata, including title,
-        description, organization, tags, and resource count.
+        This is typically the first step in exploring data.gouv.fr.
+        Use short, specific queries (the API uses AND logic, so generic words
+        like "données" or "fichier" may return zero results).
 
-        The upstream API uses strict AND logic: too many generic words can lead to
-        zero results. The tool automatically strips generic stop words (e.g. "données",
-        "fichier", "csv") and, if needed, retries with the original query. Prefer short,
-        specific queries; if you get no results, try again with fewer generic terms.
-
-        After finding relevant datasets, use get_dataset_info to get more details, or
-        list_dataset_resources to see what files are available in a dataset.
-
-        Args:
-            query: Search query string (searches in title, description, tags)
-            page: Page number (default: 1)
-            page_size: Number of results per page (default: 20, max: 100)
-
-        Returns:
-            Formatted text with dataset information, including dataset IDs for further queries
+        Typical workflow: search_datasets → list_dataset_resources →
+        query_resource_data (or download_and_parse_resource for large files).
         """
         # Clean the query to remove generic stop words that break AND-based searches
         cleaned_query = clean_search_query(query)

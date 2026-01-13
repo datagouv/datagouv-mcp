@@ -17,36 +17,11 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         page_size: int = 20,
     ) -> str:
         """
-        Query data from a specific resource (file) via the Tabular API.
+        Query tabular data from a resource via the Tabular API (no download needed).
 
-        The Tabular API is data.gouv.fr's API for parsing and querying the content of
-        resources (files) on the platform. It allows you to access structured data from
-        tabular files (CSV, XLSX, etc.) without downloading the entire file. This tool
-        fetches rows from a specific resource using this API.
-
-        Note: The Tabular API has default size limits (CSV > 100 MB, XLSX > 12.5 MB),
-        but some large files are exceptions and remain available. Use get_resource_info
-        to check actual availability before choosing which tool to use.
-
-        Recommended workflow:
-        1. Use search_datasets to find the appropriate dataset
-        2. Use list_dataset_resources to see available resources (files) in the dataset
-        3. (Optional) Use get_resource_info to verify Tabular API availability
-        4. Use query_resource_data with default page_size (20) to preview data structure
-        5. Based on total rows:
-           - Small dataset (<500 rows): increase page_size and/or paginate
-           - Large dataset (>1000 rows): use download_and_parse_resource instead
-
-        Args:
-            question: The question or description of what data you're looking for (for context)
-            resource_id: Resource ID (use list_dataset_resources to find resource IDs)
-            page: Page number to retrieve (default: 1). Use this to navigate through datasets.
-            page_size: Number of rows to retrieve per page (default: 20, max: 200).
-                       Use a small value (10-20) for a quick preview of data structure.
-                       Use a larger value (100-200) when you need more data to answer.
-
-        Returns:
-            Formatted text with the data found from the resource, including pagination info
+        Works for CSV/XLSX files. Start with small page_size (20) to preview structure.
+        For large datasets (>1000 rows) requiring full analysis, download_and_parse_resource
+        may be more efficient than paginating through many pages.
         """
         try:
             # Get resource metadata to display context

@@ -16,33 +16,11 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
         limit: int = 12,
     ) -> str:
         """
-        Get metrics (visits, downloads) for a dataset and/or a resource.
+        Get usage metrics (visits, downloads) for a dataset or resource.
 
-        Returns monthly statistics including visits and downloads, sorted by month
-        in descending order (most recent first). This tool is useful for analyzing
-        the popularity and usage of datasets and resources, but is optional in the
-        data exploration workflow.
-
-        Typical use cases:
-        - Analyze which datasets/resources are most popular
-        - Track usage trends over time
-        - Understand data consumption patterns
-
-        Note: This is separate from the main data querying workflow. Use this after
-        exploring datasets/resources if you need usage statistics.
-
-        Args:
-            dataset_id: Optional dataset ID to get metrics for (obtained from search_datasets or get_dataset_info)
-            resource_id: Optional resource ID to get metrics for (obtained from list_dataset_resources or get_resource_info)
-            limit: Maximum number of monthly records to return (default: 12, max: 100)
-
-        Returns:
-            Formatted text with monthly metrics for the dataset and/or resource
-
-        Note:
-            At least one of dataset_id or resource_id must be provided.
-            This tool only works with the production environment (DATAGOUV_ENV=prod).
-            The Metrics API does not have a demo/preprod environment.
+        Returns monthly statistics sorted by most recent first.
+        At least one of dataset_id or resource_id must be provided.
+        Note: Only available in production environment (not demo).
         """
         # Check if we're in demo environment
         current_env: str = os.getenv("DATAGOUV_ENV", "prod").strip().lower()

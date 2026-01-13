@@ -21,37 +21,11 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
         max_size_mb: int = 500,
     ) -> str:
         """
-        Download and parse a resource that is not accessible via Tabular API.
+        Download and parse a resource directly (bypasses Tabular API).
 
-        The Tabular API is data.gouv.fr's API for parsing tabular files (CSV, XLSX, etc.)
-        without downloading them. However, it has limitations. This tool downloads and
-        parses resources directly when the Tabular API cannot be used.
-
-        This tool is useful for:
-        - Files larger than Tabular API limits (CSV > 100 MB, XLSX > 12.5 MB) that are
-          not in the exceptions list
-        - Formats not supported by Tabular API (JSON, XML, etc.)
-        - Files with external URLs
-
-        For tabular files, prefer using query_resource_data with the Tabular API as it's
-        faster and more efficient. Use get_resource_info to check if a resource is
-        available via Tabular API before choosing which tool to use.
-
-        Typical workflow:
-        1. Use list_dataset_resources to find resources in a dataset
-        2. Use get_resource_info to check Tabular API availability
-        3. If not available via Tabular API, use download_and_parse_resource
-        4. If available via Tabular API, use query_resource_data instead
-
-        Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX (if openpyxl available)
-
-        Args:
-            resource_id: The ID of the resource to download and parse
-            max_rows: Maximum number of rows to return (default: 1000)
-            max_size_mb: Maximum file size to download in MB (default: 500)
-
-        Returns:
-            Formatted text with the parsed data
+        Use for JSON/JSONL files, or when full dataset analysis is needed.
+        Supports CSV, CSV.GZ, JSON, JSONL.
+        For CSV/XLSX preview or small queries, prefer query_resource_data (faster).
         """
         try:
             # Get full resource data to find URL and metadata
