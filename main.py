@@ -8,6 +8,7 @@ from typing import Awaitable, Callable
 
 import uvicorn
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from tools import register_tools
 
@@ -20,7 +21,19 @@ logging.basicConfig(
 logger = logging.getLogger(LOGGER_NAME)
 logger.setLevel(logging.DEBUG)
 
-mcp = FastMCP("data.gouv.fr MCP server")
+# Configure transport security for DNS rebinding protection (mcp >= 1.23)
+# Allow connections from production domain and localhost for development
+transport_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=True,
+    allowed_hosts=[
+        "mcp.data.gouv.fr",
+        "mcp.preprod.data.gouv.fr",
+        "localhost",
+        "127.0.0.1",
+    ],
+)
+
+mcp = FastMCP("data.gouv.fr MCP server", transport_security=transport_security)
 register_tools(mcp)
 
 
