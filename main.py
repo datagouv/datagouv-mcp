@@ -22,6 +22,7 @@ logger = logging.getLogger(LOGGER_NAME)
 logger.setLevel(logging.DEBUG)
 
 # Configure transport security for DNS rebinding protection (mcp >= 1.23)
+# Per MCP spec: MUST validate Origin header, SHOULD bind to localhost when running locally
 # Allow connections from production domain and localhost for development
 transport_security = TransportSecuritySettings(
     enable_dns_rebinding_protection=True,
@@ -30,6 +31,13 @@ transport_security = TransportSecuritySettings(
         "mcp.preprod.data.gouv.fr",
         "localhost",
         "127.0.0.1",
+    ],
+    # Validate Origin header to prevent DNS rebinding attacks (MCP spec requirement)
+    allowed_origins=[
+        "https://mcp.data.gouv.fr",
+        "https://mcp.preprod.data.gouv.fr",
+        "http://localhost:*",
+        "http://127.0.0.1:*",
     ],
 )
 
@@ -82,4 +90,9 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         sys.exit(1)
-    uvicorn.run(asgi_app, host="0.0.0.0", port=port, log_level="info")
+
+    # Per MCP spec: SHOULD bind to localhost when running locally
+    # Default to 0.0.0.0 for production (no breaking change)
+    # Set MCP_HOST=127.0.0.1 for local development to follow MCP security best practices
+    host = os.getenv("MCP_HOST", "0.0.0.0")
+    uvicorn.run(asgi_app, host=host, port=port, log_level="info")

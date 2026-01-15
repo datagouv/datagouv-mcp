@@ -181,6 +181,7 @@ docker compose down
 ```
 
 **Environment variables:**
+- `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
 - `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
 
@@ -202,6 +203,7 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
 
   Then optionnaly edit `.env` and set the variables that matter for your run:
   ```
+  MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
   DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
   ```

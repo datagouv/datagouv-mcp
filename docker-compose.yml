@@ -7,6 +7,7 @@ services:
     ports:
       - "${MCP_PORT:-8000}:${MCP_PORT:-8000}"
     environment:
+      - MCP_HOST=${MCP_HOST:-0.0.0.0}
       - MCP_PORT=${MCP_PORT:-8000}
       - DATAGOUV_API_ENV=${DATAGOUV_API_ENV:-prod}
     restart: unless-stopped
