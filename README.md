@@ -19,7 +19,7 @@ The MCP server configuration depends on your client. Use the appropriate configu
 
 ### ChatGPT
 
-ChatGPT can connect via “Connectors” (beta, paid plans only: Plus/Pro/Team/Enterprise depending on workspace enablement). Create a custom connector and set the URL to `https://mcp.data.gouv.fr/mcp` (no API key needed, tools are read-only). If the connector option is missing in your account, it has not yet been enabled by OpenAI.
+To connect an internet-hosted MCP server using ChatGPT Web (paid plans only: Plus/Pro/Team/Enterprise), open ChatGPT in your browser, go to Settings, then Apps and connectors, open Advanced settings, and enable Developer mode; next, return to Settings, open Connectors, select Browse connectors, click Add a new connector, and set the URL to `https://mcp.data.gouv.fr/mcp` then save to activate the connector so its tools become available in ChatGPT.
 
 ### Claude Desktop
 
