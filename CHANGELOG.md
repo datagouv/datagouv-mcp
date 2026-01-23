@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.12 (2026-01-23)
+
+- docs: update Cursor .md docs
+- feat: add allowed_origins and MCP_HOST local var to comply with official MCP specs
+- feat: upgrade mcp to 1.25 with DNS rebinding protection config
+- Revise ChatGPT connection instructions in README
+
+
 ## 0.2.11 (2026-01-13)
 
 - docs: streamline tool docstrings for better LLM efficiency
