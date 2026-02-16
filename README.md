@@ -236,7 +236,11 @@ This MCP server uses FastMCP and implements the **Streamable HTTP transport only
 
 ## 🛠️ Available Tools
 
-The MCP server provides tools to interact with data.gouv.fr datasets:
+The MCP server provides tools to interact with data.gouv.fr datasets and dataservices.
+
+**Note:** "Dataservices" are external third-party APIs (e.g., Adresse API, Sirene API) registered in the data.gouv.fr catalog. They are distinct from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) which power this MCP server.
+
+### Datasets (static data files)
 
 - **`search_datasets`** - Search for datasets by keywords. Returns datasets with metadata (title, description, organization, tags, resource count).
 
@@ -265,6 +269,24 @@ The MCP server provides tools to interact with data.gouv.fr datasets:
   Parameters: `resource_id` (required), `max_rows` (optional, default: 20), `max_size_mb` (optional, default: 500)
 
   Supported formats: CSV, CSV.GZ, JSON, JSONL. Useful for files exceeding Tabular API limits or formats not supported by Tabular API. Start with default max_rows (20) to preview, then call again with higher max_rows if you need all data.
+
+### Dataservices (external APIs)
+
+- **`search_dataservices`** - Search for dataservices (APIs) registered on data.gouv.fr by keywords. Returns dataservices with metadata (title, description, organization, base API URL, tags).
+
+  Parameters: `query` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
+
+- **`get_dataservice_info`** - Get detailed metadata about a specific dataservice (title, description, organization, base API URL, OpenAPI spec URL, license, dates, related datasets).
+
+  Parameters: `dataservice_id` (required)
+
+- **`get_dataservice_openapi_spec`** - Fetch and summarize the OpenAPI/Swagger specification for a dataservice. Returns a concise overview of available endpoints with their parameters.
+
+  Parameters: `dataservice_id` (required)
+
+  Note: Recommended workflow: 1) Use `search_dataservices` to find the API, 2) Use `get_dataservice_info` to get its metadata and documentation URL, 3) Use `get_dataservice_openapi_spec` to understand available endpoints and parameters, 4) Call the API using the `base_api_url` per the spec.
+
+### Metrics
 
 - **`get_metrics`** - Get metrics (visits, downloads) for a dataset and/or a resource.
 

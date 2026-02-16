@@ -151,3 +151,72 @@ class TestAsyncFunctions:
         assert details.get("id") == known_dataset_id
         assert details.get("title") or details.get("name")
         assert isinstance(details.get("resources", []), list)
+
+    async def test_search_dataservices_basic(self):
+        """Test basic dataservice search."""
+        result = await datagouv_api_client.search_dataservices(
+            "adresse", page=1, page_size=5
+        )
+
+        assert "data" in result
+        assert "page" in result
+        assert "page_size" in result
+        assert "total" in result
+        assert result["page"] == 1
+        assert isinstance(result["data"], list)
+
+    async def test_search_dataservices_structure(self):
+        """Test that dataservice search results have correct structure."""
+        result = await datagouv_api_client.search_dataservices("adresse", page_size=2)
+
+        if result["data"]:
+            ds = result["data"][0]
+            assert "id" in ds
+            assert "title" in ds
+            assert "url" in ds
+            assert "tags" in ds
+            assert isinstance(ds["tags"], list)
+            # Dataservice-specific fields
+            assert "base_api_url" in ds
+            assert "machine_documentation_url" in ds
+
+    async def test_search_dataservices_empty_query(self):
+        """Test dataservice search with empty query."""
+        result = await datagouv_api_client.search_dataservices("", page_size=1)
+        assert "data" in result
+        assert isinstance(result["data"], list)
+
+    async def test_get_dataservice_details(self):
+        """Test fetching full dataservice details payload."""
+        # API Adresse (BAN) — known to have base_api_url and machine_documentation_url
+        dataservice_id = "672cf67802ef6b1be63b8975"
+        details = await datagouv_api_client.get_dataservice_details(dataservice_id)
+
+        assert details.get("id") == dataservice_id
+        assert details.get("title")
+        assert details.get("base_api_url")
+        assert details.get("machine_documentation_url")
+
+    async def test_get_dataservice_details_invalid_id(self):
+        """Test that invalid dataservice ID raises error."""
+        invalid_id = "000000000000000000000000"
+        with pytest.raises(Exception):
+            await datagouv_api_client.get_dataservice_details(invalid_id)
+
+    async def test_fetch_openapi_spec_yaml(self):
+        """Test fetching an OpenAPI spec in YAML format."""
+        # API Adresse (BAN) — YAML spec
+        url = "https://data.geopf.fr/geocodage/openapi.yaml"
+        spec = await datagouv_api_client.fetch_openapi_spec(url)
+
+        assert isinstance(spec, dict)
+        # Should have standard OpenAPI fields
+        assert "info" in spec or "swagger" in spec or "openapi" in spec
+        assert "paths" in spec
+
+    async def test_fetch_openapi_spec_invalid_url(self):
+        """Test that fetching from an invalid URL raises error."""
+        with pytest.raises(Exception):
+            await datagouv_api_client.fetch_openapi_spec(
+                "https://example.com/nonexistent-spec.json"
+            )
