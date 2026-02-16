@@ -236,7 +236,9 @@ This MCP server uses FastMCP and implements the **Streamable HTTP transport only
 
 ## 🛠️ Available Tools
 
-The MCP server provides tools to interact with data.gouv.fr datasets and dataservices:
+The MCP server provides tools to interact with data.gouv.fr datasets and dataservices.
+
+**Note:** "Dataservices" are external third-party APIs (e.g., Adresse API, Sirene API) registered in the data.gouv.fr catalog. They are distinct from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) which power this MCP server.
 
 ### Datasets (static data files)
 

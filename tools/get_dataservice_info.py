@@ -10,7 +10,7 @@ def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def get_dataservice_info(dataservice_id: str) -> str:
         """
-        Get detailed metadata about a specific dataservice (API).
+        Get detailed metadata about a specific dataservice (external third-party API).
 
         Returns title, description, organization, base_api_url,
         machine_documentation_url (OpenAPI/Swagger spec), license, and dates.

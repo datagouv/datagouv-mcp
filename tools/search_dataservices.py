@@ -14,10 +14,10 @@ def register_search_dataservices_tool(mcp: FastMCP) -> None:
         query: str, page: int = 1, page_size: int = 20
     ) -> str:
         """
-        Search for dataservices (APIs) on data.gouv.fr by keywords.
+        Search for dataservices (external third-party APIs) on data.gouv.fr by keywords.
 
-        Dataservices are external APIs registered on data.gouv.fr that provide
-        programmatic access to data (unlike datasets which are static files).
+        Dataservices are third-party APIs registered in the data.gouv.fr catalog
+        that provide programmatic access to data (unlike datasets which are static files).
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
 

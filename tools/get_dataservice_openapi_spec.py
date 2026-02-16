@@ -87,7 +87,7 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def get_dataservice_openapi_spec(dataservice_id: str) -> str:
         """
-        Fetch and summarize the OpenAPI/Swagger spec for a dataservice.
+        Fetch and summarize the OpenAPI/Swagger spec for a dataservice (external third-party API).
 
         Retrieves the machine_documentation_url from the dataservice metadata,
         fetches the spec, and returns a summary of available endpoints with
