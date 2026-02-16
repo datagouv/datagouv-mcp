@@ -1,6 +1,7 @@
 import logging
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client
 from tools.search_datasets import clean_search_query
@@ -9,7 +10,7 @@ logger = logging.getLogger("datagouv_mcp")
 
 
 def register_search_dataservices_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def search_dataservices(
         query: str, page: int = 1, page_size: int = 20
     ) -> str:

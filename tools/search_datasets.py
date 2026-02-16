@@ -1,6 +1,7 @@
 import logging
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client
 
@@ -57,7 +58,7 @@ def clean_search_query(query: str) -> str:
 
 
 def register_search_datasets_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def search_datasets(query: str, page: int = 1, page_size: int = 20) -> str:
         """
         Search for datasets on data.gouv.fr by keywords.

@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client
 
@@ -14,7 +15,7 @@ logger = logging.getLogger("datagouv_mcp")
 
 
 def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def download_and_parse_resource(
         resource_id: str,
         max_rows: int = 20,

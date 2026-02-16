@@ -21,6 +21,24 @@ async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
         raise
 
 
+async def _post_json(
+    client: httpx.AsyncClient,
+    url: str,
+    payload: dict[str, Any],
+    api_key: str,
+) -> dict[str, Any]:
+    """POST JSON payload to the data.gouv.fr API with authentication."""
+    headers = {"X-API-KEY": api_key}
+    logger.debug("datagouv API POST %s", url)
+    try:
+        resp = await client.post(url, json=payload, headers=headers, timeout=15.0)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPError as exc:
+        logger.error("datagouv API POST failed for %s: %s", url, exc)
+        raise
+
+
 async def get_resource_details(
     resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
@@ -344,6 +362,74 @@ async def search_datasets(
             "page_size": len(results),
             "total": data.get("total", len(results)),
         }
+    finally:
+        if own:
+            await session.aclose()
+
+
+async def create_dataset(
+    title: str,
+    description: str,
+    api_key: str,
+    frequency: str = "unknown",
+    organization: str | None = None,
+    license_id: str = "fr-lo",
+    tags: list[str] | None = None,
+    private: bool = True,
+    session: httpx.AsyncClient | None = None,
+) -> dict[str, Any]:
+    """
+    Create a new dataset on data.gouv.fr.
+
+    Requires an API key with write permissions.
+
+    Args:
+        title: Dataset title (required).
+        description: Dataset description in markdown (required).
+        api_key: data.gouv.fr API key for authentication (required).
+        frequency: Update frequency. One of: unknown, punctual, continuous,
+            hourly, fourTimesADay, threeTimesADay, semidaily, daily,
+            fourTimesAWeek, threeTimesAWeek, semiweekly, weekly, biweekly,
+            threeTimesAMonth, semimonthly, monthly, bimonthly, quarterly,
+            threeTimesAYear, semiannual, annual, biennial, triennial,
+            quinquennial, irregular. Defaults to "unknown".
+        organization: Organization ID to publish under (optional).
+            If omitted, the dataset is published under the user's personal account.
+        license_id: License identifier. Defaults to "fr-lo" (Licence Ouverte / Open Licence).
+        tags: List of tags (optional).
+        private: If True (default), the dataset is created as a draft,
+            invisible to the public.
+        session: Optional httpx.AsyncClient for connection reuse.
+
+    Returns:
+        The full API response as a dict (contains id, slug, page URL, etc.).
+
+    Raises:
+        httpx.HTTPError: If the API request fails.
+    """
+    own = session is None
+    if own:
+        session = httpx.AsyncClient()
+    assert session is not None
+    try:
+        base_url: str = env_config.get_base_url("datagouv_api")
+        url = f"{base_url}1/datasets/"
+
+        payload: dict[str, Any] = {
+            "title": title,
+            "description": description,
+            "frequency": frequency,
+            "license": license_id,
+            "private": private,
+        }
+
+        if organization:
+            payload["organization"] = organization
+
+        if tags:
+            payload["tags"] = tags
+
+        return await _post_json(session, url, payload, api_key)
     finally:
         if own:
             await session.aclose()
