@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/datagouv/datagouv-mcp.svg?style=svg)](https://circleci.com/gh/datagouv/datagouv-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Model Context Protocol (MCP) server that allows AI chatbots (Claude, Gemini, Cursor, etc.) to search, explore, and analyze datasets from [data.gouv.fr](https://www.data.gouv.fr), the French national Open Data platform, directly through conversation.
+Model Context Protocol (MCP) server that allows AI chatbots (Claude, Gemini, Cursor, etc.) to search, explore, analyze and publish datasets from [data.gouv.fr](https://www.data.gouv.fr), the French national Open Data platform, directly through conversation.
 
 Instead of manually browsing the website, you can simply ask questions like "Quels jeux de données sont disponibles sur les prix de l'immobilier ?" or "Montre-moi les dernières données de population pour Paris" and get instant answers.
 
@@ -152,7 +152,7 @@ Add the following to your `~/.codeium/mcp_config.json`:
 
 **Note:**
 - The hosted endpoint is `https://mcp.data.gouv.fr/mcp`. If you run the server yourself, replace it with your own URL (see “Run locally” below for the default local endpoint).
-- This MCP server only exposes read-only tools for now, so no API key is required.
+- Read-only tools (search, explore, analyze) work without authentication. To use write tools (publishing datasets), you need to set a `DATAGOUV_API_KEY` environment variable (see [Publishing data](#-publishing-data) below).
 
 ## 🖥️ Run locally
 
@@ -184,6 +184,7 @@ docker compose down
 - `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
 - `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
+- `DATAGOUV_API_KEY`: API key for write operations (optional). Only required if you want to use publishing tools (e.g. `create_dataset`). See [Publishing data](#-publishing-data) for details.
 
 #### ⚙️ Manual Installation
 
@@ -206,6 +207,7 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
   DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
+  # DATAGOUV_API_KEY=  # Only needed for write operations (publishing)
   ```
 
   Load the variables with your preferred method, e.g.:
@@ -286,6 +288,14 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Note: Recommended workflow: 1) Use `search_dataservices` to find the API, 2) Use `get_dataservice_info` to get its metadata and documentation URL, 3) Use `get_dataservice_openapi_spec` to understand available endpoints and parameters, 4) Call the API using the `base_api_url` per the spec.
 
+### Publishing (write operations)
+
+- **`create_dataset`** - Create a new dataset on data.gouv.fr. Requires a `DATAGOUV_API_KEY` environment variable.
+
+  Parameters: `title` (required), `description` (required), `frequency` (optional, default: `"unknown"`), `organization` (optional), `license` (optional, default: `"fr-lo"`), `tags` (optional), `private` (optional, default: `true`)
+
+  Note: Datasets are created as **private drafts** by default. See [Publishing data](#-publishing-data) for the full workflow.
+
 ### Metrics
 
 - **`get_metrics`** - Get metrics (visits, downloads) for a dataset and/or a resource.
@@ -293,6 +303,28 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
   Parameters: `dataset_id` (optional), `resource_id` (optional), `limit` (optional, default: 12, max: 100)
 
   Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_ENV=prod`). The Metrics API does not have a demo/preprod environment.
+
+## 📤 Publishing data
+
+The MCP server supports publishing datasets to data.gouv.fr through the `create_dataset` tool. This requires authentication via an API key.
+
+**Publishing tools currently require running the server locally** (or self-hosting), since the API key is read from the server's environment. The hosted endpoint at `mcp.data.gouv.fr` does not support publishing yet.
+
+### Setup
+
+1. Log in to your [data.gouv.fr account](https://www.data.gouv.fr)
+2. Go to your profile settings: https://www.data.gouv.fr/fr/admin/me
+3. Copy your API key
+4. Set it as an environment variable: `DATAGOUV_API_KEY=your-key-here`
+
+### Workflow
+
+1. **Create a dataset** (as a private draft) using `create_dataset` with a title, description, and metadata
+2. **Add resources** (files or URLs) to the dataset *(coming soon)*
+3. **Review** the dataset on data.gouv.fr via the returned URL
+4. **Publish** by updating the dataset to set `private=false` *(coming soon)*
+
+Datasets are created as private drafts by default — they are not visible publicly until you explicitly publish them.
 
 ## 🧪 Tests
 
