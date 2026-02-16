@@ -3,6 +3,7 @@ from typing import Any
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client
 
@@ -84,7 +85,7 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
 
 
 def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def get_dataservice_openapi_spec(dataservice_id: str) -> str:
         """
         Fetch and summarize the OpenAPI/Swagger spec for a dataservice (external third-party API).

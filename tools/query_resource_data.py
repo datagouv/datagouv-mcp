@@ -2,6 +2,7 @@ import logging
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client, tabular_api_client
 
@@ -9,7 +10,7 @@ logger = logging.getLogger("datagouv_mcp")
 
 
 def register_query_resource_data_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def query_resource_data(
         question: str,
         resource_id: str,

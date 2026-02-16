@@ -2,6 +2,7 @@ import logging
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from helpers import datagouv_api_client
 
@@ -9,7 +10,7 @@ logger = logging.getLogger("datagouv_mcp")
 
 
 def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     async def list_dataset_resources(dataset_id: str) -> str:
         """
         List all resources (files) in a dataset with their metadata.
