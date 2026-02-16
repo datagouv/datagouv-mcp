@@ -44,3 +44,14 @@ def get_base_url(api_name: str) -> str:
             f"Valid values are: {', '.join(config.keys())}"
         )
     return config[api_name]
+
+
+def get_api_key() -> str | None:
+    """
+    Return the data.gouv.fr API key from the DATAGOUV_API_KEY environment variable.
+
+    Returns None if the variable is unset or empty.
+    The key is required for write operations (POST/PUT/PATCH/DELETE).
+    It can be obtained from the user's profile settings on data.gouv.fr.
+    """
+    return os.getenv("DATAGOUV_API_KEY", "").strip() or None
