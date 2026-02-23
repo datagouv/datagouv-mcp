@@ -334,6 +334,14 @@ Steps:
 
 ## 🤝 Contributing
 
+We welcome contributions! To keep the project stable, we use a standard review-and-deploy process:
+
+1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
+2. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
+3. **Automated Deployment:** Once merged into `main`, changes are automatically deployed to:
+   * **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
+   * **Production** (the official endpoint)
+
 ### 🧹 Code Linting and Formatting
 
 This project follows PEP 8 style guidelines using [Ruff](https://astral.sh/ruff/) for linting and formatting.
