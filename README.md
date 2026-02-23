@@ -3,13 +3,13 @@
 [![CircleCI](https://circleci.com/gh/datagouv/datagouv-mcp.svg?style=svg)](https://circleci.com/gh/datagouv/datagouv-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Model Context Protocol (MCP) server that allows AI chatbots to search, explore, and analyze datasets from [data.gouv.fr](https://www.data.gouv.fr), the French national Open Data platform, directly through conversation.
+Model Context Protocol (MCP) server that allows AI chatbots (Claude, Gemini, Cursor, etc.) to search, explore, and analyze datasets from [data.gouv.fr](https://www.data.gouv.fr), the French national Open Data platform, directly through conversation.
 
-## 🤔 What is this?
+Instead of manually browsing the website, you can simply ask questions like "Quels jeux de données sont disponibles sur les prix de l'immobilier ?" or "Montre-moi les dernières données de population pour Paris" and get instant answers.
 
-The data.gouv.fr MCP server is a tool that allows AI chatbots (like Claude, Gemini, or Cursor) to interact with datasets from [data.gouv.fr](https://www.data.gouv.fr). Instead of manually browsing the website, you can simply ask questions like "Quels jeux de données sont disponibles sur les prix de l'immobilier ?" or "Montre-moi les dernières données de population pour Paris" and get instant answers. A hosted endpoint is available at `https://mcp.data.gouv.fr/mcp`, and you can also run the server locally if you prefer.
-
-The server is built using the [official Python SDK for MCP servers and clients](https://github.com/modelcontextprotocol/python-sdk) and uses the Streamable HTTP transport protocol.
+> [!TIP]
+> Use it now: A public instance is available for everyone at https://mcp.data.gouv.fr/mcp with no access restrictions.
+> To connect your favorite chatbot, simply follow [the connection instructions below](#-connect-your-chatbot-to-the-mcp-server).
 
 ## 🌐 Connect your chatbot to the MCP server
 
@@ -224,7 +224,7 @@ Follow the steps in [Connect your chatbot to the MCP server](#-connect-your-chat
 
 ## 🚚 Transport support
 
-This MCP server uses FastMCP and implements the **Streamable HTTP transport only**.
+The MCP server is built using the [official Python SDK for MCP servers and clients](https://github.com/modelcontextprotocol/python-sdk) and uses the **Streamable HTTP transport only**.
 
 **STDIO and SSE are not supported**.
 
