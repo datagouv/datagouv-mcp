@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.16 (2026-02-23)
+
+- chore: update dependency for security
+- docs: improve README for contributing section
+- feat: add type checking
+
+
 ## 0.2.15 (2026-02-23)
 
 - docs: add disambiguation about dataservices
