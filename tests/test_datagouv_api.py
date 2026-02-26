@@ -244,3 +244,17 @@ class TestAsyncFunctions:
             await datagouv_api_client.fetch_openapi_spec(
                 "https://example.com/nonexistent-spec.json"
             )
+
+    async def test_search_datasets_sort_passed_through(self):
+        """Test that sort param is accepted and passed through without error."""
+        result = await datagouv_api_client.search_datasets(
+            query="IRVE", sort="-created", page_size=2
+        )
+        assert "data" in result
+
+    async def test_search_datasets_sort_none(self):
+        """Test that omitting sort returns results normally."""
+        result = await datagouv_api_client.search_datasets(
+            query="population", page_size=2
+        )
+        assert "data" in result
