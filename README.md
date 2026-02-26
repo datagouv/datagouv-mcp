@@ -148,7 +148,7 @@ Both files use JSON format with an mcpServers object containing named server con
   "mcpServers": {
     "datagouv": {
       "url": "https://mcp.data.gouv.fr/mcp",
-      "type": "http"
+      "type": "streamable-http"
     }
   }
 }
