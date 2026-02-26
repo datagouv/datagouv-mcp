@@ -21,7 +21,7 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     # Extract user-agent for better Matomo analytics
     user_agent: str = headers.get("user-agent", "")
 
-    params: dict = {
+    payload: dict = {
         "idsite": MATOMO_SITE_ID,
         "rec": 1,
         "url": url,
@@ -34,7 +34,7 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     try:
         # Using a context manager for the client; timeout is short to prevent hanging
         async with httpx.AsyncClient() as client:
-            await client.get(f"{MATOMO_URL}/matomo.php", params=params, timeout=1.0)
+            await client.post(f"{MATOMO_URL}/matomo.php", data=payload, timeout=1.5)
     except Exception as e:
         # Fail silently to ensure the MCP server remains operational
         logging.getLogger("datagouv_mcp").error(f"Matomo tracking failed: {e}")
