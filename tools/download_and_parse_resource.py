@@ -3,6 +3,7 @@ import gzip
 import io
 import json
 import logging
+import zipfile
 from typing import Any
 
 import httpx
@@ -24,7 +25,7 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
         Download and parse a resource directly (bypasses Tabular API).
 
         Use for JSON/JSONL files, or when full dataset analysis is needed.
-        Supports CSV, CSV.GZ, JSON, JSONL.
+        Supports CSV, CSV.GZ, JSON, JSONL, ZIP (containing CSV/JSON files).
 
         Strategy: Start with default max_rows (20) to preview structure and size.
         If you need all data, call again with a higher max_rows value.
@@ -76,7 +77,7 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
                     f"Content-Type: {content_type}"
                 )
                 content_parts.append(
-                    "Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX"
+                    "Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX, ZIP"
                 )
                 return "\n".join(content_parts)
 
@@ -105,6 +106,10 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
                         "Please use Tabular API or convert to XLSX/CSV."
                     )
                     return "\n".join(content_parts)
+                elif file_format == "zip":
+                    content_parts.append("Format: ZIP")
+                    rows, inner_filename = _parse_zip(content)
+                    content_parts.append(f"Extracted file: {inner_filename}")
                 elif file_format == "xml":
                     content_parts.append("Format: XML")
                     content_parts.append("⚠️  XML parsing not yet implemented.")
@@ -314,3 +319,40 @@ def _parse_json(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]
             except json.JSONDecodeError:
                 continue
     return result
+
+
+_PARSEABLE_EXTENSIONS = (".csv", ".json", ".jsonl", ".ndjson")
+
+
+def _parse_zip(content: bytes) -> tuple[list[dict[str, Any]], str]:
+    """Extract and parse the first supported file from a ZIP archive.
+
+    Looks for CSV, JSON, or JSONL files inside the archive.
+    Returns parsed rows and the name of the extracted file.
+    """
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        # Find the first parseable file, sorted by name for determinism
+        candidates = [
+            name
+            for name in sorted(zf.namelist())
+            if not name.startswith("__MACOSX")
+            and not name.endswith("/")
+            and any(name.lower().endswith(ext) for ext in _PARSEABLE_EXTENSIONS)
+        ]
+
+        if not candidates:
+            all_files = [n for n in zf.namelist() if not n.endswith("/")]
+            raise ValueError(
+                f"ZIP contains no supported file. "
+                f"Files found: {', '.join(all_files) or '(empty archive)'}. "
+                f"Supported extensions: {', '.join(_PARSEABLE_EXTENSIONS)}"
+            )
+
+        target = candidates[0]
+        inner_content = zf.read(target)
+
+    target_lower = target.lower()
+    if target_lower.endswith(".csv"):
+        return _parse_csv(inner_content), target
+    else:
+        return _parse_json(inner_content), target
