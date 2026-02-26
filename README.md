@@ -60,7 +60,6 @@ Add the following to your `~/.gemini/settings.json` file:
 {
   "mcpServers": {
     "datagouv": {
-      "transport": "http",
       "httpUrl": "https://mcp.data.gouv.fr/mcp"
     }
   }
