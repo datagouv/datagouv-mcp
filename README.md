@@ -20,7 +20,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Le Chat (Mistral)](#le-chat-mistral) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
 ### AnythingLLM
 
 1. Locate the `anythingllm_mcp_servers.json` file in your AnythingLLM storage plugins directory:
@@ -110,6 +110,15 @@ Add the following to your `~/.gemini/settings.json` file:
   }
 }
 ```
+
+### Le Chat (Mistral)
+
+*Available on all plans, including free.*
+
+1. **Go to Connectors**: Open Mistral in your browser, then go to `Intelligence` > `Connectors`.
+2. **Add a custom connector**: Click `Add connector` > `Custom MCP Connector`, give it a name (for example `DataGouv`), and set the server URL to `https://mcp.data.gouv.fr/mcp`.
+3. **No authentication**: Leave authentication disabled.
+4. **Create**: Click **Create**.
 
 ### Mistral Vibe CLI
 
