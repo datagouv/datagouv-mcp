@@ -129,7 +129,7 @@ Cursor supports MCP servers through its settings. To configure the server:
   "mcpServers": {
     "datagouv": {
       "url": "https://mcp.data.gouv.fr/mcp",
-      "transport": "http"
+      "transport": "https"
     }
   }
 }
