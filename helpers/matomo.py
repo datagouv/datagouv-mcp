@@ -7,7 +7,7 @@ import httpx
 # Configure Matomo
 MATOMO_URL = "https://stats.data.gouv.fr"
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
-MATOMO_AUTH = os.getenv("MATOMO_AUTH")
+MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH")
 
 
 async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
@@ -26,7 +26,7 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
         "rec": 1,
         "url": url,
         "action_name": f"MCP Request: {path}",
-        "token_auth": MATOMO_AUTH,
+        "token_auth": MATOMO_AUTH_TOKEN,
         "ua": user_agent,
         "rand": datetime.now(UTC).timestamp(),
     }
