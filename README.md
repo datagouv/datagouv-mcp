@@ -1,5 +1,8 @@
 # data.gouv.fr MCP Server
 
+<img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/5d20e992-349a-4b3b-9a0a-ebe308735cc9" />
+
+
 [![CircleCI](https://circleci.com/gh/datagouv/datagouv-mcp.svg?style=svg)](https://circleci.com/gh/datagouv/datagouv-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
