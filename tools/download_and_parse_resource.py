@@ -256,7 +256,11 @@ def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]
     if is_gzipped:
         content = gzip.decompress(content)
 
-    text = content.decode("utf-8-sig")  # Handle BOM
+    try:
+        text = content.decode("utf-8-sig")  # Handle BOM
+    except UnicodeDecodeError:
+        # Fallback to Latin-1 for French CSV files
+        text = content.decode("iso-8859-1")
 
     # Detect delimiter automatically
     # Try to sniff the delimiter from the first few lines
@@ -291,7 +295,10 @@ def _parse_json(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]
     if is_gzipped:
         content = gzip.decompress(content)
 
-    text = content.decode("utf-8")
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = content.decode("iso-8859-1")
 
     # Try JSON array first
     try:
