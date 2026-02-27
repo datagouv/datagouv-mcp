@@ -77,6 +77,25 @@ def with_monitoring(
                 await send({"type": "http.response.body", "body": body})
                 return
 
+            # OAuth 2.0 discovery endpoint (for Claude Code HTTP transport)
+            if path == "/.well-known/oauth-authorization-server":
+                # Return a valid OAuth 2.0 response indicating no auth required
+                oauth_response = {
+                    "authorization_endpoint": "urn:ietf:wg:oauth:2.0:oob",
+                    "token_endpoint": "urn:ietf:wg:oauth:2.0:oob",
+                    "response_types_supported": ["token"],
+                    "grant_types_supported": ["client_credentials"],
+                    "token_endpoint_auth_methods_supported": ["none"]
+                }
+                body = json.dumps(oauth_response).encode("utf-8")
+                oauth_headers = [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("utf-8")),
+                ]
+                await send({"type": "http.response.start", "status": 200, "headers": oauth_headers})
+                await send({"type": "http.response.body", "body": body})
+                return
+
             # Matomo Tracking for /mcp requests
             # Convert ASGI headers list to a dictionary for the helper
             headers_dict: dict[str, str] = {
