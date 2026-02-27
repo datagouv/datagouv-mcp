@@ -229,7 +229,7 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   cp .env.example .env
   ```
 
-  Then optionnaly edit `.env` and set the variables that matter for your run:
+  Then optionally edit `.env` and set the variables that matter for your run:
   ```
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
