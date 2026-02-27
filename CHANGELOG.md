@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.17 (2026-02-26)
+
+- docs: reformat ChatGPT section
+- docs: update README
+- feat: add matomo tracking
+- fix: fix matomo tracking
+
+
 ## 0.2.16 (2026-02-23)
 
 - chore: update dependency for security

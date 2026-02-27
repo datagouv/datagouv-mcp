@@ -10,6 +10,8 @@ services:
       - MCP_HOST=${MCP_HOST:-0.0.0.0}
       - MCP_PORT=${MCP_PORT:-8000}
       - DATAGOUV_ENV=${DATAGOUV_ENV:-prod}
+      - MATOMO_SITE_ID=${MATOMO_SITE_ID}
+      - MATOMO_AUTH=${MATOMO_AUTH}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import os, urllib.request; port = os.getenv('MCP_PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/health')"]

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -10,6 +11,7 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from helpers.matomo import track_matomo
 from tools import register_tools
 
 # Configure logging
@@ -51,38 +53,60 @@ mcp = FastMCP("data.gouv.fr MCP server", transport_security=transport_security)
 register_tools(mcp)
 
 
-def with_health_endpoint(
+def with_monitoring(
     inner_app: Callable[[dict, Callable, Callable], Awaitable[None]],
 ):
     async def app(scope, receive, send):
-        if scope["type"] == "http" and scope.get("path") == "/health":
-            timestamp = datetime.now(timezone.utc).isoformat()
+        # We only track HTTP requests (The /mcp endpoint and others)
+        if scope["type"] == "http":
+            path: str = scope.get("path", "")
 
-            # Get version from package metadata (managed by setuptools-scm)
-            try:
-                app_version = version("datagouv-mcp")
-            except PackageNotFoundError:
-                app_version = "unknown"
+            # Handle /health endpoint (no tracking)
+            if path == "/health":
+                timestamp = datetime.now(timezone.utc).isoformat()
+                # Get version from package metadata (managed by setuptools-scm)
+                try:
+                    app_version = version("datagouv-mcp")
+                except PackageNotFoundError:
+                    app_version = "unknown"
 
-            body = json.dumps(
-                {"status": "ok", "timestamp": timestamp, "version": app_version}
-            ).encode("utf-8")
-            headers = [
-                (b"content-type", b"application/json"),
-                (b"content-length", str(len(body)).encode("utf-8")),
-            ]
-            await send(
-                {"type": "http.response.start", "status": 200, "headers": headers}
+                body = json.dumps(
+                    {"status": "ok", "timestamp": timestamp, "version": app_version}
+                ).encode("utf-8")
+                headers = [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("utf-8")),
+                ]
+                await send(
+                    {"type": "http.response.start", "status": 200, "headers": headers}
+                )
+                await send({"type": "http.response.body", "body": body})
+                return
+
+            # Matomo Tracking for /mcp requests
+            # Convert ASGI headers list to a dictionary for the helper
+            headers_dict: dict[str, str] = {
+                k.decode("utf-8"): v.decode("utf-8")
+                for k, v in scope.get("headers", [])
+            }
+
+            # Construct the full URL
+            host: str = headers_dict.get("host", "localhost")
+            full_url: str = f"https://{host}{path}"
+
+            # Fire the tracking task in the background
+            # Since path is always /mcp, the helper will log "MCP Request: /mcp"
+            asyncio.create_task(
+                track_matomo(url=full_url, path=path, headers=headers_dict)
             )
-            await send({"type": "http.response.body", "body": body})
-            return
 
+        # Continue the MCP server logic
         await inner_app(scope, receive, send)
 
     return app
 
 
-asgi_app = with_health_endpoint(mcp.streamable_http_app())
+asgi_app = with_monitoring(mcp.streamable_http_app())
 
 
 # Run with streamable HTTP transport

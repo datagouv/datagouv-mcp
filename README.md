@@ -60,7 +60,6 @@ Add the following to your `~/.gemini/settings.json` file:
 {
   "mcpServers": {
     "datagouv": {
-      "transport": "http",
       "httpUrl": "https://mcp.data.gouv.fr/mcp"
     }
   }
@@ -131,6 +130,29 @@ Cursor supports MCP servers through its settings. To configure the server:
     "datagouv": {
       "url": "https://mcp.data.gouv.fr/mcp",
       "transport": "http"
+    }
+  }
+}
+```
+
+### IBM Bob
+
+IBM Bob supports MCP servers through its settings. To configure the server:
+
+1. Click the setting icon in the Bob panel.
+2. Select the MCP tab.
+3. Click the appropriate button:
+  - Edit Global MCP: Opens the global `mcp_settings.json` file
+  - Edit Project MCP: Opens the project-specific `.bob/mcp.json` file (Bob creates it if it does not exist)
+
+Both files use JSON format with an mcpServers object containing named server configurations.
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "type": "streamable-http"
     }
   }
 }
