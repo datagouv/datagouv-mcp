@@ -361,13 +361,17 @@ Steps:
 
 ## 🤝 Contributing
 
-We welcome contributions! To keep the project stable, we use a standard review-and-deploy process:
+We welcome contributions! To keep the project stable and reviews manageable, please observe these rules before submitting:
+- **Keep it small:** We strictly follow a **1 feature = 1 PR** workflow.
+- **Human review required:** Do not submit raw AI-generated code. All code must be reviewed and tested by a human prior to submission.
+
+We use a standard review-and-deploy process:
 
 1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
 2. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
-3. **Automated Deployment:** Once merged into `main`, changes are automatically deployed to:
-   * **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
-   * **Production** (the official endpoint)
+3. **Automated Deployment:** Once merged into `main`, changes will be deployed to:
+   1. **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
+   2. **[Production](https://mcp.data.gouv.fr/**
 
 ### 🧹 Code Linting and Formatting
 
