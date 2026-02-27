@@ -4,6 +4,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, tabular_api_client
+from helpers.formatting import truncate_text
 
 logger = logging.getLogger("datagouv_mcp")
 
@@ -31,6 +32,28 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         may be more efficient than paginating through many pages.
         """
         try:
+            filter_operator = filter_operator.lower()
+            sort_direction = sort_direction.lower()
+
+            operator_map = {
+                "exact": "exact",
+                "contains": "contains",
+                "less": "less",
+                "greater": "greater",
+                "strictly_less": "strictly_less",
+                "strictly_greater": "strictly_greater",
+            }
+            if filter_column and filter_value is not None:
+                if filter_operator not in operator_map:
+                    supported = ", ".join(sorted(operator_map.keys()))
+                    return (
+                        "Error: invalid filter_operator. "
+                        f"Supported values: {supported}."
+                    )
+
+            if sort_column and sort_direction not in {"asc", "desc"}:
+                return "Error: invalid sort_direction. Supported values: asc, desc."
+
             # Get resource metadata to display context
             try:
                 resource_metadata = await datagouv_api_client.get_resource_metadata(
@@ -84,23 +107,13 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
 
             # Add filter if provided
             if filter_column and filter_value is not None:
-                # Map simple operator names to Tabular API operators
-                operator_map = {
-                    "exact": "exact",
-                    "contains": "contains",
-                    "less": "less",
-                    "greater": "greater",
-                    "strictly_less": "strictly_less",
-                    "strictly_greater": "strictly_greater",
-                }
-                operator = operator_map.get(filter_operator, "exact")
+                operator = operator_map[filter_operator]
                 param_key = f"{filter_column}__{operator}"
                 api_params[param_key] = filter_value
 
             # Add sort if provided
             if sort_column:
-                sort_dir = "desc" if sort_direction.lower() == "desc" else "asc"
-                api_params[f"{sort_column}__sort"] = sort_dir
+                api_params[f"{sort_column}__sort"] = sort_direction
 
             logger.info(
                 f"Querying Tabular API for resource: {resource_title} "
@@ -156,8 +169,7 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
                     content_parts.append(f"  Row {i}:")
                     for key, value in row.items():
                         val_str = str(value) if value is not None else ""
-                        if len(val_str) > 100:
-                            val_str = val_str[:100] + "..."
+                        val_str = truncate_text(val_str, 100)
                         content_parts.append(f"    {key}: {val_str}")
 
                 links = tabular_data.get("links", {})

@@ -4,6 +4,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, env_config
+from helpers.formatting import truncate_text
 
 
 def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
@@ -34,8 +35,8 @@ def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
 
             if data.get("description"):
                 content_parts.append("")
-                desc = data.get("description", "")[:500]
-                content_parts.append(f"Description: {desc}...")
+                desc = str(data.get("description", ""))
+                content_parts.append(f"Description: {truncate_text(desc, 500)}")
 
             # Key dataservice fields
             content_parts.append("")

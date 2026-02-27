@@ -4,6 +4,8 @@ import pytest
 
 from helpers import crawler_api_client
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture(autouse=True)
 def clear_cache() -> None:

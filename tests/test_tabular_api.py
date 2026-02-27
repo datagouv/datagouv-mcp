@@ -6,6 +6,8 @@ import pytest
 
 from helpers import tabular_api_client
 
+pytestmark = pytest.mark.integration
+
 # Default test resource ID (known to work with demo environment)
 DEFAULT_TEST_RESOURCE_ID = "3b6b2281-b9d9-4959-ae9d-c2c166dff118"
 

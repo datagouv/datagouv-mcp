@@ -21,6 +21,21 @@ async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
         raise
 
 
+def _extract_tags(raw_tags: list[Any]) -> list[str]:
+    """Normalize tags to a list of non-empty strings."""
+    tags: list[str] = []
+    for tag in raw_tags:
+        if isinstance(tag, str):
+            normalized = tag.strip()
+        elif isinstance(tag, dict):
+            normalized = str(tag.get("name", "")).strip()
+        else:
+            continue
+        if normalized:
+            tags.append(normalized)
+    return tags
+
+
 async def get_resource_details(
     resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
@@ -125,23 +140,37 @@ async def get_resources_for_dataset(
     Get all resources for a given dataset.
 
     Returns:
-        dict with 'dataset' metadata and 'resources' list of resource IDs and titles
+        dict with 'dataset' metadata and 'resources' list with key metadata
     """
     own = session is None
     if own:
         session = httpx.AsyncClient()
+    assert session is not None
     try:
-        ds = await get_dataset_metadata(dataset_id, session=session)
-        base_url: str = env_config.get_base_url("datagouv_api")
-        # Fetch resources from API v1
-        url = f"{base_url}1/datasets/{dataset_id}/"
-        data = await _fetch_json(session, url)  # type: ignore
+        data = await get_dataset_details(dataset_id, session=session)
+        ds = {
+            "id": data.get("id"),
+            "title": data.get("title") or data.get("name"),
+            "description_short": data.get("description_short"),
+            "description": data.get("description"),
+        }
         resources: list[dict[str, Any]] = data.get("resources", [])
-        res_list: list[tuple[str, str]] = [
-            (res.get("id"), res.get("title", "") or res.get("name", ""))
-            for res in resources
-            if res.get("id")
-        ]
+        res_list: list[dict[str, Any]] = []
+        for res in resources:
+            resource_id = res.get("id")
+            if not resource_id:
+                continue
+            res_list.append(
+                {
+                    "id": resource_id,
+                    "title": res.get("title", "") or res.get("name", ""),
+                    "format": res.get("format"),
+                    "filesize": res.get("filesize"),
+                    "mime": res.get("mime"),
+                    "type": res.get("type"),
+                    "url": res.get("url"),
+                }
+            )
         return {"dataset": ds, "resources": res_list}
     finally:
         if own and session:
@@ -174,11 +203,15 @@ async def fetch_openapi_spec(
 
         # Try JSON first, then YAML
         try:
-            return json.loads(content)
+            data = json.loads(content)
+            if isinstance(data, dict):
+                return data
         except (json.JSONDecodeError, ValueError):
             pass
         try:
-            return yaml.safe_load(content)
+            data = yaml.safe_load(content)
+            if isinstance(data, dict):
+                return data
         except yaml.YAMLError:
             pass
 
@@ -243,12 +276,7 @@ async def search_dataservices(
         dataservices: list[dict[str, Any]] = data.get("data", [])
         results: list[dict[str, Any]] = []
         for ds in dataservices:
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            tags = _extract_tags(ds.get("tags", []))
 
             results.append(
                 {
@@ -314,13 +342,7 @@ async def search_datasets(
         # Extract relevant fields for each dataset
         results: list[dict[str, Any]] = []
         for ds in datasets:
-            # Handle tags - can be strings or objects with "name" field
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            tags = _extract_tags(ds.get("tags", []))
 
             results.append(
                 {

@@ -6,6 +6,8 @@ import pytest
 
 from helpers import datagouv_api_client
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def known_dataset_id() -> str:
@@ -65,9 +67,11 @@ class TestAsyncFunctions:
 
         # Check resources structure
         if result["resources"]:
-            resource_id, resource_title = result["resources"][0]
-            assert isinstance(resource_id, str)
-            assert len(resource_id) > 0
+            resource = result["resources"][0]
+            assert isinstance(resource, dict)
+            assert isinstance(resource.get("id"), str)
+            assert resource.get("id")
+            assert "title" in resource
 
     async def test_search_datasets_basic(self):
         """Test basic dataset search."""

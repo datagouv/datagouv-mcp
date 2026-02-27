@@ -2,6 +2,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import crawler_api_client, datagouv_api_client, env_config
+from helpers.formatting import format_file_size
 
 
 def register_get_resource_info_tool(mcp: FastMCP) -> None:
@@ -35,16 +36,7 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
             if resource.get("filesize"):
                 size = resource.get("filesize")
                 if isinstance(size, int):
-                    # Format size in human-readable format
-                    if size < 1024:
-                        size_str = f"{size} B"
-                    elif size < 1024 * 1024:
-                        size_str = f"{size / 1024:.1f} KB"
-                    elif size < 1024 * 1024 * 1024:
-                        size_str = f"{size / (1024 * 1024):.1f} MB"
-                    else:
-                        size_str = f"{size / (1024 * 1024 * 1024):.1f} GB"
-                    content_parts.append(f"Size: {size_str}")
+                    content_parts.append(f"Size: {format_file_size(size)}")
 
             if resource.get("mime"):
                 content_parts.append(f"MIME type: {resource.get('mime')}")

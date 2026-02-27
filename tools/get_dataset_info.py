@@ -2,6 +2,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, env_config
+from helpers.formatting import truncate_text
 
 
 def register_get_dataset_info_tool(mcp: FastMCP) -> None:
@@ -35,7 +36,9 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
             description_short = data.get("description_short")
             if description and description != description_short:
                 content_parts.append("")
-                content_parts.append(f"Full description: {description[:500]}...")
+                content_parts.append(
+                    f"Full description: {truncate_text(description, 500)}"
+                )
 
             if data.get("organization"):
                 org = data.get("organization", {})

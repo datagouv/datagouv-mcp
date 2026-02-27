@@ -25,7 +25,7 @@ jobs:
           name: Type check
           command: uv run ty check
 
-  test:
+  test-unit:
     docker:
       - image: ghcr.io/astral-sh/uv:python<< pipeline.parameters.python-version >>-trixie
     steps:
@@ -41,14 +41,34 @@ jobs:
       - store_test_results:
           path: test-results
 
+  test-integration:
+    docker:
+      - image: ghcr.io/astral-sh/uv:python<< pipeline.parameters.python-version >>-trixie
+    environment:
+      RUN_INTEGRATION_TESTS: "1"
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies and dev dependencies
+          command: uv sync --frozen
+      - run:
+          name: Run integration tests against live APIs
+          command: |
+            mkdir -p test-results
+            uv run pytest -v -m integration --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
+
 workflows:
   lint-test:
     jobs:
-      - lint:
-          filters:
-            branches:
-              only: main
-      - test:
+      - lint
+      - test-unit:
+          requires:
+            - lint
+      - test-integration:
+          requires:
+            - test-unit
           filters:
             branches:
               only: main

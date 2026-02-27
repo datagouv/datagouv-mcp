@@ -14,12 +14,18 @@ from tools import register_tools
 
 # Configure logging
 LOGGER_NAME = "datagouv_mcp"
+
+
+def _resolve_log_level(level_name: str) -> int:
+    """Resolve a log level name to a numeric logging level."""
+    return getattr(logging, level_name.upper(), logging.INFO)
+
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=_resolve_log_level(os.getenv("LOG_LEVEL", "INFO")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(LOGGER_NAME)
-logger.setLevel(logging.DEBUG)
 
 # Configure transport security for DNS rebinding protection (mcp >= 1.23)
 # Per MCP spec: MUST validate Origin header, SHOULD bind to localhost when running locally

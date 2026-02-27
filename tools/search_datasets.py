@@ -3,6 +3,7 @@ import logging
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
+from helpers.formatting import truncate_text
 
 logger = logging.getLogger("datagouv_mcp")
 
@@ -104,8 +105,8 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
             content_parts.append(f"{i}. {ds.get('title', 'Untitled')}")
             content_parts.append(f"   ID: {ds.get('id')}")
             if ds.get("description_short"):
-                desc = ds.get("description_short", "")[:200]
-                content_parts.append(f"   Description: {desc}...")
+                desc = str(ds.get("description_short", ""))
+                content_parts.append(f"   Description: {truncate_text(desc, 200)}")
             if ds.get("organization"):
                 content_parts.append(f"   Organization: {ds.get('organization')}")
             if ds.get("tags"):

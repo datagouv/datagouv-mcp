@@ -4,6 +4,8 @@ import pytest
 
 from helpers import metrics_api_client
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def known_dataset_id() -> str:

@@ -5,6 +5,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
+from helpers.formatting import truncate_text
 
 logger = logging.getLogger("datagouv_mcp")
 
@@ -38,8 +39,8 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
     if info.get("version"):
         parts.append(f"Version: {info['version']}")
     if info.get("description"):
-        desc = info["description"][:300]
-        parts.append(f"Description: {desc}...")
+        desc = str(info["description"])
+        parts.append(f"Description: {truncate_text(desc, 300)}")
 
     # Servers / base URL
     servers = spec.get("servers", [])

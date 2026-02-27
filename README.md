@@ -188,7 +188,8 @@ docker compose down
 **Environment variables:**
 - `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
-- `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
+- `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environment is used (`https://www.data.gouv.fr` or `https://demo.data.gouv.fr`). By default the MCP server talks to the production platform.
+- `LOG_LEVEL`: logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; defaults to `INFO`).
 
 #### ⚙️ Manual Installation
 
@@ -206,11 +207,12 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   cp .env.example .env
   ```
 
-  Then optionnaly edit `.env` and set the variables that matter for your run:
+  Then optionally edit `.env` and set the variables that matter for your run:
   ```
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
   DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
+  LOG_LEVEL=INFO  # Allowed values: DEBUG | INFO | WARNING | ERROR | CRITICAL
   ```
 
   Load the variables with your preferred method, e.g.:
@@ -238,6 +240,27 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 **Streamable HTTP transport (standards-compliant):**
 - `POST /mcp` - JSON-RPC messages (client → server)
 - `GET /health` - Simple JSON health probe (`{"status":"ok","timestamp":"..."}`)
+
+## 🧱 Architecture at a glance
+
+The server is intentionally small and split in three layers:
+
+1. `tools/`: MCP tool entry points, input validation, and user-facing response formatting.
+2. `helpers/`: HTTP clients for data.gouv.fr APIs (catalog, tabular, metrics, crawler) plus shared formatting utilities.
+3. `main.py`: MCP server bootstrap, transport security policy, and `/health` endpoint.
+
+Request flow:
+
+1. Client calls an MCP tool over `POST /mcp`.
+2. Tool validates inputs and calls one or more helper clients.
+3. Helpers call upstream APIs and normalize payloads.
+4. Tool formats a concise text response for LLM clients.
+
+Design invariants:
+
+- Read-only behavior (no mutation calls to data.gouv.fr).
+- Streamable HTTP transport only.
+- Production-safe defaults (`DATAGOUV_ENV=prod`, `LOG_LEVEL=INFO`).
 
 ## 🛠️ Available Tools
 
@@ -273,7 +296,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Parameters: `resource_id` (required), `max_rows` (optional, default: 20), `max_size_mb` (optional, default: 500)
 
-  Supported formats: CSV, CSV.GZ, JSON, JSONL. Useful for files exceeding Tabular API limits or formats not supported by Tabular API. Start with default max_rows (20) to preview, then call again with higher max_rows if you need all data.
+  Supported formats: CSV, CSV.GZ, JSON, JSONL, JSON.GZ, JSONL.GZ. Useful for files exceeding Tabular API limits or formats not supported by Tabular API. Start with default max_rows (20) to preview, then call again with higher max_rows if you need all data.
 
 ### Dataservices (external APIs)
 
@@ -303,24 +326,25 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
 ### ✅ Automated Tests with pytest
 
-Run the tests with pytest (these cover helper modules; the MCP server wiring is best exercised via the MCP Inspector):
+The suite is split into deterministic unit tests and live integration tests.
 
 ```shell
-# Run all tests
+# Run default suite (unit tests + local ASGI tests)
 uv run pytest
 
-# Run with verbose output
-uv run pytest -v
+# Run only unit tests explicitly
+uv run pytest -m "not integration"
 
-# Run specific test file
-uv run pytest tests/test_tabular_api.py
-
-# Run with custom resource ID
-RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabular_api.py
-
-# Run with prod environment
-DATAGOUV_ENV=prod uv run pytest
+# Run live integration tests (calls remote APIs)
+RUN_INTEGRATION_TESTS=1 uv run pytest -m integration
 ```
+
+Integration-test environment variables (optional overrides):
+
+- `TEST_DATASET_ID`
+- `TEST_RESOURCE_ID`
+- `RESOURCE_ID`
+- `DATAGOUV_ENV` (use `prod` if you need Metrics API coverage)
 
 ### 🔍 Interactive Testing with MCP Inspector
 
@@ -343,9 +367,14 @@ We welcome contributions! To keep the project stable, we use a standard review-a
 
 1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
 2. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
-3. **Automated Deployment:** Once merged into `main`, changes are automatically deployed to:
+3. **CI:** PRs run linting, typing, and deterministic unit tests. Integration tests against live APIs run on `main`.
+4. **Automated Deployment:** Once merged into `main`, changes are automatically deployed to:
    * **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
    * **Production** (the official endpoint)
+
+### 🗺️ Roadmap
+
+The production-readiness backlog and release gate checklist live in [ROADMAP.md](ROADMAP.md).
 
 ### 🧹 Code Linting and Formatting
 
@@ -363,13 +392,13 @@ uv run ty check
 
 ### 🔗 Pre-commit Hooks
 
-This repository uses a [pre-commit](https://pre-commit.com/) hook which lint and format code before each commit. Installing the pre-commit hook is strongly recommended so the checks run automatically.
+This repository uses [pre-commit](https://pre-commit.com/) hooks that lint and format code before each commit. Installing them is strongly recommended so checks run automatically.
 
 **Install pre-commit hooks:**
 ```shell
 uv run pre-commit install
 ```
-The pre-commit hook that automatically:
+The hooks automatically:
 - Check YAML syntax
 - Fix end-of-file issues
 - Remove trailing whitespace

@@ -9,6 +9,7 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
+from helpers.formatting import truncate_text
 
 logger = logging.getLogger("datagouv_mcp")
 
@@ -76,7 +77,7 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
                     f"Content-Type: {content_type}"
                 )
                 content_parts.append(
-                    "Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX"
+                    "Supported formats: CSV, CSV.GZ, JSON, JSONL, JSON.GZ, XLSX"
                 )
                 return "\n".join(content_parts)
 
@@ -91,6 +92,12 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
                 elif file_format == "json" or file_format == "jsonl":
                     content_parts.append("Format: JSON/JSONL")
                     rows = _parse_json(content, is_gzipped=bool(is_gzipped))
+                elif file_format == "gzip":
+                    content_parts.append("Format: GZIP")
+                    content_parts.append(
+                        "⚠️  Unsupported compressed format. Use CSV.GZ or JSON.GZ/JSONL.GZ."
+                    )
+                    return "\n".join(content_parts)
                 elif file_format == "xlsx":
                     content_parts.append("Format: XLSX")
                     content_parts.append(
@@ -145,8 +152,7 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
                 content_parts.append(f"  Row {i}:")
                 for key, value in row.items():
                     val_str = str(value) if value is not None else ""
-                    if len(val_str) > 100:
-                        val_str = val_str[:100] + "..."
+                    val_str = truncate_text(val_str, 100)
                     content_parts.append(f"    {key}: {val_str}")
 
             if total_rows > max_rows:
@@ -190,9 +196,9 @@ async def _download_resource(
                 )
 
         # Download with size limit
-        content = b""
+        content = bytearray()
         async for chunk in resp.aiter_bytes(chunk_size=8192):
-            content += chunk
+            content.extend(chunk)
             if len(content) > max_size:
                 raise ValueError(
                     f"File too large: exceeds {max_size / (1024 * 1024):.1f} MB limit"
@@ -208,7 +214,7 @@ async def _download_resource(
 
         content_type = resp.headers.get("Content-Type", "").split(";")[0]
 
-        return content, filename, content_type
+        return bytes(content), filename, content_type
 
 
 def _detect_file_format(filename: str, content_type: str | None) -> str:
@@ -222,6 +228,9 @@ def _detect_file_format(filename: str, content_type: str | None) -> str:
         filename_lower.endswith(".json")
         or filename_lower.endswith(".jsonl")
         or filename_lower.endswith(".ndjson")
+        or filename_lower.endswith(".json.gz")
+        or filename_lower.endswith(".jsonl.gz")
+        or filename_lower.endswith(".ndjson.gz")
     ):
         return "json"
     elif filename_lower.endswith(".xml"):
