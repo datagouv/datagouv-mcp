@@ -43,7 +43,15 @@ transport_security = TransportSecuritySettings(
     ],
 )
 
-mcp = FastMCP("data.gouv.fr MCP server", transport_security=transport_security)
+# Enable stateless_http to avoid "Session not found" errors with MCP clients
+# that don't properly maintain the mcp-session-id header across requests
+# (e.g. Claude Code, Cline, OpenAI Codex). Since this server does not use
+# server-initiated notifications, stateful sessions are not needed.
+mcp = FastMCP(
+    "data.gouv.fr MCP server",
+    transport_security=transport_security,
+    stateless_http=True,
+)
 register_tools(mcp)
 
 
