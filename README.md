@@ -19,6 +19,28 @@ Instead of manually browsing the website, you can simply ask questions like "Que
 Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you self-host, swap in your own URL.
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
+[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+### AnythingLLM
+
+1. Locate the `anythingllm_mcp_servers.json` file in your AnythingLLM storage plugins directory:
+   - **Mac**: `~/Library/Application Support/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json`
+   - **Linux**: `~/.config/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json`
+   - **Windows**: `C:\Users\<username>\AppData\Roaming\anythingllm-desktop\storage\plugins\anythingllm_mcp_servers.json`
+
+2. Add the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "type": "streamable",
+      "url": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+For more details, see the [AnythingLLM MCP documentation](https://docs.anythingllm.com/mcp-compatibility/overview).
 
 ### ChatGPT
 
@@ -28,6 +50,14 @@ The MCP server configuration depends on your client. Use the appropriate configu
 2. **Enable Dev Mode**: Open `Advanced settings` and enable **Developer mode**.
 3. **Add Connector**: Return to `Settings` > `Connectors` > `Browse connectors` and click **Add a new connector**.
 4. **Configure the connector**: Set the URL to `https://mcp.data.gouv.fr/mcp` and save to activate the tools.
+
+### Claude Code
+
+Use the `claude mcp` command to add the MCP server:
+
+```shell
+claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
+```
 
 ### Claude Desktop
 
@@ -47,12 +77,23 @@ Add the following to your Claude Desktop configuration file (typically `~/Librar
 }
 ```
 
-### Claude Code
+### Cursor
 
-Use the `claude mcp` command to add the MCP server:
+Cursor supports MCP servers through its settings. To configure the server:
 
-```shell
-claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
+1. Open Cursor Settings
+2. Search for "MCP" or "Model Context Protocol"
+3. Add a new MCP server with the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "transport": "http"
+    }
+  }
+}
 ```
 
 ### Gemini CLI
@@ -82,62 +123,6 @@ url = "https://mcp.data.gouv.fr/mcp"
 
 See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
 
-### AnythingLLM
-
-1. Locate the `anythingllm_mcp_servers.json` file in your AnythingLLM storage plugins directory:
-   - **Mac**: `~/Library/Application Support/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json`
-   - **Linux**: `~/.config/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json`
-   - **Windows**: `C:\Users\<username>\AppData\Roaming\anythingllm-desktop\storage\plugins\anythingllm_mcp_servers.json`
-
-2. Add the following configuration:
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "type": "streamable",
-      "url": "https://mcp.data.gouv.fr/mcp"
-    }
-  }
-}
-```
-
-For more details, see the [AnythingLLM MCP documentation](https://docs.anythingllm.com/mcp-compatibility/overview).
-
-### VS Code
-
-Add the following to your VS Code `settings.json`:
-
-```json
-{
-  "servers": {
-    "datagouv": {
-      "url": "https://mcp.data.gouv.fr/mcp",
-      "type": "http"
-    }
-  }
-}
-```
-
-### Cursor
-
-Cursor supports MCP servers through its settings. To configure the server:
-
-1. Open Cursor Settings
-2. Search for "MCP" or "Model Context Protocol"
-3. Add a new MCP server with the following configuration:
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "url": "https://mcp.data.gouv.fr/mcp",
-      "transport": "http"
-    }
-  }
-}
-```
-
 ### Kiro IDE
 
 Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json` in your workspace, or `~/.kiro/settings/mcp.json` for global config):
@@ -164,6 +149,7 @@ Add the following to `~/.kiro/settings/mcp.json`:
     }
   }
 }
+```
 
 ### IBM Bob
 
@@ -183,6 +169,21 @@ Both files use JSON format with an mcpServers object containing named server con
     "datagouv": {
       "url": "https://mcp.data.gouv.fr/mcp",
       "type": "streamable-http"
+    }
+  }
+}
+```
+
+### VS Code
+
+Add the following to your VS Code `settings.json`:
+
+```json
+{
+  "servers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "type": "http"
     }
   }
 }
