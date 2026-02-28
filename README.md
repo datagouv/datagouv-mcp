@@ -233,7 +233,7 @@ Docker is required for the recommended setup. Install it via [Docker Desktop](ht
 docker compose up -d
 
 # With custom environment variables
-MCP_PORT=8007 DATAGOUV_ENV=demo docker compose up -d
+MCP_PORT=8007 LOG_LEVEL=DEBUG DATAGOUV_ENV=demo docker compose up -d
 
 # Stop
 docker compose down
@@ -242,6 +242,7 @@ docker compose down
 **Environment variables:**
 - `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
+- `LOG_LEVEL`: Python logging level for the application (defaults to `INFO`). Common values: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
 - `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
 
 #### ⚙️ Manual Installation
@@ -264,6 +265,7 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   ```
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
+  LOG_LEVEL=INFO  # Python log level (default: INFO)
   DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
   ```
 
