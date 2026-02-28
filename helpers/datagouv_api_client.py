@@ -174,15 +174,22 @@ async def fetch_openapi_spec(
 
         # Try JSON first, then YAML
         try:
-            return json.loads(content)
+            parsed_json = json.loads(content)
+            if isinstance(parsed_json, dict):
+                return parsed_json
         except (json.JSONDecodeError, ValueError):
             pass
+
         try:
-            return yaml.safe_load(content)
+            parsed_yaml = yaml.safe_load(content)
+            if isinstance(parsed_yaml, dict):
+                return parsed_yaml
         except yaml.YAMLError:
             pass
 
-        raise ValueError(f"Could not parse OpenAPI spec from {url} as JSON or YAML")
+        raise ValueError(
+            f"Could not parse OpenAPI spec from {url} as JSON or YAML object"
+        )
     finally:
         if own:
             await session.aclose()

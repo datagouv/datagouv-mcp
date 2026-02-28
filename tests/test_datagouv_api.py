@@ -2,6 +2,7 @@
 
 import os
 
+import httpx
 import pytest
 
 from helpers import datagouv_api_client
@@ -220,3 +221,15 @@ class TestAsyncFunctions:
             await datagouv_api_client.fetch_openapi_spec(
                 "https://example.com/nonexistent-spec.json"
             )
+
+    async def test_fetch_openapi_spec_invalid_body(self):
+        """Test that non-dict specs raise a ValueError."""
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, text="just some text")
+
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as session:
+            with pytest.raises(ValueError, match="OpenAPI spec"):
+                await datagouv_api_client.fetch_openapi_spec(
+                    "https://example.com/spec.txt", session=session
+                )
