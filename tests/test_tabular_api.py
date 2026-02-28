@@ -33,6 +33,27 @@ async def test_fetch_resource_profile(resource_id: str) -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_resource_profile_columns_match_header(resource_id: str) -> None:
+    """Test that profile columns dict keys match the header list."""
+    profile = await tabular_api_client.fetch_resource_profile(resource_id)
+
+    profile_data = profile["profile"]
+    if "columns" not in profile_data:
+        pytest.skip("No columns in profile for this resource")
+
+    columns = profile_data["columns"]
+    header = profile_data["header"]
+
+    assert isinstance(columns, dict)
+    # Every column key should be a non-empty string
+    for col_name in columns.keys():
+        assert isinstance(col_name, str)
+        assert len(col_name) > 0
+    # Column keys should match the header list
+    assert set(columns.keys()) == set(header)
+
+
+@pytest.mark.asyncio
 async def test_fetch_resource_data_basic(resource_id: str) -> None:
     """Test basic fetching of resource data."""
     data = await tabular_api_client.fetch_resource_data(

@@ -220,3 +220,30 @@ class TestAsyncFunctions:
             await datagouv_api_client.fetch_openapi_spec(
                 "https://example.com/nonexistent-spec.json"
             )
+
+    async def test_search_datasets_sort_created_desc(self):
+        """Test that sort='-created' returns results without error."""
+        result = await datagouv_api_client.search_datasets(
+            query="IRVE", sort="-created", page_size=2
+        )
+        assert "data" in result
+        datasets = result["data"]
+        assert len(datasets) == 2
+
+    async def test_search_datasets_sort_created_asc(self):
+        """Test that sort='created' returns results in ascending order."""
+        result = await datagouv_api_client.search_datasets(
+            query="population", sort="created", page_size=2
+        )
+        assert "data" in result
+        assert len(result["data"]) > 0
+
+    async def test_search_datasets_sort_none_unchanged(self):
+        """Test that no sort param returns same results as before (default behaviour)."""
+        result_default = await datagouv_api_client.search_datasets(
+            query="population", page_size=3
+        )
+        result_no_sort = await datagouv_api_client.search_datasets(
+            query="population", sort=None, page_size=3
+        )
+        assert result_default["total"] == result_no_sort["total"]
