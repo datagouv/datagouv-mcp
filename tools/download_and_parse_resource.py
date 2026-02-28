@@ -252,15 +252,20 @@ def _detect_file_format(filename: str, content_type: str | None) -> str:
 
 
 def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]:
-    """Parse CSV content with automatic delimiter detection."""
+    """Parse CSV content with automatic delimiter and encoding detection."""
     if is_gzipped:
         content = gzip.decompress(content)
 
-    try:
-        text = content.decode("utf-8-sig")  # Handle BOM
-    except UnicodeDecodeError:
-        # Fallback to Latin-1 for French CSV files
-        text = content.decode("iso-8859-1")
+    # Try UTF-8 first (with BOM handling), then fall back to other encodings
+    text = None
+    for encoding in ("utf-8-sig", "latin-1"):
+        try:
+            text = content.decode(encoding)
+            break
+        except (UnicodeDecodeError, ValueError):
+            continue
+    if text is None:
+        text = content.decode("utf-8-sig", errors="replace")
 
     # Detect delimiter automatically
     # Try to sniff the delimiter from the first few lines
@@ -291,14 +296,20 @@ def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]
 
 
 def _parse_json(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]:
-    """Parse JSON content (array or JSONL)."""
+    """Parse JSON content (array or JSONL) with automatic encoding detection."""
     if is_gzipped:
         content = gzip.decompress(content)
 
-    try:
-        text = content.decode("utf-8")
-    except UnicodeDecodeError:
-        text = content.decode("iso-8859-1")
+    # Try UTF-8 first, then fall back to Latin-1, then lossy decode as last resort
+    text = None
+    for encoding in ("utf-8", "latin-1"):
+        try:
+            text = content.decode(encoding)
+            break
+        except (UnicodeDecodeError, ValueError):
+            continue
+    if text is None:
+        text = content.decode("utf-8", errors="replace")
 
     # Try JSON array first
     try:
