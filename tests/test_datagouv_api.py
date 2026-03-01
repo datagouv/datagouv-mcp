@@ -9,6 +9,18 @@ from helpers import datagouv_api_client
 from helpers.user_agent import USER_AGENT
 
 
+def test_normalize_tags_handles_strings_and_dicts():
+    tags = datagouv_api_client.normalize_tags(
+        ["alpha", "  beta ", {"name": "gamma"}, {"label": "delta"}, ""]
+    )
+    assert tags == ["alpha", "beta", "gamma", "delta"]
+
+
+def test_normalize_tags_ignores_invalid_entries():
+    tags = datagouv_api_client.normalize_tags([None, 123, {"name": ""}, {}])
+    assert tags == []
+
+
 @pytest.fixture
 def known_dataset_id() -> str:
     """Fixture providing a known dataset ID for testing."""
