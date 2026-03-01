@@ -10,6 +10,28 @@ from helpers import env_config
 logger = logging.getLogger("datagouv_mcp")
 
 
+def normalize_tags(raw_tags: list[Any] | None) -> list[str]:
+    """Normalize tag payloads into a clean list of strings.
+
+    Accepts string tags or dicts with a "name"/"label" field. Empty values are ignored.
+    """
+    if not raw_tags:
+        return []
+    tags: list[str] = []
+    for tag in raw_tags:
+        value: str | None = None
+        if isinstance(tag, str):
+            value = tag
+        elif isinstance(tag, dict):
+            value = tag.get("name") or tag.get("label")
+        if value is None:
+            continue
+        cleaned = value.strip()
+        if cleaned:
+            tags.append(cleaned)
+    return tags
+
+
 async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
     logger.debug("datagouv API GET %s", url)
     try:
@@ -243,12 +265,7 @@ async def search_dataservices(
         dataservices: list[dict[str, Any]] = data.get("data", [])
         results: list[dict[str, Any]] = []
         for ds in dataservices:
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            tags = normalize_tags(ds.get("tags", []))
 
             results.append(
                 {
@@ -314,13 +331,8 @@ async def search_datasets(
         # Extract relevant fields for each dataset
         results: list[dict[str, Any]] = []
         for ds in datasets:
-            # Handle tags - can be strings or objects with "name" field
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            # Handle tags - can be strings or objects with "name"/"label" field
+            tags = normalize_tags(ds.get("tags", []))
 
             results.append(
                 {
