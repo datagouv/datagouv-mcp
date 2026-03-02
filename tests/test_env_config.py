@@ -9,20 +9,20 @@ class TestGetBaseUrl:
     """Tests for get_base_url function."""
 
     def test_get_base_url_defaults_to_prod(self, monkeypatch):
-        """Test that get_base_url defaults to prod when DATAGOUV_ENV is not set."""
-        monkeypatch.delenv("DATAGOUV_ENV", raising=False)
+        """Test that get_base_url defaults to prod when DATAGOUV_API_ENV is not set."""
+        monkeypatch.delenv("DATAGOUV_API_ENV", raising=False)
         url = env_config.get_base_url("datagouv_api")
         assert url == "https://www.data.gouv.fr/api/"
 
     def test_get_base_url_case_insensitive(self, monkeypatch):
         """Test that get_base_url is case insensitive for environment."""
-        monkeypatch.setenv("DATAGOUV_ENV", "PROD")
+        monkeypatch.setenv("DATAGOUV_API_ENV", "PROD")
         url = env_config.get_base_url("datagouv_api")
         assert url == "https://www.data.gouv.fr/api/"
 
     def test_get_base_url_invalid_defaults_to_prod(self, monkeypatch):
         """Test that invalid environment defaults to prod."""
-        monkeypatch.setenv("DATAGOUV_ENV", "invalid")
+        monkeypatch.setenv("DATAGOUV_API_ENV", "invalid")
         url = env_config.get_base_url("datagouv_api")
         assert url == "https://www.data.gouv.fr/api/"
 
@@ -45,12 +45,12 @@ class TestGetBaseUrl:
         self, monkeypatch, api_name, env, expected_url
     ):
         """Test get_base_url returns correct URL for each API and environment."""
-        monkeypatch.setenv("DATAGOUV_ENV", env)
+        monkeypatch.setenv("DATAGOUV_API_ENV", env)
         url = env_config.get_base_url(api_name)
         assert url == expected_url
 
     def test_get_base_url_invalid_api_name(self, monkeypatch):
         """Test that invalid api_name raises KeyError."""
-        monkeypatch.setenv("DATAGOUV_ENV", "prod")
+        monkeypatch.setenv("DATAGOUV_API_ENV", "prod")
         with pytest.raises(KeyError, match="Invalid api_name"):
             env_config.get_base_url("invalid_api")

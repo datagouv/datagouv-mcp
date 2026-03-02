@@ -190,9 +190,9 @@ async def _download_resource(
                 )
 
         # Download with size limit
-        content = b""
+        content = bytearray()
         async for chunk in resp.aiter_bytes(chunk_size=8192):
-            content += chunk
+            content.extend(chunk)
             if len(content) > max_size:
                 raise ValueError(
                     f"File too large: exceeds {max_size / (1024 * 1024):.1f} MB limit"
@@ -208,7 +208,7 @@ async def _download_resource(
 
         content_type = resp.headers.get("Content-Type", "").split(";")[0]
 
-        return content, filename, content_type
+        return bytes(content), filename, content_type
 
 
 def _detect_file_format(filename: str, content_type: str | None) -> str:

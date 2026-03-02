@@ -22,7 +22,7 @@ def get_base_url(api_name: str) -> str:
     """
     Get the base URL for a specific API in the current environment.
 
-    Reads DATAGOUV_ENV environment variable (demo|prod). Defaults to prod if not set or invalid.
+    Reads DATAGOUV_API_ENV environment variable (demo|prod). Defaults to prod if not set or invalid.
 
     Args:
         api_name: API name to get the endpoint for.
@@ -34,7 +34,7 @@ def get_base_url(api_name: str) -> str:
     Raises:
         KeyError: If api_name is not a valid API name.
     """
-    env_name: str = os.getenv("DATAGOUV_ENV", "prod").strip().lower()
+    env_name: str = os.getenv("DATAGOUV_API_ENV", "prod").strip().lower()
     if env_name not in _ENV_TARGETS:
         env_name = "prod"
     config: dict = _ENV_TARGETS[env_name]

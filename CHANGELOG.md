@@ -147,7 +147,7 @@
 - docs: add docs for Claude code
 - docs: minor README improvements
 - docs: update README
-- fix: fix docker-compose.yaml file for default DATAGOUV_ENV
+- fix: fix docker-compose.yaml file for default DATAGOUV_API_ENV
 - fix: fix get_metrics get_env logic
 - refactor: merge branch related to refactor into separate files for each mcp tool
 - refactor: one single logegr instance for the whole codebase
@@ -166,7 +166,7 @@
 - docs: update README
 - feat: add "get_metrics" MCP tool
 - feat: add metrics api client
-- feat: default DATAGOUV_ENV to prod and update README
+- feat: default DATAGOUV_API_ENV to prod and update README
 - refactor: refactor API clients to share a common env_config
 
 
@@ -175,7 +175,7 @@
 - docs: improve docs
 - feat: remove edition tool "create_dataset" which needs API key auth
 - Revert "ci: separate CI into parallel jobs"
-- feat: default DATAGOUV_ENV to prod and update README
+- feat: default DATAGOUV_API_ENV to prod and update README
 
 
 ## 0.2.0 (2025-11-25)

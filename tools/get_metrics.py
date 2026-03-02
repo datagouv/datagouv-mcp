@@ -23,11 +23,11 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
         Note: Only available in production environment (not demo).
         """
         # Check if we're in demo environment
-        current_env: str = os.getenv("DATAGOUV_ENV", "prod").strip().lower()
+        current_env: str = os.getenv("DATAGOUV_API_ENV", "prod").strip().lower()
         if current_env == "demo":
             return (
                 "Error: The Metrics API is not available in the demo environment.\n"
-                "The Metrics API only exists in production. Please set DATAGOUV_ENV=prod "
+                "The Metrics API only exists in production. Please set DATAGOUV_API_ENV=prod "
                 "to use this tool, or switch to production environment to access metrics data."
             )
 

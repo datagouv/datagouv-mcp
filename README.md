@@ -1,5 +1,8 @@
 # data.gouv.fr MCP Server
 
+<img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/5d20e992-349a-4b3b-9a0a-ebe308735cc9" />
+
+
 [![CircleCI](https://circleci.com/gh/datagouv/datagouv-mcp.svg?style=svg)](https://circleci.com/gh/datagouv/datagouv-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -17,67 +20,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-### ChatGPT
-
-*Available for paid plans only (Plus, Pro, Team, and Enterprise).*
-
-1. **Access Settings**: Open ChatGPT in your browser, go to `Settings`, then `Apps and connectors`.
-2. **Enable Dev Mode**: Open `Advanced settings` and enable **Developer mode**.
-3. **Add Connector**: Return to `Settings` > `Connectors` > `Browse connectors` and click **Add a new connector**.
-4. **Configure the connector**: Set the URL to `https://mcp.data.gouv.fr/mcp` and save to activate the tools.
-
-### Claude Desktop
-
-Add the following to your Claude Desktop configuration file (typically `~/Library/Application Support/Claude/claude_desktop_config.json` on MacOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.data.gouv.fr/mcp"
-      ]
-    }
-  }
-}
-```
-
-### Claude Code
-
-Use the `claude mcp` command to add the MCP server:
-
-```shell
-claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
-```
-
-### Gemini CLI
-
-Add the following to your `~/.gemini/settings.json` file:
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "httpUrl": "https://mcp.data.gouv.fr/mcp"
-    }
-  }
-}
-```
-
-### Mistral Vibe CLI
-
-Edit your Vibe config (default `~/.vibe/config.toml`) and add the MCP server:
-
-```toml
-[[mcp_servers]]
-name = "datagouv"
-transport = "streamable-http"
-url = "https://mcp.data.gouv.fr/mcp"
-```
-
-See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
+[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Le Chat (Mistral)](#le-chat-mistral) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
 
 ### AnythingLLM
 
@@ -101,16 +44,36 @@ See the full Vibe MCP options in the official docs: [MCP server configuration](h
 
 For more details, see the [AnythingLLM MCP documentation](https://docs.anythingllm.com/mcp-compatibility/overview).
 
-### VS Code
+### ChatGPT
 
-Add the following to your VS Code `settings.json`:
+*Available for paid plans only (Plus, Pro, Team, and Enterprise).*
+
+1. **Access Settings**: Open ChatGPT in your browser, go to `Settings`, then `Apps and connectors`.
+2. **Enable Dev Mode**: Open `Advanced settings` and enable **Developer mode**.
+3. **Add Connector**: Return to `Settings` > `Connectors` > `Browse connectors` and click **Add a new connector**.
+4. **Configure the connector**: Set the URL to `https://mcp.data.gouv.fr/mcp` and save to activate the tools.
+
+### Claude Code
+
+Use the `claude mcp` command to add the MCP server:
+
+```shell
+claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
+```
+
+### Claude Desktop
+
+Add the following to your Claude Desktop configuration file (typically `~/Library/Application Support/Claude/claude_desktop_config.json` on MacOS, or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "datagouv": {
-      "url": "https://mcp.data.gouv.fr/mcp",
-      "type": "http"
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.data.gouv.fr/mcp"
+      ]
     }
   }
 }
@@ -135,6 +98,27 @@ Cursor supports MCP servers through its settings. To configure the server:
 }
 ```
 
+### Gemini CLI
+
+Add the following to your `~/.gemini/settings.json` file:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "httpUrl": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+### HuggingChat
+
+1. **Access Settings:** In the chat interface, click the + icon, select `MCP Servers`, and click `Manage MCP Servers`.
+2. **Add Server:** Click the + `Add Server` button in the server management window.
+3. **Configure the Server:** Enter a **Server Name** (e.g., "Data Gouv") and set the **Server URL** to `https://mcp.data.gouv.fr/mcp`. Click `Add Server` to save.
+4. **Verify Connection:** Click the `Health Check` button on the new server card to confirm it displays as **Connected**. Ensure the toggle is activated to use the tools in your chat.
+
 ### IBM Bob
 
 IBM Bob supports MCP servers through its settings. To configure the server:
@@ -153,6 +137,71 @@ Both files use JSON format with an mcpServers object containing named server con
     "datagouv": {
       "url": "https://mcp.data.gouv.fr/mcp",
       "type": "streamable-http"
+    }
+  }
+}
+```
+
+### Kiro CLI
+
+Add the following to `~/.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+### Kiro IDE
+
+Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json` in your workspace, or `~/.kiro/settings/mcp.json` for global config):
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+### Le Chat (Mistral)
+
+*Available on all plans, including free.*
+
+1. **Go to Connectors**: Open Mistral in your browser, then go to `Intelligence` > `Connectors`.
+2. **Add a custom connector**: Click `Add connector` > `Custom MCP Connector`, give it a name (for example `DataGouv`), and set the server URL to `https://mcp.data.gouv.fr/mcp`.
+3. **No authentication**: Leave authentication disabled.
+4. **Create**: Click **Create**.
+
+### Mistral Vibe CLI
+
+Edit your Vibe config (default `~/.vibe/config.toml`) and add the MCP server:
+
+```toml
+[[mcp_servers]]
+name = "datagouv"
+transport = "streamable-http"
+url = "https://mcp.data.gouv.fr/mcp"
+```
+
+See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
+
+### VS Code
+
+Add the following to your VS Code `settings.json`:
+
+```json
+{
+  "servers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "type": "http"
     }
   }
 }
@@ -201,7 +250,7 @@ Docker is required for the recommended setup. Install it via [Docker Desktop](ht
 docker compose up -d
 
 # With custom environment variables
-MCP_PORT=8007 DATAGOUV_ENV=demo LOG_LEVEL=DEBUG docker compose up -d
+MCP_PORT=8007 DATAGOUV_API_ENV=demo LOG_LEVEL=DEBUG docker compose up -d
 
 # Stop
 docker compose down
@@ -210,8 +259,11 @@ docker compose down
 **Environment variables:**
 - `MCP_HOST`: host to bind to (defaults to `0.0.0.0`). Set to `127.0.0.1` for local development to follow MCP security best practices.
 - `MCP_PORT`: port for the MCP HTTP server (defaults to `8000` when unset).
-- `DATAGOUV_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_ENV=demo` if you specifically need the demo environment.
+- `MCP_ENV`: environment name reported to Sentry (defaults to `local` when unset). Set explicitly to `prod`, `preprod`, or `demo` in your deployment.
+- `DATAGOUV_API_ENV`: `prod` (default) or `demo`. This controls which data.gouv.fr environement it uses the data from (https://www.data.gouv.fr or https://demo.data.gouv.fr). By default the MCP server talks to the production data.gouv.fr. Set `DATAGOUV_API_ENV=demo` if you specifically need the demo environment.
 - `LOG_LEVEL`: Python logging level for the application (defaults to `INFO`). Common values: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
+- `SENTRY_DSN`: Sentry DSN to enable error and performance monitoring. Monitoring is disabled when unset.
+- `SENTRY_SAMPLE_RATE`: sampling rate for Sentry traces and profiles (float `0.0`–`1.0`, defaults to `1.0`).
 
 #### ⚙️ Manual Installation
 
@@ -233,7 +285,8 @@ You will need [uv](https://github.com/astral-sh/uv) to install dependencies and 
   ```
   MCP_HOST=127.0.0.1  # (defaults to 0.0.0.0, use 127.0.0.1 for local dev)
   MCP_PORT=8007  # (defaults to 8000 when unset)
-  DATAGOUV_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
+  MCP_ENV=local  # environment name sent to Sentry (defaults to local when unset)
+  DATAGOUV_API_ENV=prod  # Allowed values: demo | prod (defaults to prod when unset)
   LOG_LEVEL=INFO  # Python log level (default: INFO)
   ```
 
@@ -321,7 +374,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Parameters: `dataset_id` (optional), `resource_id` (optional), `limit` (optional, default: 12, max: 100)
 
-  Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_ENV=prod`). The Metrics API does not have a demo/preprod environment.
+  Returns monthly statistics including visits and downloads, sorted by month in descending order (most recent first). At least one of `dataset_id` or `resource_id` must be provided. **Note:** This tool only works with the production environment (`DATAGOUV_API_ENV=prod`). The Metrics API does not have a demo/preprod environment.
 
 ## 🧪 Tests
 
@@ -343,7 +396,7 @@ uv run pytest tests/test_tabular_api.py
 RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabular_api.py
 
 # Run with prod environment
-DATAGOUV_ENV=prod uv run pytest
+DATAGOUV_API_ENV=prod uv run pytest
 ```
 
 ### 🔍 Interactive Testing with MCP Inspector
