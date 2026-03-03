@@ -35,8 +35,8 @@ transport_security = TransportSecuritySettings(
     allowed_hosts=[
         "mcp.data.gouv.fr",
         "mcp.preprod.data.gouv.fr",
-        "localhost",
-        "127.0.0.1",
+        "localhost:*",
+        "127.0.0.1:*",
     ],
     # Validate Origin header to prevent DNS rebinding attacks (MCP spec requirement)
     allowed_origins=[
