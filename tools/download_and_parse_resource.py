@@ -250,6 +250,8 @@ def _detect_file_format(filename: str, content_type: str | None) -> str:
             return "xml"
         elif "excel" in content_type or "spreadsheet" in content_type:
             return "xlsx"
+        elif "zip" in content_type and "gzip" not in content_type:
+            return "zip"
         elif "gzip" in content_type:
             return "gzip"
 

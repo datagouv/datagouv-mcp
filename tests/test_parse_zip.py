@@ -5,7 +5,7 @@ import zipfile
 
 import pytest
 
-from tools.download_and_parse_resource import _parse_zip
+from tools.download_and_parse_resource import _detect_file_format, _parse_zip
 
 
 def _make_zip(files: dict[str, str]) -> bytes:
@@ -94,3 +94,17 @@ class TestParseZip:
         assert filename == "subdir/data.csv"
         assert len(rows) == 1
         assert rows[0]["a"] == "1"
+
+
+class TestDetectZipByContentType:
+    def test_detects_zip_from_application_zip(self):
+        assert _detect_file_format("resource", "application/zip") == "zip"
+
+    def test_detects_zip_from_x_zip_compressed(self):
+        assert _detect_file_format("resource", "application/x-zip-compressed") == "zip"
+
+    def test_does_not_confuse_gzip_with_zip(self):
+        assert _detect_file_format("resource", "application/gzip") == "gzip"
+
+    def test_extension_takes_priority_over_content_type(self):
+        assert _detect_file_format("data.zip", "application/octet-stream") == "zip"
