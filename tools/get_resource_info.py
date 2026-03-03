@@ -96,6 +96,15 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
                             content_parts.append(
                                 "✅ Available via Tabular API (can be queried)"
                             )
+                        profile_data = resp.json()
+                        columns = sorted(
+                            profile_data.get("profile", {}).get("columns", {}).keys()
+                        )
+                        if columns:
+                            content_parts.append("")
+                            content_parts.append("Columns available for filtering:")
+                            for col in columns:
+                                content_parts.append(f"  - {col}")
                     else:
                         content_parts.append(
                             "⚠️  Not available via Tabular API (may not be tabular data)"
