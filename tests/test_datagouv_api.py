@@ -1,10 +1,12 @@
 """Tests for the datagouv_api_client helper."""
 
 import os
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from helpers import datagouv_api_client
+from helpers.user_agent import USER_AGENT
 
 
 @pytest.fixture
@@ -33,6 +35,28 @@ class TestAsyncFunctions:
         assert metadata["id"] == known_dataset_id
         assert "title" in metadata
         assert metadata["title"] is not None
+
+    async def test_get_dataset_metadata_sends_user_agent(self, known_dataset_id):
+        """Test that get_dataset_metadata creates a client with User-Agent header."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": known_dataset_id,
+            "title": "Test Dataset",
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+        mock_client.aclose = AsyncMock(return_value=None)
+
+        with patch(
+            "helpers.datagouv_api_client.httpx.AsyncClient",
+            return_value=mock_client,
+        ) as mock_async_client:
+            await datagouv_api_client.get_dataset_metadata(
+                known_dataset_id, session=None
+            )
+
+        mock_async_client.assert_called_once_with(headers={"User-Agent": USER_AGENT})
 
     async def test_get_resource_metadata(self, known_resource_id):
         """Test fetching resource metadata."""
