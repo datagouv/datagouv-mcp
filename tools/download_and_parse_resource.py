@@ -1,9 +1,13 @@
 import csv
 import gzip
-import io
 import itertools
 import json
 import logging
+import os
+import tempfile
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -13,31 +17,62 @@ from helpers import datagouv_api_client
 
 logger = logging.getLogger("datagouv_mcp")
 
-MAX_DOWNLOAD_SIZE_MB: int = 50  # TODO: make this as a environment variable
-MAX_ROWS_HARD_LIMIT: int = 500
+MAX_DOWNLOAD_SIZE_MB: int = int(os.getenv("MAX_DOWNLOAD_SIZE_MB", "100"))
+CACHE_TTL_SECONDS: int = 1800  # 30 minutes
+
+
+@dataclass
+class CachedFile:
+    """Metadata for a file streamed to disk."""
+
+    path: str
+    filename: str
+    content_type: str | None
+    file_format: str  # normalised format: "csv", "jsonl", "unknown", …
+    is_gzipped: bool
+    created_at: float = field(default_factory=time.monotonic)
+
+    def is_expired(self) -> bool:
+        return time.monotonic() - self.created_at > CACHE_TTL_SECONDS
+
+
+# In-process cache: survives across requests within the same worker.
+# Key: resource_id
+_file_cache: dict[str, CachedFile] = {}
 
 
 def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def download_and_parse_resource(
         resource_id: str,
-        max_rows: int = 20,
+        page: int = 1,
+        page_size: int = 50,
     ) -> str:
         """
-        Download and parse a resource directly (bypasses Tabular API).
+        Download and parse a resource file in pages (fallback tool — prefer self-download).
 
-        Use for JSON/JSONL files only. For CSV/XLSX, prefer query_resource_data
-        (no download needed, supports pagination and filtering).
-        Supports CSV, CSV.GZ, JSON, JSONL.
+        IMPORTANT: If your environment can fetch URLs directly (via fetch, curl, wget, or
+        a browser tool), ALWAYS prefer downloading and parsing the file yourself. Use this
+        tool only when you have no other way to access the file content.
 
-        Strategy: Start with default max_rows (20) to preview structure.
-        Increase max_rows up to 500 for a broader sample.
-        Files larger than 50 MB are rejected.
+        Supported formats: CSV, CSV.GZ, JSON, JSONL/NDJSON.
+        For CSV/XLSX already indexed by the Tabular API, prefer query_resource_data instead
+        (no download needed, supports filtering and sorting).
+
+        Pagination:
+        - Start with page=1 (default) to preview structure and get total_rows.
+        - Increment page to read further chunks. Each call reuses the cached file on disk
+          — the file is only downloaded once per 30-minute window.
+        - page_size must be at least 1.
+
+        Files larger than MAX_DOWNLOAD_SIZE_MB (default 100 MB) are rejected.
+        JSON arrays are normalised to JSONL on first access so all subsequent pages are
+        read as cheap line-based streaming (no repeated full-file parse).
         """
-        max_rows = min(max(max_rows, 1), MAX_ROWS_HARD_LIMIT)
+        page = max(page, 1)
+        page_size = max(page_size, 1)
 
         try:
-            # Get full resource data to find URL and metadata
             resource_data = await datagouv_api_client.get_resource_details(resource_id)
             resource = resource_data.get("resource", {})
             if not resource.get("id"):
@@ -50,279 +85,371 @@ def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
             resource_title = resource.get("title") or resource.get("name") or "Unknown"
 
             content_parts = [
-                f"Downloading and parsing resource: {resource_title}",
+                f"Resource: {resource_title}",
                 f"Resource ID: {resource_id}",
                 f"URL: {resource_url}",
                 "",
             ]
 
-            # Download the file
+            # Retrieve or download to disk cache
+            _evict_expired_cache()
+            cached = _file_cache.get(resource_id)
+            if cached is None or cached.is_expired():
+                content_parts.append("Downloading file to local cache…")
+                try:
+                    max_size = MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
+                    tmp_path, filename, content_type = await _stream_to_tempfile(
+                        resource_url, max_size
+                    )
+                except ValueError as e:
+                    return f"Error: {e}"
+                except Exception as e:  # noqa: BLE001
+                    return f"Error downloading resource: {e}"
+
+                is_gzipped = filename.lower().endswith(".gz") or bool(
+                    content_type and "gzip" in content_type
+                )
+                file_format = _detect_file_format(filename, content_type)
+
+                if file_format == "unknown":
+                    Path(tmp_path).unlink(missing_ok=True)
+                    content_parts += [
+                        "",
+                        f"Unknown file format. Filename: {filename}, "
+                        f"Content-Type: {content_type}",
+                        "Supported formats: CSV, CSV.GZ, JSON, JSONL",
+                    ]
+                    return "\n".join(content_parts)
+
+                # Normalise JSON array → JSONL so all formats use line-based streaming
+                if file_format == "json":
+                    try:
+                        tmp_path, file_format = _normalise_json_to_jsonl(
+                            tmp_path, is_gzipped
+                        )
+                        is_gzipped = False  # normalised file is plain text
+                    except Exception as e:  # noqa: BLE001
+                        Path(tmp_path).unlink(missing_ok=True)
+                        return f"Error parsing JSON file: {e}"
+
+                cached = CachedFile(
+                    path=tmp_path,
+                    filename=filename,
+                    content_type=content_type,
+                    file_format=file_format,
+                    is_gzipped=is_gzipped,
+                )
+                _file_cache[resource_id] = cached
+                file_size = Path(tmp_path).stat().st_size
+                content_parts.append(
+                    f"Downloaded and cached: {file_size / (1024 * 1024):.2f} MB"
+                )
+            else:
+                content_parts.append(
+                    "Using cached file (downloaded earlier this session)."
+                )
+
+            content_parts.append(f"Format: {cached.file_format.upper()}")
+            content_parts.append("")
+
+            # Parse the requested page
             try:
-                max_size = MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
-                content, filename, content_type = await _download_resource(
-                    resource_url, max_size
+                rows, has_more, total_rows_hint = _read_page(
+                    cached, page=page, page_size=page_size
                 )
-                file_size = len(content)
-                content_parts.append(f"Downloaded: {file_size / (1024 * 1024):.2f} MB")
-            except ValueError as e:
-                return f"Error: {str(e)}"
             except Exception as e:  # noqa: BLE001
-                return f"Error downloading resource: {str(e)}"
+                return f"Error reading page from file: {e}"
 
-            # Detect format
-            is_gzipped = filename.lower().endswith(".gz") or (
-                content_type and "gzip" in content_type
-            )
-            file_format = _detect_file_format(filename, content_type)
-
-            if file_format == "unknown":
-                content_parts.append("")
-                content_parts.append(
-                    f"⚠️  Unknown file format. Filename: {filename}, "
-                    f"Content-Type: {content_type}"
-                )
-                content_parts.append(
-                    "Supported formats: CSV, CSV.GZ, JSON, JSONL, XLSX"
-                )
+            if not rows and page == 1:
+                content_parts.append("No data rows found in file.")
                 return "\n".join(content_parts)
-
-            # Parse according to format
-            rows = []
-            try:
-                if file_format == "csv" or (
-                    file_format == "gzip" and "csv" in filename.lower()
-                ):
-                    content_parts.append("Format: CSV")
-                    rows = _parse_csv(
-                        content, is_gzipped=bool(is_gzipped), max_rows=max_rows
-                    )
-                elif file_format == "json" or file_format == "jsonl":
-                    content_parts.append("Format: JSON/JSONL")
-                    rows = _parse_json(
-                        content, is_gzipped=bool(is_gzipped), max_rows=max_rows
-                    )
-                elif file_format == "xlsx":
-                    content_parts.append("Format: XLSX")
-                    content_parts.append(
-                        "⚠️  XLSX parsing requires openpyxl library. "
-                        "Please install it or use Tabular API for smaller files."
-                    )
-                    return "\n".join(content_parts)
-                elif file_format == "xls":
-                    content_parts.append("Format: XLS")
-                    content_parts.append(
-                        "⚠️  XLS format not supported. "
-                        "Please use Tabular API or convert to XLSX/CSV."
-                    )
-                    return "\n".join(content_parts)
-                elif file_format == "xml":
-                    content_parts.append("Format: XML")
-                    content_parts.append("⚠️  XML parsing not yet implemented.")
-                    return "\n".join(content_parts)
-                else:
-                    content_parts.append(f"Format: {file_format}")
-                    content_parts.append("⚠️  Format not supported for parsing.")
-                    return "\n".join(content_parts)
-
-            except Exception as e:  # noqa: BLE001
-                return f"Error parsing file: {str(e)}"
 
             if not rows:
-                content_parts.append("")
-                content_parts.append("⚠️  No data rows found in file.")
+                content_parts.append(
+                    f"No rows on page {page}. "
+                    f"Try a lower page number (last page had data)."
+                )
                 return "\n".join(content_parts)
 
-            total_rows = len(rows)
+            if total_rows_hint is not None:
+                content_parts.append(f"Total rows in file: {total_rows_hint}")
+            content_parts.append(
+                f"Page {page} — {len(rows)} row(s) "
+                f"(rows {(page - 1) * page_size + 1}–{(page - 1) * page_size + len(rows)})"
+            )
 
-            content_parts.append("")
-            content_parts.append(f"Total rows parsed (up to limit): {total_rows}")
-            content_parts.append(f"Returning: {total_rows} row(s)")
-
-            # Show column names
             if rows:
                 columns = [str(k) if k is not None else "" for k in rows[0].keys()]
                 content_parts.append(f"Columns: {', '.join(columns)}")
 
             content_parts.append("")
-            if total_rows == 1:
-                content_parts.append("Data (1 row):")
-            else:
-                content_parts.append(f"Data ({total_rows} rows):")
-            for i, row in enumerate(rows, 1):
+            content_parts.append(f"Data ({len(rows)} row(s)):")
+            for i, row in enumerate(rows, start=(page - 1) * page_size + 1):
                 content_parts.append(f"  Row {i}:")
                 for key, value in row.items():
                     val_str = str(value) if value is not None else ""
-                    if len(val_str) > 100:
-                        val_str = val_str[:100] + "..."
+                    if len(val_str) > 200:
+                        val_str = val_str[:200] + "…"
                     content_parts.append(f"    {key}: {val_str}")
 
-            if total_rows == max_rows:
-                content_parts.append("")
-                content_parts.append(
-                    f"⚠️  Row limit reached ({max_rows}). "
-                    "The file may contain more rows."
-                )
+            if has_more:
+                content_parts += [
+                    "",
+                    f"More data available — call again with page={page + 1} "
+                    f"(page_size={page_size}) to continue.",
+                ]
 
             return "\n".join(content_parts)
 
         except httpx.HTTPStatusError as e:
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+            return f"Error: HTTP {e.response.status_code} - {e}"
         except Exception as e:  # noqa: BLE001
             logger.exception("Unexpected error in download_and_parse_resource")
-            return f"Error: {str(e)}"
+            return f"Error: {e}"
 
 
-async def _download_resource(
-    resource_url: str, max_size: int = MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
-) -> tuple[bytes, str, str | None]:
+# ---------------------------------------------------------------------------
+# Cache helpers
+# ---------------------------------------------------------------------------
+
+
+def _evict_expired_cache() -> None:
+    """Remove expired entries and delete their temp files."""
+    expired = [k for k, v in _file_cache.items() if v.is_expired()]
+    for key in expired:
+        cached = _file_cache.pop(key)
+        Path(cached.path).unlink(missing_ok=True)
+        logger.debug(f"Evicted cached file for resource {key}: {cached.path}")
+
+
+# ---------------------------------------------------------------------------
+# Download
+# ---------------------------------------------------------------------------
+
+
+async def _stream_to_tempfile(
+    resource_url: str,
+    max_size: int,
+) -> tuple[str, str, str | None]:
     """
-    Download a resource with size limit.
+    Stream a remote file to a named temp file on disk.
 
-    Returns:
-        (content, filename, content_type)
+    Returns (tmp_path, filename, content_type).
+    Raises ValueError if the file exceeds max_size.
     """
-    async with httpx.AsyncClient() as session:
-        resp = await session.get(resource_url, timeout=300.0)
-        resp.raise_for_status()
+    async with httpx.AsyncClient() as client:
+        async with client.stream("GET", resource_url, timeout=300.0) as resp:
+            resp.raise_for_status()
 
-        # Check content length if available
-        content_length = resp.headers.get("Content-Length")
-        if content_length:
-            size = int(content_length)
-            if size > max_size:
+            content_length = resp.headers.get("Content-Length")
+            if content_length and int(content_length) > max_size:
                 raise ValueError(
-                    f"File too large: {size / (1024 * 1024):.1f} MB "
-                    f"(max: {max_size / (1024 * 1024):.1f} MB)"
+                    f"File too large: {int(content_length) / (1024 * 1024):.1f} MB "
+                    f"(limit: {max_size / (1024 * 1024):.0f} MB)"
                 )
 
-        # Accumulate chunks then join once (avoids bytearray → bytes double-copy)
-        chunks: list[bytes] = []
-        total = 0
-        async for chunk in resp.aiter_bytes(chunk_size=65536):
-            total += len(chunk)
-            if total > max_size:
-                raise ValueError(
-                    f"File too large: exceeds {max_size / (1024 * 1024):.1f} MB limit"
-                )
-            chunks.append(chunk)
+            content_disposition = resp.headers.get("Content-Disposition", "")
+            content_type = resp.headers.get("Content-Type", "").split(";")[0].strip()
 
-        # Get filename from Content-Disposition or URL
-        filename = "resource"
-        content_disposition = resp.headers.get("Content-Disposition", "")
-        if "filename=" in content_disposition:
-            filename = content_disposition.split("filename=")[1].strip("\"'")
-        elif "/" in resource_url:
-            filename = resource_url.split("/")[-1].split("?")[0]
+            filename = "resource"
+            if "filename=" in content_disposition:
+                filename = content_disposition.split("filename=")[1].strip("\"'")
+            elif "/" in resource_url:
+                filename = resource_url.split("/")[-1].split("?")[0] or "resource"
 
-        content_type = resp.headers.get("Content-Type", "").split(";")[0]
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{filename}")
+            total = 0
+            try:
+                async for chunk in resp.aiter_bytes(chunk_size=65536):
+                    total += len(chunk)
+                    if total > max_size:
+                        tmp.close()
+                        Path(tmp.name).unlink(missing_ok=True)
+                        raise ValueError(
+                            f"File too large: exceeds {max_size / (1024 * 1024):.0f} MB limit"
+                        )
+                    tmp.write(chunk)
+            finally:
+                tmp.close()
 
-        return b"".join(chunks), filename, content_type
+    return tmp.name, filename, content_type or None
+
+
+# ---------------------------------------------------------------------------
+# Format detection
+# ---------------------------------------------------------------------------
 
 
 def _detect_file_format(filename: str, content_type: str | None) -> str:
-    """Detect file format from filename and content type."""
-    filename_lower = filename.lower()
-
-    # Check by extension first
-    if filename_lower.endswith(".csv") or filename_lower.endswith(".csv.gz"):
+    fn = filename.lower()
+    if fn.endswith(".csv") or fn.endswith(".csv.gz"):
         return "csv"
-    elif (
-        filename_lower.endswith(".json")
-        or filename_lower.endswith(".jsonl")
-        or filename_lower.endswith(".ndjson")
-    ):
+    if fn.endswith(".jsonl") or fn.endswith(".ndjson") or fn.endswith(".jsonl.gz"):
+        return "jsonl"
+    if fn.endswith(".json") or fn.endswith(".json.gz"):
         return "json"
-    elif filename_lower.endswith(".xml"):
-        return "xml"
-    elif filename_lower.endswith(".xlsx"):
+    if fn.endswith(".xlsx"):
         return "xlsx"
-    elif filename_lower.endswith(".xls"):
+    if fn.endswith(".xls"):
         return "xls"
-    elif filename_lower.endswith(".gz"):
+    if fn.endswith(".xml"):
+        return "xml"
+    if fn.endswith(".gz"):
         return "gzip"
-    elif filename_lower.endswith(".zip"):
+    if fn.endswith(".zip"):
         return "zip"
 
-    # Check by content type
     if content_type:
-        if "csv" in content_type:
+        ct = content_type.lower()
+        if "csv" in ct:
             return "csv"
-        elif "json" in content_type:
+        if "json" in ct:
             return "json"
-        elif "xml" in content_type:
+        if "xml" in ct:
             return "xml"
-        elif "excel" in content_type or "spreadsheet" in content_type:
+        if "excel" in ct or "spreadsheet" in ct:
             return "xlsx"
-        elif "gzip" in content_type:
+        if "gzip" in ct:
             return "gzip"
 
     return "unknown"
 
 
-def _parse_csv(
-    content: bytes, is_gzipped: bool = False, max_rows: int = MAX_ROWS_HARD_LIMIT
-) -> list[dict[str, Any]]:
-    """Parse CSV content with automatic delimiter detection, stopping at max_rows."""
-    if is_gzipped:
-        content = gzip.decompress(content)
+# ---------------------------------------------------------------------------
+# JSON → JSONL normalisation
+# ---------------------------------------------------------------------------
 
-    text = content.decode("utf-8-sig")  # Handle BOM
 
-    # Detect delimiter automatically
-    # Try to sniff the delimiter from the first few lines
-    sample_lines = text.split("\n")[:5]  # Use first 5 lines for detection
-    sample_text = "\n".join(sample_lines)
+def _normalise_json_to_jsonl(json_path: str, is_gzipped: bool) -> tuple[str, str]:
+    """
+    Parse a JSON file (array or single object) and write it out as JSONL.
 
-    delimiter = ","
+    Returns (new_tmp_path, "jsonl").
+    The original temp file is deleted after successful conversion.
+    This is the only point in the lifecycle where a JSON file is fully loaded
+    into memory — it happens once and the result is cached on disk as JSONL.
+    """
+    opener = gzip.open if is_gzipped else open
+    with opener(json_path, "rt", encoding="utf-8") as fh:
+        data = json.load(fh)
+
+    if isinstance(data, dict):
+        records: list[Any] = [data]
+    elif isinstance(data, list):
+        records = data
+    else:
+        records = [{"value": data}]
+
+    tmp = tempfile.NamedTemporaryFile(
+        delete=False, suffix="_normalised.jsonl", mode="w", encoding="utf-8"
+    )
     try:
-        sniffer = csv.Sniffer()
-        delimiter = sniffer.sniff(sample_text, delimiters=",;\t|").delimiter
-    except (csv.Error, AttributeError):
-        # If sniffing fails, try common delimiters in order of likelihood
-        # Count occurrences of each delimiter in the sample
-        delimiter_counts = {
-            ",": sample_text.count(","),
-            ";": sample_text.count(";"),
-            "\t": sample_text.count("\t"),
-            "|": sample_text.count("|"),
-        }
-        # Use the delimiter with the most occurrences (but at least 2 to avoid false positives)
-        if delimiter_counts:
-            best_delimiter = max(delimiter_counts.items(), key=lambda x: x[1])
-            if best_delimiter[1] >= 2:
-                delimiter = best_delimiter[0]
+        for record in records:
+            tmp.write(json.dumps(record, ensure_ascii=False) + "\n")
+    finally:
+        tmp.close()
 
-    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
-    return list(itertools.islice(reader, max_rows))
+    Path(json_path).unlink(missing_ok=True)
+    return tmp.name, "jsonl"
 
 
-def _parse_json(
-    content: bytes, is_gzipped: bool = False, max_rows: int = MAX_ROWS_HARD_LIMIT
-) -> list[dict[str, Any]]:
-    """Parse JSON content (array or JSONL), stopping at max_rows."""
-    if is_gzipped:
-        content = gzip.decompress(content)
+# ---------------------------------------------------------------------------
+# Paginated readers
+# ---------------------------------------------------------------------------
 
-    text = content.decode("utf-8")
 
-    # Try JSON array first
-    try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            return data
-        if isinstance(data, dict):
-            return [data]
-    except json.JSONDecodeError:
-        pass
+def _read_page(
+    cached: CachedFile,
+    page: int,
+    page_size: int,
+) -> tuple[list[dict[str, Any]], bool, int | None]:
+    """
+    Read one page from a cached file.
 
-    # Try JSONL (one JSON object per line) — stop early at max_rows
-    result = []
-    for line in text.strip().split("\n"):
-        if len(result) >= max_rows:
-            break
-        if line.strip():
+    Returns (rows, has_more, total_rows_hint).
+    total_rows_hint is None when counting would require a full scan we haven't done.
+    """
+    if cached.file_format in ("csv", "jsonl"):
+        return _read_line_based_page(cached, page, page_size)
+
+    # Unsupported formats fall through with an informative error
+    raise ValueError(
+        f"Format '{cached.file_format}' is not supported for paginated reading. "
+        "Supported: CSV, JSONL/NDJSON."
+    )
+
+
+def _read_line_based_page(
+    cached: CachedFile,
+    page: int,
+    page_size: int,
+) -> tuple[list[dict[str, Any]], bool, int | None]:
+    """Streaming page reader for CSV and JSONL."""
+    offset = (page - 1) * page_size
+
+    if cached.file_format == "csv":
+        return _read_csv_page(cached.path, cached.is_gzipped, offset, page_size)
+    else:
+        return _read_jsonl_page(cached.path, cached.is_gzipped, offset, page_size)
+
+
+def _read_csv_page(
+    path: str,
+    is_gzipped: bool,
+    offset: int,
+    page_size: int,
+) -> tuple[list[dict[str, Any]], bool, int | None]:
+    opener = gzip.open if is_gzipped else open
+    with opener(path, "rt", encoding="utf-8-sig") as fh:
+        # Sniff delimiter from a small sample, then rewind
+        sample = "".join(fh.readline() for _ in range(5))
+        fh.seek(0)
+
+        delimiter = ","
+        try:
+            delimiter = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+        except (csv.Error, AttributeError):
+            counts = {d: sample.count(d) for d in (",", ";", "\t", "|")}
+            best, n = max(counts.items(), key=lambda x: x[1])
+            if n >= 2:
+                delimiter = best
+
+        reader = csv.DictReader(fh, delimiter=delimiter)
+
+        # Skip rows before our page
+        for _ in itertools.islice(reader, offset):
+            pass
+
+        rows = list(itertools.islice(reader, page_size))
+        has_more = next(reader, None) is not None
+
+    return rows, has_more, None
+
+
+def _read_jsonl_page(
+    path: str,
+    is_gzipped: bool,
+    offset: int,
+    page_size: int,
+) -> tuple[list[dict[str, Any]], bool, int | None]:
+    opener = gzip.open if is_gzipped else open
+    rows: list[dict[str, Any]] = []
+    has_more = False
+
+    with opener(path, "rt", encoding="utf-8") as fh:
+        line_iter = (line for line in fh if line.strip())
+
+        # Skip rows before our page
+        for _ in itertools.islice(line_iter, offset):
+            pass
+
+        for line in itertools.islice(line_iter, page_size):
             try:
-                result.append(json.loads(line))
+                obj = json.loads(line)
+                rows.append(obj if isinstance(obj, dict) else {"value": obj})
             except json.JSONDecodeError:
                 continue
-    return result
+
+        has_more = next(line_iter, None) is not None
+
+    return rows, has_more, None

@@ -28,7 +28,7 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         Use filter_column/filter_value/filter_operator to filter, sort_column/sort_direction to sort.
         Filter operators: exact, contains, less, greater, strictly_less, strictly_greater.
         For large datasets (>1000 rows) requiring full analysis, download_and_parse_resource
-        may be more efficient than paginating through many pages.
+        also supports pagination and may be more efficient for JSON/JSONL files.
         """
         try:
             filter_operator = filter_operator.lower()
@@ -181,11 +181,11 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
                     if total_count and total_count > 1000:
                         content_parts.append(
                             f"⚠️ Large dataset ({total_count} rows). "
-                            f"For comprehensive analysis, consider using download_and_parse_resource "
-                            f"instead of paginating through many pages."
+                            f"For JSON/JSONL files, download_and_parse_resource supports "
+                            f"pagination with a disk cache (file downloaded once)."
                         )
                         content_parts.append(
-                            f"   If you only need specific data, you can continue with page={next_page}."
+                            f"   To continue here, use page={next_page}."
                         )
                     else:
                         content_parts.append(
