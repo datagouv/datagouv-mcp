@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.19 (2026-03-04)
+
+- docs: add TODO
+- docs: improve README for instructions about chatbots
+- feat: include version in user-agent
+- feat: mcp sends a specific user agent to datagouv service
+- fix: allow localhost with port in allowed_hosts for local MCP clients
+- fix: fix wrong max value
+- fix: remove slicing in _parse_json response
+- fix(download): harden RAM limits in download_and_parse_resource
+- tests: test user-agent
+
+
 ## 0.2.18 (2026-03-03)
 
 - docs: update README with IBM Bob server type from 'http' to 'streamable-http'
