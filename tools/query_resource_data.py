@@ -27,8 +27,8 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         Works for CSV/XLSX files. Start with small page_size (20) to preview structure.
         Use filter_column/filter_value/filter_operator to filter, sort_column/sort_direction to sort.
         Filter operators: exact, contains, less, greater, strictly_less, strictly_greater.
-        For large datasets (>1000 rows) requiring full analysis, download_and_parse_resource
-        may be more efficient than paginating through many pages.
+        For large datasets requiring full analysis, paginate through pages or use
+        get_resource_info to retrieve the raw file URL and fetch it directly.
         """
         try:
             filter_operator = filter_operator.lower()
@@ -181,11 +181,8 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
                     if total_count and total_count > 1000:
                         content_parts.append(
                             f"⚠️ Large dataset ({total_count} rows). "
-                            f"For comprehensive analysis, consider using download_and_parse_resource "
-                            f"instead of paginating through many pages."
-                        )
-                        content_parts.append(
-                            f"   If you only need specific data, you can continue with page={next_page}."
+                            f"To get all data, paginate using page={next_page} or use "
+                            f"get_resource_info to retrieve the raw file URL and fetch it directly."
                         )
                     else:
                         content_parts.append(

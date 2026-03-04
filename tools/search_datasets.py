@@ -66,8 +66,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
 
-        Typical workflow: search_datasets → list_dataset_resources →
-        query_resource_data (or download_and_parse_resource for large files).
+        Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
         """
         # Clean the query to remove generic stop words that break AND-based searches
         cleaned_query = clean_search_query(query)

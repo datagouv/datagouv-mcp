@@ -1,8 +1,5 @@
 from mcp.server.fastmcp import FastMCP
 
-from tools.download_and_parse_resource import (
-    register_download_and_parse_resource_tool,
-)
 from tools.get_dataservice_info import register_get_dataservice_info_tool
 from tools.get_dataservice_openapi_spec import (
     register_get_dataservice_openapi_spec_tool,
@@ -26,5 +23,4 @@ def register_tools(mcp: FastMCP) -> None:
     register_get_dataset_info_tool(mcp)
     register_list_dataset_resources_tool(mcp)
     register_get_resource_info_tool(mcp)
-    register_download_and_parse_resource_tool(mcp)
     register_get_metrics_tool(mcp)
