@@ -17,6 +17,8 @@ from tools import register_tools
 
 init_sentry()
 
+SERVER_START_TIME = datetime.now(timezone.utc)
+
 # Configure logging
 LOGGER_NAME = "datagouv_mcp"
 
@@ -69,7 +71,6 @@ def with_monitoring(
 
             # Handle /health endpoint (no tracking)
             if path == "/health":
-                timestamp = datetime.now(timezone.utc).isoformat()
                 # Get version from package metadata (managed by setuptools-scm)
                 try:
                     app_version = version("datagouv-mcp")
@@ -77,7 +78,13 @@ def with_monitoring(
                     app_version = "unknown"
 
                 body = json.dumps(
-                    {"status": "ok", "timestamp": timestamp, "version": app_version}
+                    {
+                        "status": "ok",
+                        "uptime_since": SERVER_START_TIME.isoformat(),
+                        "version": app_version,
+                        "env": os.getenv("MCP_ENV", "unknown"),
+                        "data_env": os.getenv("DATAGOUV_API_ENV", "unknown"),
+                    }
                 ).encode("utf-8")
                 headers = [
                     (b"content-type", b"application/json"),
