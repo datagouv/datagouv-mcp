@@ -11,8 +11,8 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
         Get detailed information about a specific resource (file).
 
         Returns format, size, MIME type, URL, and checks Tabular API availability.
-        Helps decide which tool to use: query_resource_data (if Tabular API available)
-        or download_and_parse_resource (for large files or unsupported formats).
+        Helps decide whether to use query_resource_data (if Tabular API is available)
+        or fetch the raw file URL directly for unsupported formats or large files.
         """
         try:
             # Get full resource data from API v2

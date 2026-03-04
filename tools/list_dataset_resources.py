@@ -10,8 +10,8 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
         List all resources (files) in a dataset with their metadata.
 
         Returns resource ID, title, format, size, and URL for each file.
-        Next step: use query_resource_data for CSV/XLSX files,
-        or download_and_parse_resource for other formats (JSON, JSONL) or large datasets.
+        Next step: use query_resource_data for CSV/XLSX files via the Tabular API,
+        or fetch the resource URL directly for other formats (JSON, JSONL) or large datasets.
         """
         try:
             dataset = await datagouv_api_client.get_dataset_details(dataset_id)
