@@ -1,7 +1,7 @@
 """Tests for the datagouv_api_client helper."""
 
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -23,6 +23,11 @@ def known_resource_id() -> str:
     return "3b6b2281-b9d9-4959-ae9d-c2c166dff118"
 
 
+def test_module_client_has_user_agent():
+    """Test that the shared httpx client is configured with the correct User-Agent header."""
+    assert datagouv_api_client._client.headers.get("user-agent") == USER_AGENT
+
+
 @pytest.mark.asyncio
 class TestAsyncFunctions:
     """Tests for async API functions."""
@@ -36,8 +41,10 @@ class TestAsyncFunctions:
         assert "title" in metadata
         assert metadata["title"] is not None
 
-    async def test_get_dataset_metadata_sends_user_agent(self, known_dataset_id):
-        """Test that get_dataset_metadata creates a client with User-Agent header."""
+    async def test_get_dataset_metadata_accepts_session_override(
+        self, known_dataset_id
+    ):
+        """Test that get_dataset_metadata uses an injected session when provided."""
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -46,17 +53,12 @@ class TestAsyncFunctions:
         }
         mock_response.raise_for_status = MagicMock()
         mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock(return_value=None)
 
-        with patch(
-            "helpers.datagouv_api_client.httpx.AsyncClient",
-            return_value=mock_client,
-        ) as mock_async_client:
-            await datagouv_api_client.get_dataset_metadata(
-                known_dataset_id, session=None
-            )
+        await datagouv_api_client.get_dataset_metadata(
+            known_dataset_id, session=mock_client
+        )
 
-        mock_async_client.assert_called_once_with(headers={"User-Agent": USER_AGENT})
+        mock_client.get.assert_called_once()
 
     async def test_get_resource_metadata(self, known_resource_id):
         """Test fetching resource metadata."""
