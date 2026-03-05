@@ -11,6 +11,8 @@ from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
+_client = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+
 
 async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
     logger.debug("datagouv API GET %s", url)
@@ -29,38 +31,24 @@ async def get_resource_details(
     """
     Fetch the complete resource payload from the API v2 endpoint.
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        base_url: str = env_config.get_base_url("datagouv_api")
-        url = f"{base_url}2/datasets/resources/{resource_id}/"
-        return await _fetch_json(session, url)
-    finally:
-        if own:
-            await session.aclose()
+    client = session or _client
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}2/datasets/resources/{resource_id}/"
+    return await _fetch_json(client, url)
 
 
 async def get_resource_metadata(
     resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        data = await get_resource_details(resource_id, session=session)
-        resource: dict[str, Any] = data.get("resource", {})
-        return {
-            "id": resource.get("id") or resource_id,
-            "title": resource.get("title") or resource.get("name"),
-            "description": resource.get("description"),
-            "dataset_id": data.get("dataset_id"),
-        }
-    finally:
-        if own:
-            await session.aclose()
+    client = session or _client
+    data = await get_resource_details(resource_id, session=client)
+    resource: dict[str, Any] = data.get("resource", {})
+    return {
+        "id": resource.get("id") or resource_id,
+        "title": resource.get("title") or resource.get("name"),
+        "description": resource.get("description"),
+        "dataset_id": data.get("dataset_id"),
+    }
 
 
 async def get_dataset_details(
@@ -69,55 +57,35 @@ async def get_dataset_details(
     """
     Fetch the complete dataset payload from the API v1 endpoint.
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        base_url: str = env_config.get_base_url("datagouv_api")
-        url = f"{base_url}1/datasets/{dataset_id}/"
-        return await _fetch_json(session, url)
-    finally:
-        if own:
-            await session.aclose()
+    client = session or _client
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}1/datasets/{dataset_id}/"
+    return await _fetch_json(client, url)
 
 
 async def get_dataset_metadata(
     dataset_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        data = await get_dataset_details(dataset_id, session=session)
-        return {
-            "id": data.get("id"),
-            "title": data.get("title") or data.get("name"),
-            "description_short": data.get("description_short"),
-            "description": data.get("description"),
-        }
-    finally:
-        if own:
-            await session.aclose()
+    client = session or _client
+    data = await get_dataset_details(dataset_id, session=client)
+    return {
+        "id": data.get("id"),
+        "title": data.get("title") or data.get("name"),
+        "description_short": data.get("description_short"),
+        "description": data.get("description"),
+    }
 
 
 async def get_resource_and_dataset_metadata(
     resource_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    try:
-        res: dict[str, Any] = await get_resource_metadata(resource_id, session=session)
-        ds: dict[str, Any] = {}
-        ds_id = res.get("dataset_id")
-        if ds_id:
-            ds = await get_dataset_metadata(str(ds_id), session=session)
-        return {"resource": res, "dataset": ds}
-    finally:
-        if own and session:
-            await session.aclose()
+    client = session or _client
+    res: dict[str, Any] = await get_resource_metadata(resource_id, session=client)
+    ds: dict[str, Any] = {}
+    ds_id = res.get("dataset_id")
+    if ds_id:
+        ds = await get_dataset_metadata(str(ds_id), session=client)
+    return {"resource": res, "dataset": ds}
 
 
 async def get_resources_for_dataset(
@@ -129,25 +97,18 @@ async def get_resources_for_dataset(
     Returns:
         dict with 'dataset' metadata and 'resources' list of resource IDs and titles
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    try:
-        ds = await get_dataset_metadata(dataset_id, session=session)
-        base_url: str = env_config.get_base_url("datagouv_api")
-        # Fetch resources from API v1
-        url = f"{base_url}1/datasets/{dataset_id}/"
-        data = await _fetch_json(session, url)  # type: ignore
-        resources: list[dict[str, Any]] = data.get("resources", [])
-        res_list: list[tuple[str, str]] = [
-            (res.get("id"), res.get("title", "") or res.get("name", ""))
-            for res in resources
-            if res.get("id")
-        ]
-        return {"dataset": ds, "resources": res_list}
-    finally:
-        if own and session:
-            await session.aclose()
+    client = session or _client
+    ds = await get_dataset_metadata(dataset_id, session=client)
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}1/datasets/{dataset_id}/"
+    data = await _fetch_json(client, url)
+    resources: list[dict[str, Any]] = data.get("resources", [])
+    res_list: list[tuple[str, str]] = [
+        (res.get("id"), res.get("title", "") or res.get("name", ""))
+        for res in resources
+        if res.get("id")
+    ]
+    return {"dataset": ds, "resources": res_list}
 
 
 async def fetch_openapi_spec(
@@ -164,30 +125,22 @@ async def fetch_openapi_spec(
         httpx.HTTPError: If the HTTP request fails.
         ValueError: If the response cannot be parsed as JSON or YAML.
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
+    client = session or _client
+    logger.debug("Fetching OpenAPI spec from %s", url)
+    resp = await client.get(url, timeout=15.0, follow_redirects=True)
+    resp.raise_for_status()
+    content = resp.text
+
     try:
-        logger.debug("Fetching OpenAPI spec from %s", url)
-        resp = await session.get(url, timeout=15.0, follow_redirects=True)
-        resp.raise_for_status()
-        content = resp.text
+        return json.loads(content)
+    except (json.JSONDecodeError, ValueError):
+        pass
+    try:
+        return yaml.safe_load(content)
+    except yaml.YAMLError:
+        pass
 
-        # Try JSON first, then YAML
-        try:
-            return json.loads(content)
-        except (json.JSONDecodeError, ValueError):
-            pass
-        try:
-            return yaml.safe_load(content)
-        except yaml.YAMLError:
-            pass
-
-        raise ValueError(f"Could not parse OpenAPI spec from {url} as JSON or YAML")
-    finally:
-        if own:
-            await session.aclose()
+    raise ValueError(f"Could not parse OpenAPI spec from {url} as JSON or YAML")
 
 
 async def get_dataservice_details(
@@ -196,17 +149,10 @@ async def get_dataservice_details(
     """
     Fetch the complete dataservice payload from the API v1 endpoint.
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        base_url: str = env_config.get_base_url("datagouv_api")
-        url = f"{base_url}1/dataservices/{dataservice_id}/"
-        return await _fetch_json(session, url)
-    finally:
-        if own:
-            await session.aclose()
+    client = session or _client
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}1/dataservices/{dataservice_id}/"
+    return await _fetch_json(client, url)
 
 
 async def search_dataservices(
@@ -226,56 +172,49 @@ async def search_dataservices(
     Returns:
         dict with 'data' (list of dataservices), 'page', 'page_size', and 'total'
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        base_url: str = env_config.get_base_url("datagouv_api")
-        url = f"{base_url}2/dataservices/search/"
-        params = {
-            "q": query,
-            "page": page,
-            "page_size": min(page_size, 100),
-        }
-        resp = await session.get(url, params=params, timeout=15.0)
-        resp.raise_for_status()
-        data = resp.json()
+    client = session or _client
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}2/dataservices/search/"
+    params = {
+        "q": query,
+        "page": page,
+        "page_size": min(page_size, 100),
+    }
+    resp = await client.get(url, params=params, timeout=15.0)
+    resp.raise_for_status()
+    data = resp.json()
 
-        dataservices: list[dict[str, Any]] = data.get("data", [])
-        results: list[dict[str, Any]] = []
-        for ds in dataservices:
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+    dataservices: list[dict[str, Any]] = data.get("data", [])
+    results: list[dict[str, Any]] = []
+    for ds in dataservices:
+        tags: list[str] = []
+        for tag in ds.get("tags", []):
+            if isinstance(tag, str):
+                tags.append(tag)
+            elif isinstance(tag, dict):
+                tags.append(tag.get("name", ""))
 
-            results.append(
-                {
-                    "id": ds.get("id"),
-                    "title": ds.get("title") or "",
-                    "description": ds.get("description", ""),
-                    "organization": ds.get("organization", {}).get("name")
-                    if ds.get("organization")
-                    else None,
-                    "base_api_url": ds.get("base_api_url"),
-                    "machine_documentation_url": ds.get("machine_documentation_url"),
-                    "tags": tags,
-                    "url": f"{env_config.get_base_url('site')}dataservices/{ds.get('id', '')}",
-                }
-            )
+        results.append(
+            {
+                "id": ds.get("id"),
+                "title": ds.get("title") or "",
+                "description": ds.get("description", ""),
+                "organization": ds.get("organization", {}).get("name")
+                if ds.get("organization")
+                else None,
+                "base_api_url": ds.get("base_api_url"),
+                "machine_documentation_url": ds.get("machine_documentation_url"),
+                "tags": tags,
+                "url": f"{env_config.get_base_url('site')}dataservices/{ds.get('id', '')}",
+            }
+        )
 
-        return {
-            "data": results,
-            "page": page,
-            "page_size": len(results),
-            "total": data.get("total", len(results)),
-        }
-    finally:
-        if own:
-            await session.aclose()
+    return {
+        "data": results,
+        "page": page,
+        "page_size": len(results),
+        "total": data.get("total", len(results)),
+    }
 
 
 async def search_datasets(
@@ -295,57 +234,47 @@ async def search_datasets(
     Returns:
         dict with 'data' (list of datasets), 'page', 'page_size', and 'total'
     """
-    own = session is None
-    if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    assert session is not None
-    try:
-        base_url: str = env_config.get_base_url("datagouv_api")
-        # Use API v2 for dataset search
-        url = f"{base_url}2/datasets/search/"
-        params = {
-            "q": query,
-            "page": page,
-            "page_size": min(page_size, 100),  # API limit
-        }
-        resp = await session.get(url, params=params, timeout=15.0)
-        resp.raise_for_status()
-        data = resp.json()
+    client = session or _client
+    base_url: str = env_config.get_base_url("datagouv_api")
+    url = f"{base_url}2/datasets/search/"
+    params = {
+        "q": query,
+        "page": page,
+        "page_size": min(page_size, 100),
+    }
+    resp = await client.get(url, params=params, timeout=15.0)
+    resp.raise_for_status()
+    data = resp.json()
 
-        datasets: list[dict[str, Any]] = data.get("data", [])
-        # Extract relevant fields for each dataset
-        results: list[dict[str, Any]] = []
-        for ds in datasets:
-            # Handle tags - can be strings or objects with "name" field
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+    datasets: list[dict[str, Any]] = data.get("data", [])
+    results: list[dict[str, Any]] = []
+    for ds in datasets:
+        tags: list[str] = []
+        for tag in ds.get("tags", []):
+            if isinstance(tag, str):
+                tags.append(tag)
+            elif isinstance(tag, dict):
+                tags.append(tag.get("name", ""))
 
-            results.append(
-                {
-                    "id": ds.get("id"),
-                    "title": ds.get("title") or ds.get("name", ""),
-                    "description": ds.get("description", ""),
-                    "description_short": ds.get("description_short", ""),
-                    "slug": ds.get("slug", ""),
-                    "organization": ds.get("organization", {}).get("name")
-                    if ds.get("organization")
-                    else None,
-                    "tags": tags,
-                    "resources_count": len(ds.get("resources", [])),
-                    "url": f"{env_config.get_base_url('site')}datasets/{ds.get('slug', ds.get('id', ''))}",
-                }
-            )
+        results.append(
+            {
+                "id": ds.get("id"),
+                "title": ds.get("title") or ds.get("name", ""),
+                "description": ds.get("description", ""),
+                "description_short": ds.get("description_short", ""),
+                "slug": ds.get("slug", ""),
+                "organization": ds.get("organization", {}).get("name")
+                if ds.get("organization")
+                else None,
+                "tags": tags,
+                "resources_count": len(ds.get("resources", [])),
+                "url": f"{env_config.get_base_url('site')}datasets/{ds.get('slug', ds.get('id', ''))}",
+            }
+        )
 
-        return {
-            "data": results,
-            "page": page,
-            "page_size": len(results),
-            "total": data.get("total", len(results)),
-        }
-    finally:
-        if own:
-            await session.aclose()
+    return {
+        "data": results,
+        "page": page,
+        "page_size": len(results),
+        "total": data.get("total", len(results)),
+    }
