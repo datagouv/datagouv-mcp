@@ -12,6 +12,9 @@ from helpers import datagouv_api_client
 
 logger = logging.getLogger("datagouv_mcp")
 
+# Most common encodings for French open data files (data.gouv.fr)
+ENCODINGS = ["utf-8-sig", "latin-1", "cp1252", "iso-8859-15"]
+
 
 def register_download_and_parse_resource_tool(mcp: FastMCP) -> None:
     @mcp.tool()
@@ -258,14 +261,23 @@ def _parse_csv(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]]
 
     # Try UTF-8 first (with BOM handling), then fall back to other encodings
     text = None
-    for encoding in ("utf-8-sig", "latin-1"):
+    for encoding in ENCODINGS:
         try:
             text = content.decode(encoding)
             break
-        except (UnicodeDecodeError, ValueError):
+        except (UnicodeDecodeError, ValueError) as e:
+            logger.debug(
+                f"Failed to decode CSV with {encoding}: {e}. Trying next encoding."
+            )
             continue
+
     if text is None:
-        text = content.decode("utf-8-sig", errors="replace")
+        # Last resort: use errors='replace' to avoid crashing
+        text = content.decode("utf-8", errors="replace")
+        logger.error(
+            "Failed to decode CSV with any known encoding. "
+            f"Tried: {', '.join(ENCODINGS)}. Using lossy UTF-8 decode."
+        )
 
     # Detect delimiter automatically
     # Try to sniff the delimiter from the first few lines
@@ -300,16 +312,25 @@ def _parse_json(content: bytes, is_gzipped: bool = False) -> list[dict[str, Any]
     if is_gzipped:
         content = gzip.decompress(content)
 
-    # Try UTF-8 first (with BOM handling), then fall back to Latin-1, then lossy decode as last resort
+    # Try UTF-8 first (with BOM handling), then fall back to other encodings
     text = None
-    for encoding in ("utf-8-sig", "latin-1"):
+    for encoding in ENCODINGS:
         try:
             text = content.decode(encoding)
             break
-        except (UnicodeDecodeError, ValueError):
+        except (UnicodeDecodeError, ValueError) as e:
+            logger.debug(
+                f"Failed to decode JSON with {encoding}: {e}. Trying next encoding."
+            )
             continue
+
     if text is None:
+        # Last resort: use errors='replace' to avoid crashing
         text = content.decode("utf-8", errors="replace")
+        logger.error(
+            "Failed to decode JSON with any known encoding. "
+            f"Tried: {', '.join(ENCODINGS)}. Using lossy UTF-8 decode."
+        )
 
     # Try JSON array first
     try:
