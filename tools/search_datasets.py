@@ -58,13 +58,25 @@ def clean_search_query(query: str) -> str:
 
 def register_search_datasets_tool(mcp: FastMCP) -> None:
     @mcp.tool()
-    async def search_datasets(query: str, page: int = 1, page_size: int = 20) -> str:
+    async def search_datasets(
+        query: str,
+        page: int = 1,
+        page_size: int = 20,
+        sort: str | None = None,
+    ) -> str:
         """
         Search for datasets on data.gouv.fr by keywords.
 
         This is typically the first step in exploring data.gouv.fr.
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
+
+        Args:
+            query: Keywords to search. Avoid generic words like "données".
+            page: Page number (default 1).
+            page_size: Results per page (default 20).
+            sort: Sort order. Use '-created' for most recent, 'created' for oldest,
+                  '-title'/'title' for title descending/ascending. Default: relevance.
 
         Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
         """
@@ -73,7 +85,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
 
         # Try with cleaned query first
         result = await datagouv_api_client.search_datasets(
-            query=cleaned_query, page=page, page_size=page_size
+            query=cleaned_query, page=page, page_size=page_size, sort=sort
         )
 
         # Format the result as text content
@@ -88,7 +100,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
                 query,
             )
             result = await datagouv_api_client.search_datasets(
-                query=query, page=page, page_size=page_size
+                query=query, page=page, page_size=page_size, sort=sort
             )
             datasets = result.get("data", [])
 
