@@ -4,12 +4,14 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, metrics_api_client
+from helpers.logging import log_tool, MAIN_LOGGER_NAME
 
-logger = logging.getLogger("datagouv_mcp")
+logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 def register_get_metrics_tool(mcp: FastMCP) -> None:
     @mcp.tool()
+    @log_tool
     async def get_metrics(
         dataset_id: str | None = None,
         resource_id: str | None = None,

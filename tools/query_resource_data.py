@@ -4,12 +4,14 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, tabular_api_client
+from helpers.logging import log_tool, MAIN_LOGGER_NAME
 
-logger = logging.getLogger("datagouv_mcp")
+logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 def register_query_resource_data_tool(mcp: FastMCP) -> None:
     @mcp.tool()
+    @log_tool
     async def query_resource_data(
         question: str,
         resource_id: str,

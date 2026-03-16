@@ -2,10 +2,12 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import crawler_api_client, datagouv_api_client, env_config
+from helpers.logging import log_tool
 
 
 def register_get_resource_info_tool(mcp: FastMCP) -> None:
     @mcp.tool()
+    @log_tool
     async def get_resource_info(resource_id: str) -> str:
         """
         Get detailed information about a specific resource (file).

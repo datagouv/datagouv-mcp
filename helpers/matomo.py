@@ -37,4 +37,4 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
             await client.post(f"{MATOMO_URL}/matomo.php", data=payload, timeout=1.5)
     except Exception as e:
         # Fail silently to ensure the MCP server remains operational
-        logging.getLogger("datagouv_mcp").error(f"Matomo tracking failed: {e}")
+        logging.getLogger(MAIN_LOGGER_NAME).error(f"Matomo tracking failed: {e}")
