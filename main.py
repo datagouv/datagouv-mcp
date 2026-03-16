@@ -13,21 +13,14 @@ from mcp.server.transport_security import TransportSecuritySettings
 
 from helpers.matomo import track_matomo
 from helpers.sentry import init_sentry
+from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from tools import register_tools
 
 init_sentry()
 
 SERVER_START_TIME = datetime.now(timezone.utc)
 
-# Configure logging
-LOGGER_NAME = "datagouv_mcp"
-
-
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(LOGGER_NAME)
+logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 # Configure transport security for DNS rebinding protection (mcp >= 1.23)
 # Per MCP spec: MUST validate Origin header, SHOULD bind to localhost when running locally
@@ -138,4 +131,10 @@ if __name__ == "__main__":
     # Default to 0.0.0.0 for production (no breaking change)
     # Set MCP_HOST=127.0.0.1 for local development to follow MCP security best practices
     host = os.getenv("MCP_HOST", "0.0.0.0")
-    uvicorn.run(asgi_app, host=host, port=port, log_level="info")
+    uvicorn.run(
+        asgi_app,
+        host=host,
+        port=port,
+        log_level="info",
+        log_config=UVICORN_LOGGING_CONFIG,
+    )
