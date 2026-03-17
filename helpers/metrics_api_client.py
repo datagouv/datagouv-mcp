@@ -37,7 +37,7 @@ async def get_metrics(
         id_field: The ID field name (defaults to "{model}_id", e.g. "dataset_id" for model "datasets").
         time_granularity: Time granularity for metrics (default: "month"). Currently only "month" is
             supported by the API, but this parameter allows for future extensibility (e.g. "day", "week", "year").
-        limit: Maximum number of records to return (default: 12, max: 100).
+        limit: Maximum number of records to return (default: 12, max: 50).
         sort_order: Sort order for time field ("asc" or "desc", default: "desc").
         session: Optional httpx session for reuse across calls.
 
@@ -65,7 +65,7 @@ async def get_metrics(
         params = {
             f"{id_field}__exact": id_value,
             f"{time_field}__sort": sort_order,
-            "page_size": max(1, min(limit, 100)),
+            "page_size": max(1, min(limit, 50)),
         }
         logger.debug(
             f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "

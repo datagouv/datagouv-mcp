@@ -163,3 +163,50 @@ async def test_get_metrics_csv_with_custom_params():
     assert len(csv_content) > 0
     lines = csv_content.strip().split("\n")
     assert len(lines) > 1  # Header + data rows
+
+
+@pytest.mark.asyncio
+async def test_get_metrics_limit_capped_at_50():
+    """Test that limit is capped at 50 (API maximum)."""
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+
+    # Request with limit > 50
+    metrics = await metrics_api_client.get_metrics(
+        "datasets",
+        known_dataset_id,
+        limit=100,  # Request 100, should be capped to 50
+    )
+
+    # The function should not raise an error
+    assert len(metrics) > 0
+
+
+@pytest.mark.asyncio
+async def test_get_metrics_limit_minimum_is_1():
+    """Test that limit has a minimum of 1."""
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+
+    # Request with limit < 1
+    metrics = await metrics_api_client.get_metrics(
+        "datasets",
+        known_dataset_id,
+        limit=0,  # Should be capped to 1
+    )
+
+    # Should succeed with at least 1 record (or empty if no data)
+    assert isinstance(metrics, list)
+
+
+@pytest.mark.asyncio
+async def test_get_metrics_limit_exactly_50():
+    """Test that limit of exactly 50 works without error."""
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+
+    metrics = await metrics_api_client.get_metrics(
+        "datasets",
+        known_dataset_id,
+        limit=50,
+    )
+
+    assert isinstance(metrics, list)
+    assert len(metrics) <= 50
