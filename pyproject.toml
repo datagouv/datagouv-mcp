@@ -2,9 +2,7 @@
 name = "datagouv-mcp"
 dynamic = ["version"]
 description = "Model Context Protocol (MCP) server for interacting with data.gouv.fr datasets and resources via LLM chatbots"
-authors = [
-    {name = "data.gouv.fr", email = "opendatateam@data.gouv.fr"}
-]
+authors = [{ name = "data.gouv.fr", email = "opendatateam@data.gouv.fr" }]
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
@@ -23,6 +21,7 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
+    "pytest-httpx>=0.35.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.14.0",
     "ty>=0.0.18",

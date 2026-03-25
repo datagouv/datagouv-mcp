@@ -5,8 +5,9 @@ import httpx
 
 from helpers import env_config
 from helpers.user_agent import USER_AGENT
+from helpers.logging import MAIN_LOGGER_NAME
 
-logger = logging.getLogger("datagouv_mcp")
+logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 async def _get_session(

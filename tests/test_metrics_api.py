@@ -189,3 +189,47 @@ async def test_get_metrics_limit(limit, expected_max_len, require_non_empty):
         assert len(metrics) <= expected_max_len
     if require_non_empty:
         assert len(metrics) > 0
+        
+        
+@pytest.mark.asyncio
+async def test_get_metrics_with_none_values_dataset():
+    """Test that None values in metrics are handled gracefully (defaulting to 0)."""
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+
+    # This integration test ensures the API response with None values doesn't crash
+    metrics = await metrics_api_client.get_metrics(
+        "datasets",
+        known_dataset_id,
+        limit=5,
+    )
+
+    # If any visits/downloads are None, they should be coerced to 0
+    for entry in metrics:
+        visits = entry.get("monthly_visit", 0) or 0
+        downloads = entry.get("monthly_download_resource", 0) or 0
+
+        assert isinstance(visits, int), "visits should be an int"
+        assert isinstance(downloads, int), "downloads should be an int"
+        assert visits >= 0, "visits should be non-negative"
+        assert downloads >= 0, "downloads should be non-negative"
+
+
+@pytest.mark.asyncio
+async def test_get_metrics_with_none_values_resource():
+    """Test that None values in resource metrics are handled gracefully."""
+    known_resource_id = os.getenv(
+        "TEST_RESOURCE_ID",
+        "3b6b2281-b9d9-4959-ae9d-c2c166dff118",
+    )
+
+    metrics = await metrics_api_client.get_metrics(
+        "resources",
+        known_resource_id,
+        limit=5,
+    )
+
+    # Ensure downloads are properly coerced to int even if None
+    for entry in metrics:
+        downloads = entry.get("monthly_download_resource", 0) or 0
+        assert isinstance(downloads, int), "downloads should be an int"
+        assert downloads >= 0, "downloads should be non-negative"
