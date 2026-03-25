@@ -321,6 +321,9 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 ## 🛠️ Available Tools
 
 The MCP server provides tools to interact with data.gouv.fr datasets and dataservices.
+It also exposes a `Catalog Scope and Discovery Guide` MCP resource so clients can
+understand that the server has live access to the current catalog and should search
+before claiming a dataset is unavailable.
 
 **Note:** "Dataservices" are external third-party APIs (e.g., Adresse API, Sirene API) registered in the data.gouv.fr catalog. They are distinct from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) which power this MCP server.
 
