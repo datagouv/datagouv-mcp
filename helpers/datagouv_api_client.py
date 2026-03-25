@@ -6,8 +6,8 @@ import httpx
 import yaml
 
 from helpers import env_config
-from helpers.user_agent import USER_AGENT
 from helpers.logging import MAIN_LOGGER_NAME
+from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
