@@ -3,6 +3,7 @@ import os
 from datetime import UTC, datetime
 
 import httpx
+from helpers.logging import MAIN_LOGGER_NAME
 
 # Configure Matomo
 MATOMO_URL = "https://stats.data.gouv.fr"
