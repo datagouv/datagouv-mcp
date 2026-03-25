@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.0",
     "pytest-httpx>=0.35.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.14.0",
