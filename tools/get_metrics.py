@@ -87,8 +87,8 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
                         total_downloads = 0
                         for entry in metrics:
                             month = entry.get("metric_month", "Unknown")
-                            visits = entry.get("monthly_visit", 0)
-                            downloads = entry.get("monthly_download_resource", 0)
+                            visits = entry.get("monthly_visit", 0) or 0
+                            downloads = entry.get("monthly_download_resource", 0) or 0
                             total_visits += visits
                             total_downloads += downloads
                             content_parts.append(
@@ -153,7 +153,7 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
                         total_downloads = 0
                         for entry in metrics:
                             month = entry.get("metric_month", "Unknown")
-                            downloads = entry.get("monthly_download_resource", 0)
+                            downloads = entry.get("monthly_download_resource", 0) or 0
                             total_downloads += downloads
                             content_parts.append(f"{month:<12} {downloads:<15,}")
 
