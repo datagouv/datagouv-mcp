@@ -2,10 +2,12 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, env_config
+from helpers.logging import log_tool
 
 
 def register_get_dataset_info_tool(mcp: FastMCP) -> None:
     @mcp.tool()
+    @log_tool
     async def get_dataset_info(dataset_id: str) -> str:
         """
         Get detailed metadata about a specific dataset.

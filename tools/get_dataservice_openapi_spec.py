@@ -5,8 +5,9 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
+from helpers.logging import log_tool, MAIN_LOGGER_NAME
 
-logger = logging.getLogger("datagouv_mcp")
+logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 def _summarize_parameters(params: list[dict[str, Any]]) -> str:
@@ -85,6 +86,7 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
 
 def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
     @mcp.tool()
+    @log_tool
     async def get_dataservice_openapi_spec(dataservice_id: str) -> str:
         """
         Fetch and summarize the OpenAPI/Swagger spec for a dataservice (external third-party API).
