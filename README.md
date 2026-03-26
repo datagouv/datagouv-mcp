@@ -421,7 +421,7 @@ We welcome contributions! To keep the project stable and reviews manageable, ple
 We use a standard review-and-deploy process:
 
 1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
-2. **Continuous integration:** CI runs automatically on the pull request. **All required checks must pass** before the PR can be merged (linting, formatting, type checking, and tests). Running the same checks locally—via the commands under [Code linting and formatting](#-code-linting-and-formatting) or the [pre-commit hook](#-pre-commit-hooks)—helps avoid surprise failures.
+2. **Continuous integration:** CI runs automatically on the pull request. **All required checks must pass** before the PR can be merged (tests, linting, formatting, and type checking). Run the same checks locally—tests per [Tests](#-tests), and lint/format/type via [Code linting and formatting](#-code-linting-and-formatting) or the [pre-commit hook](#-pre-commit-hooks)—to avoid surprise CI failures.
 3. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
 4. **Deployment process:** Once merged into `main`, maintainers deploy changes periodically to **[pre-production](https://mcp.preprod.data.gouv.fr/)** for more tests and validation before wider release.
 
