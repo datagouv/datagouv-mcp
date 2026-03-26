@@ -11,6 +11,8 @@ MATOMO_URL = "https://stats.data.gouv.fr"
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH")
 
+_client = httpx.AsyncClient()
+
 
 async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     """
@@ -34,9 +36,7 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     }
 
     try:
-        # Using a context manager for the client; timeout is short to prevent hanging
-        async with httpx.AsyncClient() as client:
-            await client.post(f"{MATOMO_URL}/matomo.php", data=payload, timeout=1.5)
+        await _client.post(f"{MATOMO_URL}/matomo.php", data=payload, timeout=1.5)
     except Exception as e:
         # Fail silently to ensure the MCP server remains operational
         logging.getLogger(MAIN_LOGGER_NAME).error(f"Matomo tracking failed: {e}")
