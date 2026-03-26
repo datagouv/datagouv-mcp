@@ -413,16 +413,17 @@ Steps:
 ## 🤝 Contributing
 
 We welcome contributions! To keep the project stable and reviews manageable, please observe these rules before submitting:
+
+- **Human review and accountability:** Do not submit raw, unreviewed AI-generated code. Every change must be read, understood, tested, and validated by a human before you open a PR. **By submitting a pull request, you certify that you fully understand the proposed code and could explain and defend it in review without relying on an AI assistant.**
 - **Keep it small:** We strictly follow a **1 feature = 1 PR** workflow.
-- **Human review required:** Do not submit raw AI-generated code. All code must be reviewed and tested by a human prior to submission.
+- **Conventional commits:** Use the [Conventional Commits](https://www.conventionalcommits.org/) format for **git commit messages** and **PR titles** (e.g. `feat: add dataset search`, `fix: handle empty API response`). See the specification for allowed types, scopes, and breaking-change markers.
 
 We use a standard review-and-deploy process:
 
 1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
-2. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
-3. **Automated Deployment:** Once merged into `main`, changes will be deployed to:
-   1. **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
-   2. **[Production](https://mcp.data.gouv.fr/)**
+2. **Continuous integration:** CI runs automatically on the pull request. **All required checks must pass** before the PR can be merged (linting, formatting, type checking, and tests). Running the same checks locally—via the commands under [Code linting and formatting](#-code-linting-and-formatting) or the [pre-commit hook](#-pre-commit-hooks)—helps avoid surprise failures.
+3. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
+4. **Deployment process:** Once merged into `main`, maintainers deploy changes periodically to **[pre-production](https://mcp.preprod.data.gouv.fr/)** for more tests and validation before wider release.
 
 ### 🧹 Code Linting and Formatting
 
