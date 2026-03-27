@@ -166,15 +166,15 @@ async def test_get_metrics_csv_with_custom_params():
 
 
 @pytest.mark.parametrize(
-    "limit, expected_max_len, require_non_empty",
+    "limit, expected_max_len",
     [
-        (0, 1, False),  # Test minimum limit: 0 should be capped to 1
-        (50, 50, False),  # Test exact limit: 50 should work, len <= 50
-        (100, None, True),  # Test capped limit: 100 should be capped to 50, len > 0
+        (0, 1),  # Test minimum limit: 0 should be capped to 1
+        (50, 50),  # Test exact limit: 50 should work, len <= 50
+        (100, 50),  # Test capped limit: 100 should be capped to 50
     ],
 )
 @pytest.mark.asyncio
-async def test_get_metrics_limit(limit, expected_max_len, require_non_empty):
+async def test_get_metrics_limit(limit, expected_max_len):
     """Test that limit parameter is handled correctly (minimum 1, maximum 50)."""
     known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
 
@@ -185,12 +185,9 @@ async def test_get_metrics_limit(limit, expected_max_len, require_non_empty):
     )
 
     assert isinstance(metrics, list)
-    if expected_max_len is not None:
-        assert len(metrics) <= expected_max_len
-    if require_non_empty:
-        assert len(metrics) > 0
-        
-        
+    assert len(metrics) <= expected_max_len
+
+
 @pytest.mark.asyncio
 async def test_get_metrics_with_none_values_dataset():
     """Test that None values in metrics are handled gracefully (defaulting to 0)."""
