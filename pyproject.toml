@@ -7,7 +7,7 @@ readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
     "httpx>=0.28.0",
-    "mcp>=1.25.0,<2",
+    "mcp @ git+https://github.com/modelcontextprotocol/python-sdk.git@v1.x",
     "pyyaml>=6.0",
     "sentry-sdk>=2.54.0",
 ]
