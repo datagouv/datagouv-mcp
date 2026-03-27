@@ -37,3 +37,5 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = ["stress: stress tests requiring a running MCP server (not run by default)"]
+addopts = "-m 'not stress'"
