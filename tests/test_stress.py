@@ -1,13 +1,10 @@
 """
-Stress test: sends concurrent MCP requests and abruptly closes TCP connections
-to verify the server handles client disconnects without crashing.
+Stress tests: send many concurrent MCP requests against a running server.
 
 Requires a running MCP server (not started by the test).
 Excluded from normal pytest runs -- launch explicitly with:
 
-    uv run pytest -m stress --timeout=60
-
-See README or plan for full setup instructions.
+    uv run pytest -m stress
 """
 
 import asyncio
@@ -56,20 +53,6 @@ def _build_raw_http_request(tool_name: str, tool_args: dict) -> bytes:
     return raw.encode()
 
 
-async def _fire_and_disconnect(tool_name: str, tool_args: dict) -> str:
-    """Send request then close TCP socket immediately -- don't read response."""
-    parsed = urlparse(MCP_URL)
-    host = parsed.hostname or "localhost"
-    port = parsed.port or 80
-    raw_request = _build_raw_http_request(tool_name, tool_args)
-    reader, writer = await asyncio.open_connection(host, port)
-    writer.write(raw_request)
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
-    return "cut"
-
-
 async def _fire_and_read(tool_name: str, tool_args: dict) -> str:
     """Send request and fully read the response (normal flow)."""
     parsed = urlparse(MCP_URL)
@@ -85,6 +68,20 @@ async def _fire_and_read(tool_name: str, tool_args: dict) -> str:
     assert response, "Empty response from server"
     assert b"200 OK" in response
     return "success"
+
+
+async def _fire_and_disconnect(tool_name: str, tool_args: dict) -> str:
+    """Send request then close TCP socket immediately -- don't read response."""
+    parsed = urlparse(MCP_URL)
+    host = parsed.hostname or "localhost"
+    port = parsed.port or 80
+    raw_request = _build_raw_http_request(tool_name, tool_args)
+    reader, writer = await asyncio.open_connection(host, port)
+    writer.write(raw_request)
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+    return "cut"
 
 
 async def _worker(
