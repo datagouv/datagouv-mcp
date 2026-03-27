@@ -37,7 +37,7 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
             return "Error: At least one of dataset_id or resource_id must be provided."
 
         content_parts: list[str] = []
-        limit = max(1, min(limit, 100))
+        limit = max(1, min(limit, 50))
 
         try:
             if dataset_id:
