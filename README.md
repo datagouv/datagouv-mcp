@@ -395,6 +395,17 @@ RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabula
 DATAGOUV_API_ENV=prod uv run pytest
 ```
 
+### 🔥 Stress Tests
+
+Stress tests send many concurrent requests against a running MCP server. They require a running server and make real HTTP requests, so they are excluded from default `pytest` runs.
+
+```shell
+# Start the server first, then in another terminal:
+uv run pytest -m stress
+```
+
+Currently includes a test that mixes normal requests with abrupt client TCP disconnects, verifying the server stays healthy and keeps serving despite the disruption. It uses `MCP_PORT` (default: `8000`) to connect to the local server.
+
 ### 🔍 Interactive Testing with MCP Inspector
 
 Use the official [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) to interactively test the server tools and resources.
