@@ -395,6 +395,17 @@ RESOURCE_ID=3b6b2281-b9d9-4959-ae9d-c2c166dff118 uv run pytest tests/test_tabula
 DATAGOUV_API_ENV=prod uv run pytest
 ```
 
+### 🔥 Stress Tests
+
+Stress tests send many concurrent requests against a running MCP server. They require a running server and make real HTTP requests, so they are excluded from default `pytest` runs.
+
+```shell
+# Start the server first, then in another terminal:
+uv run pytest -m stress
+```
+
+Currently includes a test that mixes normal requests with abrupt client TCP disconnects, verifying the server stays healthy and keeps serving despite the disruption. It uses `MCP_PORT` (default: `8000`) to connect to the local server.
+
 ### 🔍 Interactive Testing with MCP Inspector
 
 Use the official [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) to interactively test the server tools and resources.
@@ -413,16 +424,17 @@ Steps:
 ## 🤝 Contributing
 
 We welcome contributions! To keep the project stable and reviews manageable, please observe these rules before submitting:
+
+- **Human review and accountability:** Do not submit raw, unreviewed AI-generated code. Every change must be read, understood, tested, and validated by a human before you open a PR. **By submitting a pull request, you certify that you fully understand the proposed code and could explain and defend it in review without relying on an AI assistant.**
 - **Keep it small:** We strictly follow a **1 feature = 1 PR** workflow.
-- **Human review required:** Do not submit raw AI-generated code. All code must be reviewed and tested by a human prior to submission.
+- **Conventional commits:** Use the [Conventional Commits](https://www.conventionalcommits.org/) format for **git commit messages** and **PR titles** (e.g. `feat: add dataset search`, `fix: handle empty API response`). See the specification for allowed types, scopes, and breaking-change markers.
 
 We use a standard review-and-deploy process:
 
 1. **Submit a PR:** Propose your changes via a Pull Request against the `main` branch.
-2. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
-3. **Automated Deployment:** Once merged into `main`, changes will be deployed to:
-   1. **[Pre-production](https://mcp.preprod.data.gouv.fr/)** for final validation
-   2. **[Production](https://mcp.data.gouv.fr/)**
+2. **Continuous integration:** CI runs automatically on the pull request. **All required checks must pass** before the PR can be merged (tests, linting, formatting, and type checking). Run the same checks locally—tests per [Tests](#-tests), and lint/format/type via [Code linting and formatting](#-code-linting-and-formatting) or the [pre-commit hook](#-pre-commit-hooks)—to avoid surprise CI failures.
+3. **Review:** All PRs must be reviewed and approved by a maintainer before merging.
+4. **Deployment process:** Once merged into `main`, maintainers deploy changes periodically to **[pre-production](https://mcp.preprod.data.gouv.fr/)** for more tests and validation before wider release.
 
 ### 🧹 Code Linting and Formatting
 
