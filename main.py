@@ -16,6 +16,17 @@ from helpers.matomo import track_matomo
 from helpers.sentry import init_sentry
 from tools import register_tools
 
+ENABLE_DEBUG = True
+if ENABLE_DEBUG:
+    from helpers.debug_memory import (
+        get_diff,
+        get_memory_info,
+        start_tracemalloc,
+        take_snapshot,
+    )
+
+    start_tracemalloc()
+
 init_sentry()
 
 SERVER_START_TIME = datetime.now(timezone.utc)
@@ -79,6 +90,27 @@ def with_monitoring(
                         "data_env": os.getenv("DATAGOUV_API_ENV", "unknown"),
                     }
                 ).encode("utf-8")
+                headers = [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("utf-8")),
+                ]
+                await send(
+                    {"type": "http.response.start", "status": 200, "headers": headers}
+                )
+                await send({"type": "http.response.body", "body": body})
+                return
+
+            if ENABLE_DEBUG and path.startswith("/debug/memory"):
+                if path == "/debug/memory":
+                    data = get_memory_info()
+                elif path == "/debug/memory/snapshot":
+                    data = take_snapshot()
+                elif path == "/debug/memory/diff":
+                    data = get_diff()
+                else:
+                    data = {"error": "unknown debug endpoint"}
+
+                body = json.dumps(data, default=str).encode("utf-8")
                 headers = [
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("utf-8")),
