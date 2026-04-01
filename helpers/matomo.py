@@ -7,7 +7,7 @@ import httpx
 from helpers.logging import MAIN_LOGGER_NAME
 
 # Configure Matomo
-MATOMO_URL = "https://stats.data.gouv.fr"
+MATOMO_URL = os.getenv("MATOMO_URL")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH")
 
@@ -16,8 +16,9 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     """
     Sends an asynchronous tracking request to Matomo.
     Fired in the background to avoid blocking the MCP server response.
+    Skipped when MATOMO_URL or MATOMO_SITE_ID is unset.
     """
-    if not MATOMO_SITE_ID:
+    if not MATOMO_URL or not MATOMO_SITE_ID:
         return
 
     # Extract user-agent for better Matomo analytics
