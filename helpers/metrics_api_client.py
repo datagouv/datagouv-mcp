@@ -9,14 +9,7 @@ from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
-
-async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
-    if session is not None:
-        return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    return new_session, True
+_client = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
 
 
 async def get_metrics(
@@ -59,28 +52,24 @@ async def get_metrics(
         )
 
     time_field: str = f"metric_{time_granularity}"
-    sess, owns_session = await _get_session(session)
-    try:
-        base_url: str = env_config.get_base_url("metrics_api")
-        url = f"{base_url}{model}/data/"
-        params = {
-            f"{id_field}__exact": id_value,
-            f"{time_field}__sort": sort_order,
-            "page_size": max(1, min(limit, 100)),
-        }
-        logger.debug(
-            f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "
-            f"{time_field}__sort={sort_order}, page_size={params['page_size']}"
-        )
-        resp = await sess.get(url, params=params, timeout=20.0)
-        resp.raise_for_status()
-        payload = resp.json()
-        data: list[dict[str, Any]] = payload.get("data", [])
-        logger.debug(f"Received {len(data)} metric entries from API")
-        return data
-    finally:
-        if owns_session:
-            await sess.aclose()
+    client = session or _client
+    base_url: str = env_config.get_base_url("metrics_api")
+    url = f"{base_url}{model}/data/"
+    params = {
+        f"{id_field}__exact": id_value,
+        f"{time_field}__sort": sort_order,
+        "page_size": max(1, min(limit, 100)),
+    }
+    logger.debug(
+        f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "
+        f"{time_field}__sort={sort_order}, page_size={params['page_size']}"
+    )
+    resp = await client.get(url, params=params, timeout=20.0)
+    resp.raise_for_status()
+    payload = resp.json()
+    data: list[dict[str, Any]] = payload.get("data", [])
+    logger.debug(f"Received {len(data)} metric entries from API")
+    return data
 
 
 async def get_metrics_csv(
@@ -124,21 +113,17 @@ async def get_metrics_csv(
         )
 
     time_field: str = f"metric_{time_granularity}"
-    sess, owns_session = await _get_session(session)
-    try:
-        base_url: str = env_config.get_base_url("metrics_api")
-        url = f"{base_url}{model}/data/csv/"
-        params = {
-            f"{id_field}__exact": id_value,
-            f"{time_field}__sort": sort_order,
-        }
-        logger.debug(
-            f"Fetching metrics CSV from {url} with params: {id_field}__exact={id_value}, "
-            f"{time_field}__sort={sort_order}"
-        )
-        resp = await sess.get(url, params=params, timeout=30.0)
-        resp.raise_for_status()
-        return resp.text
-    finally:
-        if owns_session:
-            await sess.aclose()
+    client = session or _client
+    base_url: str = env_config.get_base_url("metrics_api")
+    url = f"{base_url}{model}/data/csv/"
+    params = {
+        f"{id_field}__exact": id_value,
+        f"{time_field}__sort": sort_order,
+    }
+    logger.debug(
+        f"Fetching metrics CSV from {url} with params: {id_field}__exact={id_value}, "
+        f"{time_field}__sort={sort_order}"
+    )
+    resp = await client.get(url, params=params, timeout=30.0)
+    resp.raise_for_status()
+    return resp.text

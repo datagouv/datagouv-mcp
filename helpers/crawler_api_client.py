@@ -10,19 +10,12 @@ from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
+_client = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+
 # Cache for the exceptions list
 _exceptions_cache: set[str] | None = None
 _cache_timestamp: float = 0
 CACHE_TTL_SECONDS: float = 3600.0  # 1 hour
-
-
-async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
-    if session is not None:
-        return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
-    return new_session, True
 
 
 async def fetch_resource_exceptions(
@@ -57,14 +50,14 @@ async def fetch_resource_exceptions(
         logger.debug("Using cached exceptions list (%d items)", len(_exceptions_cache))
         return _exceptions_cache
 
-    sess, owns_session = await _get_session(session)
+    client = session or _client
     try:
         base_url: str = env_config.get_base_url("crawler_api")
         url = f"{base_url}resources-exceptions"
 
         logger.info(f"Crawler API: Fetching resource exceptions from {url}")
 
-        resp = await sess.get(url, timeout=30.0)
+        resp = await client.get(url, timeout=30.0)
         resp.raise_for_status()
 
         data: list[dict[str, Any]] = resp.json()
@@ -92,9 +85,6 @@ async def fetch_resource_exceptions(
             return _exceptions_cache
         # Return empty set if no cache available
         return set()
-    finally:
-        if owns_session:
-            await sess.aclose()
 
 
 async def is_in_exceptions_list(
