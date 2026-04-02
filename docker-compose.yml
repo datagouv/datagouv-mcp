@@ -10,6 +10,7 @@ services:
       - MCP_HOST=${MCP_HOST:-0.0.0.0}
       - MCP_PORT=${MCP_PORT:-8000}
       - DATAGOUV_API_ENV=${DATAGOUV_API_ENV:-prod}
+      - MATOMO_URL=${MATOMO_URL}
       - MATOMO_SITE_ID=${MATOMO_SITE_ID}
       - MATOMO_AUTH_TOKEN=${MATOMO_AUTH_TOKEN}
     restart: unless-stopped

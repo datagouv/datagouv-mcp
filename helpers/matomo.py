@@ -7,17 +7,22 @@ import httpx
 from helpers.logging import MAIN_LOGGER_NAME
 
 # Configure Matomo
-MATOMO_URL = "https://stats.data.gouv.fr"
+MATOMO_URL = os.getenv("MATOMO_URL")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH")
+
+# Shared client reused across all tracking calls to avoid creating a new
+# TCP connection + SSL handshake + httpx overhead on every MCP request.
+_client = httpx.AsyncClient(timeout=1.5)
 
 
 async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     """
     Sends an asynchronous tracking request to Matomo.
     Fired in the background to avoid blocking the MCP server response.
+    Skipped when MATOMO_URL or MATOMO_SITE_ID is unset.
     """
-    if not MATOMO_SITE_ID:
+    if not MATOMO_URL or not MATOMO_SITE_ID:
         return
 
     # Extract user-agent for better Matomo analytics
@@ -34,9 +39,7 @@ async def track_matomo(url: str, path: str, headers: dict[str, str]) -> None:
     }
 
     try:
-        # Using a context manager for the client; timeout is short to prevent hanging
-        async with httpx.AsyncClient() as client:
-            await client.post(f"{MATOMO_URL}/matomo.php", data=payload, timeout=1.5)
+        await _client.post(f"{MATOMO_URL}/matomo.php", data=payload)
     except Exception as e:
         # Fail silently to ensure the MCP server remains operational
         logging.getLogger(MAIN_LOGGER_NAME).error(f"Matomo tracking failed: {e}")
