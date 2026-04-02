@@ -194,11 +194,14 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
             except tabular_api_client.ResourceNotAvailableError as e:
                 logger.warning(f"Resource not available: {resource_id} - {str(e)}")
                 content_parts.append(f"⚠️  {str(e)}")
+            except tabular_api_client.TabularApiRequestError as e:
+                logger.warning(f"Tabular API request failed: {resource_id} - {str(e)}")
+                content_parts.append(f"⚠️  {str(e)}")
             except httpx.HTTPStatusError as e:
                 error_details = f"HTTP {e.response.status_code}: {str(e)}"
                 if e.request:
                     error_details += f" - URL: {e.request.url}"
-                logger.error(
+                logger.warning(
                     f"Tabular API HTTP error for resource {resource_id}: {error_details}"
                 )
                 content_parts.append(f"❌ Tabular API error ({error_details})")

@@ -130,8 +130,9 @@ async def test_invalid_resource_raises_error() -> None:
     """Test that invalid resource ID raises ResourceNotAvailableError."""
     invalid_id = "00000000-0000-0000-0000-000000000000"
 
-    with pytest.raises(tabular_api_client.ResourceNotAvailableError):
+    with pytest.raises(tabular_api_client.ResourceNotAvailableError) as exc:
         await tabular_api_client.fetch_resource_data(invalid_id, page_size=1)
+    assert "search_datasets" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -139,8 +140,9 @@ async def test_invalid_resource_profile_raises_error() -> None:
     """Test that invalid resource ID raises error for profile."""
     invalid_id = "00000000-0000-0000-0000-000000000000"
 
-    with pytest.raises(tabular_api_client.ResourceNotAvailableError):
+    with pytest.raises(tabular_api_client.ResourceNotAvailableError) as exc:
         await tabular_api_client.fetch_resource_profile(invalid_id)
+    assert "search_datasets" in str(exc.value)
 
 
 @pytest.mark.asyncio
