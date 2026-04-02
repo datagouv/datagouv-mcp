@@ -363,7 +363,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
 - **`query_resource_data`** - Query data from a specific resource via the Tabular API. Fetches rows from a resource to answer questions.
 
-  Parameters: `question` (required), `resource_id` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 200)
+  Parameters: `resource_id` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 200)
 
   Note: Recommended workflow: 1) Use `search_datasets` to find the dataset, 2) Use `list_dataset_resources` to see available resources, 3) Use `query_resource_data` with default `page_size` (20) to preview data structure. For small datasets (<500 rows), increase `page_size` or paginate. For large datasets (>1000 rows), continue paginating or use `get_resource_info` to retrieve the raw file URL and fetch it directly. Works for CSV/XLS resources within Tabular API size limits (CSV ≤ 100 MB, XLSX ≤ 12.5 MB).
 
