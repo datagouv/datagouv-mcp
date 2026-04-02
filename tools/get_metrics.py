@@ -4,7 +4,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, metrics_api_client
-from helpers.logging import log_tool, MAIN_LOGGER_NAME
+from helpers.logging import MAIN_LOGGER_NAME, log_tool
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 

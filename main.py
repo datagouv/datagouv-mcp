@@ -11,9 +11,9 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from helpers.matomo import track_matomo
 from helpers.sentry import init_sentry
-from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from tools import register_tools
 
 init_sentry()

@@ -20,12 +20,16 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.0",
     "pytest-httpx>=0.35.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.14.0",
     "ty>=0.0.18",
 ]
+
+[tool.ruff.lint]
+# Match CI: `ruff check --select I .` — default Ruff select does not include isort (I).
+extend-select = ["I"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -33,3 +37,5 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = ["stress: stress tests requiring a running MCP server (not run by default)"]
+addopts = "-m 'not stress'"

@@ -44,11 +44,5 @@ jobs:
 workflows:
   lint-test:
     jobs:
-      - lint:
-          filters:
-            branches:
-              only: main
-      - test:
-          filters:
-            branches:
-              only: main
+      - lint
+      - test
