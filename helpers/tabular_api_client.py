@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -9,9 +10,88 @@ from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
+# User-facing hints (returned to the LLM via tools; keep in English).
+MSG_RESOURCE_NOT_IN_TABULAR = (
+    "This resource ID was not found in the Tabular API. "
+    "Use search_datasets to find a dataset, then list_dataset_resources "
+    "to obtain the correct resource ID."
+)
+
+MSG_TABULAR_SERVER_ISSUE = (
+    "The Tabular API is temporarily unavailable or returned a server error. "
+    "Please try again in about one minute."
+)
+
+MSG_TABULAR_BAD_REQUEST = (
+    "The Tabular API rejected the request (invalid filter, sort column, or parameter). "
+    "Call again without sort or filter to preview rows and confirm column names, "
+    "or align filter_column and sort_column with the resource schema."
+)
+
+MSG_TABULAR_COLUMN_HINT = (
+    "A column or parameter in the request does not exist in this resource; "
+    "remove sort/filter or use exact names from a preview."
+)
+
 
 class ResourceNotAvailableError(Exception):
     """Raised when a resource is not available via the Tabular API."""
+
+
+class TabularApiRequestError(Exception):
+    """Raised when the Tabular API returns a non-success response (other than 404)."""
+
+
+def _optional_column_hint(body: str) -> str | None:
+    try:
+        payload: object = json.loads(body)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    errors = payload.get("errors")
+    if not isinstance(errors, list) or not errors:
+        return None
+    first = errors[0]
+    if not isinstance(first, dict):
+        return None
+    detail = first.get("detail")
+    if isinstance(detail, dict):
+        msg = detail.get("message")
+        if isinstance(msg, str) and "does not exist" in msg.lower():
+            return MSG_TABULAR_COLUMN_HINT
+    return None
+
+
+def _raise_for_tabular_failure(
+    resp: httpx.Response,
+    resource_id: str,
+    *,
+    endpoint: str,
+) -> None:
+    status = resp.status_code
+    body = resp.text
+    logger.warning(
+        "Tabular API: HTTP %s for resource %s (%s endpoint)",
+        status,
+        resource_id,
+        endpoint,
+    )
+    logger.debug("Tabular API response body (truncated): %s", body[:500])
+
+    if status >= 500 or status in (408, 429):
+        raise TabularApiRequestError(MSG_TABULAR_SERVER_ISSUE)
+    if status in (401, 403):
+        raise TabularApiRequestError(
+            f"The Tabular API returned HTTP {status} (access or permission). "
+            "If the problem persists, try again in about one minute."
+        )
+
+    hint = _optional_column_hint(body)
+    msg = MSG_TABULAR_BAD_REQUEST
+    if hint:
+        msg = f"{msg} {hint}"
+    raise TabularApiRequestError(msg)
 
 
 async def _get_session(
@@ -54,18 +134,11 @@ async def fetch_resource_data(
         resp = await sess.get(url, params=query_params, timeout=30.0)
         if resp.status_code == 404:
             logger.warning(f"Tabular API: Resource {resource_id} not found (404)")
-            raise ResourceNotAvailableError(
-                f"Resource {resource_id} not available via Tabular API"
-            )
+            raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
         if resp.status_code >= 400:
-            error_body = resp.text
-            logger.error(
-                f"Tabular API: Error {resp.status_code} for resource {resource_id} - "
-                f"Response: {error_body[:500]}"
-            )
+            _raise_for_tabular_failure(resp, resource_id, endpoint="data")
 
-        resp.raise_for_status()
         return resp.json()
     finally:
         if owns_session:
@@ -95,18 +168,11 @@ async def fetch_resource_profile(
             logger.warning(
                 f"Tabular API: Resource profile {resource_id} not found (404)"
             )
-            raise ResourceNotAvailableError(
-                f"Resource {resource_id} profile not available via Tabular API"
-            )
+            raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
         if resp.status_code >= 400:
-            error_body = resp.text
-            logger.error(
-                f"Tabular API: Profile error {resp.status_code} for resource {resource_id} - "
-                f"Response: {error_body[:500]}"
-            )
+            _raise_for_tabular_failure(resp, resource_id, endpoint="profile")
 
-        resp.raise_for_status()
         profile_data: dict[str, Any] = resp.json()
 
         # Clean up headers: remove surrounding quotes if present
