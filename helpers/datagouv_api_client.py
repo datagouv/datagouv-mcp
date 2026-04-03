@@ -245,12 +245,11 @@ async def search_dataservices(
         dataservices: list[dict[str, Any]] = data.get("data", [])
         results: list[dict[str, Any]] = []
         for ds in dataservices:
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            tags = [
+                tag.strip()
+                for tag in ds.get("tags", [])
+                if isinstance(tag, str) and tag.strip()
+            ]
 
             results.append(
                 {
@@ -316,13 +315,12 @@ async def search_datasets(
         # Extract relevant fields for each dataset
         results: list[dict[str, Any]] = []
         for ds in datasets:
-            # Handle tags - can be strings or objects with "name" field
-            tags: list[str] = []
-            for tag in ds.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tags.append(tag.get("name", ""))
+            # Tags are emitted as a list of strings by the API.
+            tags = [
+                tag.strip()
+                for tag in ds.get("tags", [])
+                if isinstance(tag, str) and tag.strip()
+            ]
 
             results.append(
                 {
