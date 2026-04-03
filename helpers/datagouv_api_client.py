@@ -12,28 +12,6 @@ from helpers.user_agent import USER_AGENT
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
-def normalize_tags(raw_tags: list[Any] | None) -> list[str]:
-    """Normalize tag payloads into a clean list of strings.
-
-    Accepts string tags or dicts with a "name"/"label" field. Empty values are ignored.
-    """
-    if not raw_tags:
-        return []
-    tags: list[str] = []
-    for tag in raw_tags:
-        value: str | None = None
-        if isinstance(tag, str):
-            value = tag
-        elif isinstance(tag, dict):
-            value = tag.get("name") or tag.get("label")
-        if value is None:
-            continue
-        cleaned = value.strip()
-        if cleaned:
-            tags.append(cleaned)
-    return tags
-
-
 async def _fetch_json(client: httpx.AsyncClient, url: str) -> dict[str, Any]:
     logger.debug("datagouv API GET %s", url)
     try:
@@ -267,7 +245,11 @@ async def search_dataservices(
         dataservices: list[dict[str, Any]] = data.get("data", [])
         results: list[dict[str, Any]] = []
         for ds in dataservices:
-            tags = normalize_tags(ds.get("tags", []))
+            tags = [
+                tag.strip()
+                for tag in ds.get("tags", [])
+                if isinstance(tag, str) and tag.strip()
+            ]
 
             results.append(
                 {
@@ -333,8 +315,12 @@ async def search_datasets(
         # Extract relevant fields for each dataset
         results: list[dict[str, Any]] = []
         for ds in datasets:
-            # Handle tags - can be strings or objects with "name"/"label" field
-            tags = normalize_tags(ds.get("tags", []))
+            # Tags are emitted as a list of strings by the API.
+            tags = [
+                tag.strip()
+                for tag in ds.get("tags", [])
+                if isinstance(tag, str) and tag.strip()
+            ]
 
             results.append(
                 {
