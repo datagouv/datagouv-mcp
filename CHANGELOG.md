@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.22 (2026-04-02)
+
+- chore: update dependencies to fix dependabot alerts ([#79](https://github.com/datagouv/datagouv-mcp/pull/79))
+- chore(logging): add structured logging for MCP tool calls
+- chore(logging): add unit test
+- ci: run workflow on all branches; align Ruff imports with CI ([#81](https://github.com/datagouv/datagouv-mcp/pull/81))
+- docs: improve contributing guidelines ([#82](https://github.com/datagouv/datagouv-mcp/pull/82))
+- feat(matomo): read base URL from env and skip tracking when unset ([#89](https://github.com/datagouv/datagouv-mcp/pull/89))
+- fix: get_metrics limit exceeds API maximum ([#75](https://github.com/datagouv/datagouv-mcp/pull/75))
+- fix: handle None values in metrics to prevent TypeError ([#78](https://github.com/datagouv/datagouv-mcp/pull/78))
+- fix: typo
+- fix(logging): import logger name var ([#80](https://github.com/datagouv/datagouv-mcp/pull/80))
+- fix(matomo): use shared httpx client instead of per-request client ([#88](https://github.com/datagouv/datagouv-mcp/pull/88))
+- test: add stress test for client disconnect handling ([#83](https://github.com/datagouv/datagouv-mcp/pull/83))
+
+
 ## 0.2.20 (2026-03-04)
 
 - feat: better health check ([#64](https://github.com/datagouv/datagouv-mcp/pull/64))

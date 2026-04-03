@@ -81,6 +81,25 @@ Add the following to your Claude Desktop configuration file (typically `~/.confi
 }
 ```
 
+**Claude Desktop on Windows:** If the server appears in the list but never connects (no handshake, tools missing), Claude may be using its built-in Node.js runtime, which does not see packages installed with your system `npm` (including a global `mcp-remote`). Set `isUsingBuiltInNodeForMcp` to `false` at the **root** of the same config file so `npx` uses your installed Node — then restart Claude Desktop:
+
+```json
+{
+  "isUsingBuiltInNodeForMcp": false,
+  "mcpServers": {
+    "datagouv": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.data.gouv.fr/mcp"
+      ]
+    }
+  }
+}
+```
+
+See [issue #69](https://github.com/datagouv/datagouv-mcp/issues/69) for background.
+
 ### Cursor
 
 Cursor supports MCP servers through its settings. To configure the server:
