@@ -47,15 +47,7 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
                     if org.get("id"):
                         content_parts.append(f"  Organization ID: {org.get('id')}")
 
-            # Handle tags
-            tags = []
-            for tag in data.get("tags", []):
-                if isinstance(tag, str):
-                    tags.append(tag)
-                elif isinstance(tag, dict):
-                    tag_name = tag.get("name", "")
-                    if tag_name:
-                        tags.append(tag_name)
+            tags: list[str] = data.get("tags") or []
             if tags:
                 content_parts.append("")
                 content_parts.append(f"Tags: {', '.join(tags[:10])}")
