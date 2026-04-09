@@ -3,10 +3,14 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import crawler_api_client, datagouv_api_client, env_config
 from helpers.logging import log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 
 def register_get_resource_info_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="Get resource info",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def get_resource_info(resource_id: str) -> str:
         """

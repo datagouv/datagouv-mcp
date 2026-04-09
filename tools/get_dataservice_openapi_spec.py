@@ -6,6 +6,7 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -85,7 +86,10 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
 
 
 def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="Get dataservice OpenAPI spec",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def get_dataservice_openapi_spec(dataservice_id: str) -> str:
         """
