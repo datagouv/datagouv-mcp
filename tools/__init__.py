@@ -11,11 +11,13 @@ from tools.list_dataset_resources import register_list_dataset_resources_tool
 from tools.query_resource_data import register_query_resource_data_tool
 from tools.search_dataservices import register_search_dataservices_tool
 from tools.search_datasets import register_search_datasets_tool
+from tools.search_organizations import register_search_organizations_tool
 
 
 def register_tools(mcp: FastMCP) -> None:
     """Register all MCP tools with the provided FastMCP instance."""
     register_search_datasets_tool(mcp)
+    register_search_organizations_tool(mcp)
     register_search_dataservices_tool(mcp)
     register_get_dataservice_info_tool(mcp)
     register_get_dataservice_openapi_spec_tool(mcp)
