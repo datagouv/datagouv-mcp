@@ -66,7 +66,6 @@ def _optional_column_hint(body: str) -> str | None:
 def _raise_for_tabular_failure(
     resp: httpx.Response,
     resource_id: str,
-    *,
     endpoint: str,
 ) -> None:
     status = resp.status_code
