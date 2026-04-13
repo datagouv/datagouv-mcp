@@ -53,6 +53,31 @@ async def test_fetch_resource_data_400_with_column_detail(
     msg = str(exc.value)
     assert "rejected" in msg.lower()
     assert "does not exist" in msg.lower()
+    assert "original error message" in msg.lower()
+    assert "nombre_piscines" in msg.lower()
+
+
+@pytest.mark.asyncio
+async def test_fetch_resource_data_400_includes_api_uuid_message(
+    httpx_mock: HTTPXMock,
+) -> None:
+    pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
+    payload = {
+        "errors": [
+            {
+                "detail": {
+                    "message": 'invalid input syntax for type uuid: "1234"',
+                },
+            }
+        ]
+    }
+    httpx_mock.add_response(method="GET", url=pattern, status_code=400, json=payload)
+    with pytest.raises(tabular_api_client.TabularApiRequestError) as exc:
+        await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
+    msg = str(exc.value)
+    assert "rejected" in msg.lower()
+    assert "original error message" in msg.lower()
+    assert "uuid" in msg.lower()
 
 
 @pytest.mark.asyncio
