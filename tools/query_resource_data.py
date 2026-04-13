@@ -13,7 +13,6 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     @log_tool
     async def query_resource_data(
-        question: str,
         resource_id: str,
         page: int = 1,
         page_size: int = 20,
@@ -83,12 +82,7 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
             ]
             if dataset_id:
                 content_parts.append(f"Dataset: {dataset_title} (ID: {dataset_id})")
-            content_parts.extend(
-                [
-                    f"Question: {question}",
-                    "",
-                ]
-            )
+            content_parts.append("")
 
             # Show applied filters if any
             if filter_column and filter_value is not None:
