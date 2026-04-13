@@ -66,6 +66,7 @@ coverage.xml
 *.mo
 
 # IDEs
+.cursor
 .vscode
 .idea
 .mr.developer.cfg

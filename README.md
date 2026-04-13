@@ -22,7 +22,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Le Chat (Mistral)](#le-chat-mistral) | [Mistral Vibe](#mistral-vibe-cli) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+[AnythingLLM](#anythingllm) | [ChatGPT](#chatgpt) | [Claude Code](#claude-code) | [Claude Desktop](#claude-desktop) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Le Chat (Mistral)](#le-chat-mistral) | [Mistral Vibe](#mistral-vibe-cli) | [OpenCode](#opencode) | [VS Code](#vs-code) | [Windsurf](#windsurf)
 
 ### AnythingLLM
 
@@ -80,6 +80,25 @@ Add the following to your Claude Desktop configuration file (typically `~/.confi
   }
 }
 ```
+
+**Claude Desktop on Windows:** If the server appears in the list but never connects (no handshake, tools missing), Claude may be using its built-in Node.js runtime, which does not see packages installed with your system `npm` (including a global `mcp-remote`). Set `isUsingBuiltInNodeForMcp` to `false` at the **root** of the same config file so `npx` uses your installed Node — then restart Claude Desktop:
+
+```json
+{
+  "isUsingBuiltInNodeForMcp": false,
+  "mcpServers": {
+    "datagouv": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.data.gouv.fr/mcp"
+      ]
+    }
+  }
+}
+```
+
+See [issue #69](https://github.com/datagouv/datagouv-mcp/issues/69) for background.
 
 ### Cursor
 
@@ -193,6 +212,23 @@ url = "https://mcp.data.gouv.fr/mcp"
 ```
 
 See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
+
+### OpenCode
+
+Add to `opencode.json` (e.g. `~/.config/opencode/opencode.json` or your project root). Remote servers use the top-level `mcp` object with `type: "remote"`. See [OpenCode MCP servers](https://opencode.ai/docs/mcp-servers/).
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "datagouv": {
+      "type": "remote",
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "enabled": true
+    }
+  }
+}
+```
 
 ### VS Code
 
@@ -344,7 +380,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
 - **`query_resource_data`** - Query data from a specific resource via the Tabular API. Fetches rows from a resource to answer questions.
 
-  Parameters: `question` (required), `resource_id` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 200)
+  Parameters: `resource_id` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 200)
 
   Note: Recommended workflow: 1) Use `search_datasets` to find the dataset, 2) Use `list_dataset_resources` to see available resources, 3) Use `query_resource_data` with default `page_size` (20) to preview data structure. For small datasets (<500 rows), increase `page_size` or paginate. For large datasets (>1000 rows), continue paginating or use `get_resource_info` to retrieve the raw file URL and fetch it directly. Works for CSV/XLS resources within Tabular API size limits (CSV ≤ 100 MB, XLSX ≤ 12.5 MB).
 
