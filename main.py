@@ -18,6 +18,7 @@ from helpers.matomo import (
     track_matomo_request,
 )
 from helpers.sentry import init_sentry
+from mcp_resources import register_resources
 from tools import register_tools
 
 init_sentry()
@@ -56,6 +57,7 @@ mcp = FastMCP(
     stateless_http=True,
 )
 register_tools(mcp)
+register_resources(mcp)
 
 
 def with_monitoring(
