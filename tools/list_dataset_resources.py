@@ -2,10 +2,14 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 from helpers.logging import log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 
 def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="List dataset resources",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def list_dataset_resources(dataset_id: str) -> str:
         """

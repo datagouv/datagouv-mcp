@@ -4,6 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -58,7 +59,10 @@ def clean_search_query(query: str) -> str:
 
 
 def register_search_datasets_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="Search datasets",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def search_datasets(query: str, page: int = 1, page_size: int = 20) -> str:
         """

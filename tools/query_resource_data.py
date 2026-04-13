@@ -5,12 +5,16 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, tabular_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 def register_query_resource_data_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="Query resource data",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def query_resource_data(
         resource_id: str,
