@@ -12,7 +12,11 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
 from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
-from helpers.matomo import track_matomo
+from helpers.matomo import (
+    apply_matomo_request_context,
+    reset_matomo_request_context,
+    track_matomo_request,
+)
 from helpers.sentry import init_sentry
 from tools import register_tools
 
@@ -89,24 +93,24 @@ def with_monitoring(
                 await send({"type": "http.response.body", "body": body})
                 return
 
-            # Matomo Tracking for /mcp requests
-            # Convert ASGI headers list to a dictionary for the helper
+            # Matomo: bind request URL/UA for tool event tracking; HTTP-level hit in background
             headers_dict: dict[str, str] = {
                 k.decode("utf-8"): v.decode("utf-8")
                 for k, v in scope.get("headers", [])
             }
-
-            # Construct the full URL
+            url_token, ua_token = apply_matomo_request_context(headers_dict, path)
             host: str = headers_dict.get("host", "localhost")
             full_url: str = f"https://{host}{path}"
+            try:
+                asyncio.create_task(
+                    track_matomo_request(url=full_url, path=path, headers=headers_dict)
+                )
+                await inner_app(scope, receive, send)
+            finally:
+                reset_matomo_request_context(url_token, ua_token)
+            return
 
-            # Fire the tracking task in the background
-            # Since path is always /mcp, the helper will log "MCP Request: /mcp"
-            asyncio.create_task(
-                track_matomo(url=full_url, path=path, headers=headers_dict)
-            )
-
-        # Continue the MCP server logic
+        # Continue the MCP server logic (non-HTTP scopes, e.g. lifespan)
         await inner_app(scope, receive, send)
 
     return app

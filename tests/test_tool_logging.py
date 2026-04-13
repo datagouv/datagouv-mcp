@@ -42,11 +42,15 @@ async def test_tool_logs_kwargs(
     mcp: FastMCP,
     caplog,
     httpx_mock: HTTPXMock,
+    monkeypatch,
     tool_name: str,
     call_args: dict,
     expected_kwargs: dict,
 ):
-    httpx_mock.add_response(json={})
+    monkeypatch.setattr("helpers.matomo.MATOMO_URL", "https://matomo.example.com")
+    monkeypatch.setattr("helpers.matomo.MATOMO_SITE_ID", "1")
+    httpx_mock.add_response(json={})  # Mock tool call
+    httpx_mock.add_response(json={})  # Mock Matomo call
     with caplog.at_level(logging.INFO, logger=TOOLS_LOGGER_NAME):
         await mcp.call_tool(tool_name, call_args)
 
