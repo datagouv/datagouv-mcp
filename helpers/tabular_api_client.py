@@ -72,12 +72,9 @@ def _raise_for_tabular_failure(
     status = resp.status_code
     body = resp.text
     logger.warning(
-        "Tabular API: HTTP %s for resource %s (%s endpoint)",
-        status,
-        resource_id,
-        endpoint,
+        f"Tabular API: HTTP {status} for resource {resource_id} ({endpoint} endpoint)"
     )
-    logger.debug("Tabular API response body (truncated): %s", body[:500])
+    logger.debug(f"Tabular API response body (truncated): {body[:500]}")
 
     if status >= 500 or status in (408, 429):
         raise TabularApiRequestError(MSG_TABULAR_SERVER_ISSUE)
