@@ -42,12 +42,9 @@ class TabularApiRequestError(Exception):
     """Raised when the Tabular API returns a non-success response (other than 404)."""
 
 
-def _optional_column_hint(body: str) -> str | None:
-    try:
-        payload: object = json.loads(body)
-    except json.JSONDecodeError:
-        return None
-    if not isinstance(payload, dict):
+def _optional_column_hint(payload: dict[str, Any] | None) -> str | None:
+    """If the first Tabular API error looks like a missing column, return a user hint."""
+    if payload is None:
         return None
     errors = payload.get("errors")
     if not isinstance(errors, list) or not errors:
@@ -61,6 +58,30 @@ def _optional_column_hint(body: str) -> str | None:
         if isinstance(msg, str) and "does not exist" in msg.lower():
             return MSG_TABULAR_COLUMN_HINT
     return None
+
+
+def _tabular_error_payload_and_messages(
+    body: str,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Parse `body` once (same string as logged); return JSON dict and API detail messages.
+
+    Expects Tabular-style JSON: ``errors[*].detail.message`` strings. Non-JSON bodies
+    return ``(None, [])`` so callers can still raise a generic error.
+    """
+    try:
+        data: object = json.loads(body)
+    except json.JSONDecodeError:
+        return None, []
+    if not isinstance(data, dict):
+        return None, []
+
+    error_msgs: list[str] = []
+    for error in data["errors"]:
+        m = error["detail"]["message"]
+        s = m.strip()
+        if s:
+            error_msgs.append(s)
+    return data, error_msgs
 
 
 def _raise_for_tabular_failure(
@@ -83,10 +104,18 @@ def _raise_for_tabular_failure(
             "If the problem persists, try again in about one minute."
         )
 
-    hint = _optional_column_hint(body)
+    payload, error_msgs = _tabular_error_payload_and_messages(body)
+    hint = _optional_column_hint(payload)
+
     msg = MSG_TABULAR_BAD_REQUEST
     if hint:
         msg = f"{msg} {hint}"
+    if error_msgs:
+        error_msg = ", ".join(error_msgs)
+        if len(error_msg) > 2000:
+            error_msg = error_msg[:1997] + "..."
+        msg = f"{msg} - Original error message: {error_msg}"
+
     raise TabularApiRequestError(msg)
 
 
