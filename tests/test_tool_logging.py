@@ -46,7 +46,8 @@ async def test_tool_logs_kwargs(
     call_args: dict,
     expected_kwargs: dict,
 ):
-    httpx_mock.add_response(json={})
+    httpx_mock.add_response(json={})  # Mock tool call
+    httpx_mock.add_response(json={})  # Mock Matomo call
     with caplog.at_level(logging.INFO, logger=TOOLS_LOGGER_NAME):
         await mcp.call_tool(tool_name, call_args)
 
