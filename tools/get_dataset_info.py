@@ -3,10 +3,14 @@ from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, env_config
 from helpers.logging import log_tool
+from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 
 def register_get_dataset_info_tool(mcp: FastMCP) -> None:
-    @mcp.tool()
+    @mcp.tool(
+        title="Get dataset info",
+        annotations=READ_ONLY_EXTERNAL_API_TOOL,
+    )
     @log_tool
     async def get_dataset_info(dataset_id: str) -> str:
         """
