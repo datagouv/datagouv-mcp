@@ -11,6 +11,7 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from helpers.health_probe import _run_health_check
 from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from helpers.matomo import (
     apply_matomo_request_context,
@@ -74,21 +75,32 @@ def with_monitoring(
                 except PackageNotFoundError:
                     app_version = "unknown"
 
-                body = json.dumps(
-                    {
-                        "status": "ok",
-                        "uptime_since": SERVER_START_TIME.isoformat(),
-                        "version": app_version,
-                        "env": os.getenv("MCP_ENV", "unknown"),
-                        "data_env": os.getenv("DATAGOUV_API_ENV", "unknown"),
-                    }
-                ).encode("utf-8")
+                is_healthy = await _run_health_check()
+                if is_healthy:
+                    body = json.dumps(
+                        {
+                            "status": "ok",
+                            "uptime_since": SERVER_START_TIME.isoformat(),
+                            "version": app_version,
+                            "env": os.getenv("MCP_ENV", "unknown"),
+                            "data_env": os.getenv("DATAGOUV_API_ENV", "unknown"),
+                        }
+                    ).encode("utf-8")
+                    http_status = 200
+                else:
+                    body = json.dumps({"status": "mcp_unavailable"}).encode("utf-8")
+                    http_status = 503
+
                 headers = [
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("utf-8")),
                 ]
                 await send(
-                    {"type": "http.response.start", "status": 200, "headers": headers}
+                    {
+                        "type": "http.response.start",
+                        "status": http_status,
+                        "headers": headers,
+                    }
                 )
                 await send({"type": "http.response.body", "body": body})
                 return
