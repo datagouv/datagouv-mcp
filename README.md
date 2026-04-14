@@ -352,7 +352,7 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 
 **Streamable HTTP transport (standards-compliant):**
 - `POST /mcp` - JSON-RPC messages (client → server)
-- `GET /health` - Deep health probe: runs a full MCP handshake and tool call. Returns `{"status":"ok",...}` with HTTP 200 if healthy, or `{"status":"mcp_unavailable"}` with HTTP 503 if the MCP stack is not responding correctly.
+- `GET /health` - Health check endpoint: runs a full MCP handshake and tool call. Returns `{"status":"ok",...}` with HTTP 200 if healthy, or `{"status":"mcp_unavailable"}` with HTTP 503 if the MCP stack is not responding correctly.
 
 ## 🛠️ Available Tools
 
@@ -442,13 +442,13 @@ uv run pytest -m stress
 
 Currently includes a test that mixes normal requests with abrupt client TCP disconnects, verifying the server stays healthy and keeps serving despite the disruption. It uses `MCP_PORT` (default: `8000`) to connect to the local server.
 
-### 🩺 Deep Health Check
+### 🩺 Run a Health Check from the CLI
 
 Runs a full MCP handshake and calls `search_datasets` to validate end-to-end stack health. Requires a running server and is excluded from default `pytest` runs.
 
 ```shell
 # Start the server first, then in another terminal:
-uv run pytest -m deep_health
+uv run pytest -m health_check
 ```
 
 ### 🛠️ Local Tool Testing Script

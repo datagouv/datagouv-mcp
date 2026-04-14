@@ -11,7 +11,7 @@ import uvicorn
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from helpers.health_probe import _run_deep_check
+from helpers.health_probe import _run_health_check
 from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from helpers.matomo import (
     apply_matomo_request_context,
@@ -75,7 +75,7 @@ def with_monitoring(
                 except PackageNotFoundError:
                     app_version = "unknown"
 
-                is_healthy = await _run_deep_check()
+                is_healthy = await _run_health_check()
                 if is_healthy:
                     body = json.dumps(
                         {

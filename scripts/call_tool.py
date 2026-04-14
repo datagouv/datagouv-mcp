@@ -12,14 +12,12 @@ Example:
 import asyncio
 import json
 import logging
-import os
 import sys
 
-from mcp.client.session import ClientSession
-from mcp.client.streamable_http import streamable_http_client
 from mcp.types import TextContent
 
 from helpers.logging import MAIN_LOGGER_NAME
+from helpers.mcp_client import call_tool_on_mcp
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -28,23 +26,19 @@ async def call_tool(tool_name: str, args: dict) -> None:
     """
     Connect to MCP server and call a tool with given arguments.
     """
-    logger.debug("Initiating tool call: %s", tool_name)
-    port = os.getenv("MCP_PORT", "8000")
-    url = f"http://localhost:{port}/mcp"
+    logger.debug(f"Initiating tool call: {tool_name}")
 
-    async with streamable_http_client(url) as (read, write, _):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            result = await session.call_tool(tool_name, args)
-            if result.content and isinstance(result.content[0], TextContent):
-                print(result.content[0].text)
-            elif not result.content:
-                print(f"Error: empty response from tool '{tool_name}'", file=sys.stderr)
-            else:
-                print(
-                    f"Error: unexpected content type from tool '{tool_name}': {type(result.content[0]).__name__}",
-                    file=sys.stderr,
-                )
+    result = await call_tool_on_mcp(tool_name, args)
+
+    if result.content and isinstance(result.content[0], TextContent):
+        print(result.content[0].text)
+    elif not result.content:
+        print(f"Error: empty response from tool '{tool_name}'", file=sys.stderr)
+    else:
+        print(
+            f"Error: unexpected content type from tool '{tool_name}': {type(result.content[0]).__name__}",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":
