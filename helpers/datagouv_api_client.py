@@ -363,10 +363,10 @@ async def search_organizations(
     session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
-    List or search organizations on data.gouv.fr (API v1).
+    List or search publishing organizations on data.gouv.fr.
 
     Args:
-        query: Search string (optional). Same AND-style token behavior as other uData searches.
+        query: Optional search string; keyword-style search over organization fields.
         page: Page number (default: 1).
         page_size: Results per page (default: 20, max: 100).
         sort: Sort field, optionally prefixed with '-' for descending. Examples: name,
@@ -377,7 +377,9 @@ async def search_organizations(
         business_number_id: Filter by SIREN or other business id when indexed.
 
     Returns:
-        dict with 'data' (trimmed org dicts), 'page', 'page_size', and 'total'.
+        dict with keys: 'data' (list of trimmed org dicts: id, name, slug, acronym,
+        badges, metrics, profile_url, url), 'page', 'page_size', and 'total' (full
+        match count across pages).
     """
     own = session is None
     if own:
@@ -385,7 +387,7 @@ async def search_organizations(
     assert session is not None
     try:
         base_url: str = env_config.get_base_url("datagouv_api")
-        url = f"{base_url}1/organizations/"
+        url = f"{base_url}2/organizations/search/"
         params: dict[str, Any] = {
             "page": page,
             "page_size": min(page_size, 100),

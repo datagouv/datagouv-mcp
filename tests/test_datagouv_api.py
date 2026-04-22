@@ -211,7 +211,7 @@ class TestAsyncFunctions:
         assert isinstance(result["data"], list)
 
     async def test_search_organizations_passes_params_to_api(self):
-        """Organization search uses API v1 path and forwards query params."""
+        """Organization search uses API v2 path and forwards query params."""
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -244,7 +244,7 @@ class TestAsyncFunctions:
 
         mock_client.get.assert_called_once()
         args, kwargs = mock_client.get.call_args
-        assert "1/organizations/" in args[0]
+        assert "2/organizations/search/" in args[0]
         assert kwargs["params"] == {
             "page": 2,
             "page_size": 10,

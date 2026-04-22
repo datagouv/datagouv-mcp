@@ -366,7 +366,7 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Parameters: `query` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
 
-- **`search_organizations`** - List or search publishing organizations on data.gouv.fr (Main API v1). Returns trimmed rows (id, name, slug, acronym, badges, metrics, URLs).
+- **`search_organizations`** - List or search publishing organizations on data.gouv.fr. Returns trimmed rows (id, name, slug, acronym, badges, metrics, URLs).
 
   Parameters: `query` (optional; AND-style keyword search; omit or leave empty to browse), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100), `sort` (optional; e.g. `datasets`, `-datasets`), `badge` (optional; e.g. `public-service`, `certified`, `association`, `company`, `local-authority`), `name` (optional, exact name filter), `business_number_id` (optional).
 

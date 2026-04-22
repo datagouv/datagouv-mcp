@@ -26,21 +26,25 @@ def register_search_organizations_tool(mcp: FastMCP) -> None:
         business_number_id: str | None = None,
     ) -> str:
         """
-        List or search organizations (publishers) on data.gouv.fr via API v1.
+        Find publishing organizations on data.gouv.fr (who publishes datasets and
+        reuses).
 
-        Use a short, specific search string when filtering by keywords: the API uses
-        AND-style matching on tokens, so generic words may return no rows (same idea
-        as dataset search).
+        Pass a short `query` with distinctive words (acronym, ministry name, city,
+        \"INSEE\", etc.). Generic or very broad terms often return large result sets;
+        combine with `page` / `page_size` or add `badge` / `name` / `business_number_id`
+        when you need a narrow list.
 
-        Optional sort values include: name, datasets, reuses, followers, views,
-        created, last_modified, and the same names prefixed with '-' for descending
-        order (e.g. -datasets).
+        Leave `query` empty to list organizations with pagination (same as browsing
+        the catalog). Use `sort` to order results (e.g. name, datasets, reuses,
+        followers, views, created, last_modified, or the same with a leading '-' for
+        descending, such as -datasets).
 
-        Optional badge filter (exact): public-service, certified, association,
+        `badge` filters by publisher type: public-service, certified, association,
         company, local-authority.
 
-        Leave query empty to browse the catalog with pagination; combine with sort
-        or badge to narrow results.
+        The reply includes how many organizations matched, the current page, and for
+        each hit: name (and acronym if any), id, slug, badges, optional usage
+        metrics, and links to the organization page.
         """
         cleaned_query = clean_search_query(query) if query else ""
 
