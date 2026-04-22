@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -6,7 +8,8 @@ from main import asgi_app
 
 @pytest.mark.asyncio
 async def test_health_endpoint_returns_valid_response():
-    transport = ASGITransport(app=asgi_app)
+    # httpx types ASGI scope as MutableMapping; our wrappers use dict — runtime is fine.
+    transport = ASGITransport(app=cast(Any, asgi_app))
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/health")
 
