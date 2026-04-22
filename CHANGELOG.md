@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.24 (2026-04-22)
+
+- chore: update gitignore
+- chore: upgrade dependencies ([#105](https://github.com/datagouv/datagouv-mcp/pull/105))
+- feat: add deep health check and call_tool dev script ([#100](https://github.com/datagouv/datagouv-mcp/pull/100))
+- feat: add tool titles and MCP annotations ([#102](https://github.com/datagouv/datagouv-mcp/pull/102))
+- feat(matomo): track MCP tool calls as Matomo events ([#101](https://github.com/datagouv/datagouv-mcp/pull/101))
+- fix(tabular): handle Tabular API 4xx/5xx with LLM hints ([#94](https://github.com/datagouv/datagouv-mcp/pull/94))
+- refactor(datagouv): simplify tags handling to match API swagger ([#98](https://github.com/datagouv/datagouv-mcp/pull/98))
+- refactor(query_resource_data): remove question parameter ([#95](https://github.com/datagouv/datagouv-mcp/pull/95))
+
+
 ## 0.2.23 (2026-04-09)
 
 - docs(readme): add OpenCode MCP configuration ([#99](https://github.com/datagouv/datagouv-mcp/pull/99))
