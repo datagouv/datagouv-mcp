@@ -1,5 +1,5 @@
 import httpx
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 from helpers import crawler_api_client, datagouv_api_client, env_config
 from helpers.logging import log_tool
