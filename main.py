@@ -8,8 +8,12 @@ from importlib.metadata import PackageNotFoundError, version
 from typing import Awaitable, Callable
 
 import uvicorn
-from mcp.server.fastmcp import FastMCP
-from mcp.server.transport_security import TransportSecuritySettings
+from fastmcp import FastMCP
+from mcp.server.transport_security import (
+    TransportSecurityMiddleware,
+    TransportSecuritySettings,
+)
+from starlette.requests import Request
 
 from helpers.health_probe import _run_health_check
 from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
@@ -47,16 +51,39 @@ transport_security = TransportSecuritySettings(
     ],
 )
 
-# Enable stateless_http to avoid "Session not found" errors with MCP clients
-# that don't properly maintain the mcp-session-id header across requests
-# (e.g. Claude Code, Cline, OpenAI Codex). Since this server does not use
-# server-initiated notifications, stateful sessions are not needed.
-mcp = FastMCP(
-    "data.gouv.fr MCP server",
-    transport_security=transport_security,
-    stateless_http=True,
-)
+# Default streamable HTTP path (must match mcp.http_app path below)
+MCP_STREAMABLE_HTTP_PATH = "/mcp"
+
+# FastMCP 3: stateless HTTP is set on http_app(), not the constructor.
+# transport_security is not a FastMCP() kwarg; we apply the SDK's
+# TransportSecurityMiddleware in front of the /mcp route only (see
+# with_mcp_transport_security).
+mcp = FastMCP("data.gouv.fr MCP server")
 register_tools(mcp)
+
+
+def with_mcp_transport_security(
+    inner_app: Callable[[dict, Callable, Callable], Awaitable[None]],
+    mcp_path: str,
+    settings: TransportSecuritySettings,
+) -> Callable[[dict, Callable, Callable], Awaitable[None]]:
+    """Enforce the same Host/Origin/Content-Type checks as the MCP SDK for /mcp only."""
+
+    security = TransportSecurityMiddleware(settings)
+
+    async def app(scope, receive, send):
+        if scope["type"] == "http":
+            path: str = scope.get("path", "")
+            if path == mcp_path or path == mcp_path + "/":
+                request = Request(scope, receive)
+                is_post = scope.get("method", "") == "POST"
+                err = await security.validate_request(request, is_post=is_post)
+                if err is not None:
+                    await err(scope, receive, send)
+                    return
+        await inner_app(scope, receive, send)
+
+    return app
 
 
 def with_monitoring(
@@ -128,7 +155,19 @@ def with_monitoring(
     return app
 
 
-asgi_app = with_monitoring(mcp.streamable_http_app())
+# Stateless HTTP: avoid "Session not found" with clients that do not keep mcp-session-id
+mcp_asgi = mcp.http_app(
+    path=MCP_STREAMABLE_HTTP_PATH,
+    transport="streamable-http",
+    stateless_http=True,
+)
+
+# Security runs before Matomo/inner MCP (same order as when the SDK passed transport_security into the transport).
+asgi_app = with_mcp_transport_security(
+    with_monitoring(mcp_asgi),
+    MCP_STREAMABLE_HTTP_PATH,
+    transport_security,
+)
 
 
 # Run with streamable HTTP transport

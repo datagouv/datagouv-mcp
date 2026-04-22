@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 from helpers.logging import log_tool
