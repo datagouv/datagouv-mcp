@@ -1,0 +1,27 @@
+name: General issue
+description: Bug report, feature request, or other feedback
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### AI-generated content
+
+        **Raw AI-only issues (output you have not personally edited, fully understood, and vetted) are not allowed and may be closed without discussion.** By submitting, you state you understand this issue and can defend it without an AI.
+
+        All other rules (workflow, commits, review): **[Contributing guidelines](https://github.com/datagouv/datagouv-mcp/blob/main/README.md#contributing)**.
+
+  - type: checkboxes
+    id: human_accountability
+    attributes:
+      label: Confirmation
+      options:
+        - label: I am not submitting raw, unreviewed AI-generated content. I have reviewed, understand, and stand behind this issue.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, what you expected, and any steps to reproduce (for bugs).
+    validations:
+      required: true
