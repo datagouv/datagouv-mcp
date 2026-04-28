@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/datagouv-datagouv-mcp-badge.png)](https://mseep.ai/app/datagouv-datagouv-mcp)
+
 # data.gouv.fr MCP Server
 
 <img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/5d20e992-349a-4b3b-9a0a-ebe308735cc9" />
