@@ -194,7 +194,7 @@ async def get_dataservice_details(
     dataservice_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """
-    Fetch the complete dataservice payload from the API v1 endpoint.
+    Fetch the full catalog payload for a third-party API from GET /1/dataservices/{id}/.
     """
     own = session is None
     if own:
@@ -216,7 +216,7 @@ async def search_dataservices(
     session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
-    Search for dataservices (APIs) on data.gouv.fr.
+    Search third-party APIs cataloged on data.gouv.fr via GET /2/dataservices/search/.
 
     Args:
         query: Search query string
@@ -224,7 +224,7 @@ async def search_dataservices(
         page_size: Number of results per page (default: 20, max: 100)
 
     Returns:
-        dict with 'data' (list of dataservices), 'page', 'page_size', and 'total'
+        dict with 'data' (list of third-party API entries), 'page', 'page_size', and 'total'
     """
     own = session is None
     if own:
@@ -242,9 +242,9 @@ async def search_dataservices(
         resp.raise_for_status()
         data = resp.json()
 
-        dataservices: list[dict[str, Any]] = data.get("data", [])
+        raw_items: list[dict[str, Any]] = data.get("data", [])
         results: list[dict[str, Any]] = []
-        for ds in dataservices:
+        for ds in raw_items:
             tags: list[str] = ds.get("tags") or []
 
             results.append(

@@ -10,25 +10,25 @@ from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Get dataservice info",
+        title="Get third-party API info",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
     )
     @log_tool
     async def get_dataservice_info(dataservice_id: str) -> str:
         """
-        Get detailed metadata about a specific dataservice (external third-party API).
+        Get detailed metadata about a specific third-party API (dataservice).
 
         Returns title, description, organization, base_api_url,
         machine_documentation_url (OpenAPI/Swagger spec), license, and dates.
 
-        To use a dataservice: (1) get its info here, (2) fetch the OpenAPI spec
+        To use a third-party API: (1) get its info here, (2) fetch the OpenAPI spec
         via get_dataservice_openapi_spec, (3) call base_api_url per spec.
         """
         try:
             data = await datagouv_api_client.get_dataservice_details(dataservice_id)
 
             content_parts = [
-                f"Dataservice Information: {data.get('title', 'Unknown')}",
+                f"Third-party API information: {data.get('title', 'Unknown')}",
                 "",
             ]
 
@@ -43,7 +43,7 @@ def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
                 desc = data.get("description", "")[:500]
                 content_parts.append(f"Description: {desc}...")
 
-            # Key dataservice fields
+            # Catalog resource fields for this third-party API (dataservice)
             content_parts.append("")
             if data.get("base_api_url"):
                 content_parts.append(f"Base API URL: {data.get('base_api_url')}")
@@ -87,7 +87,7 @@ def register_get_dataservice_info_tool(mcp: FastMCP) -> None:
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                return f"Error: Dataservice with ID '{dataservice_id}' not found."
+                return f"Error: Third-party API not found (dataservice_id='{dataservice_id}')."
             return f"Error: HTTP {e.response.status_code} - {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"

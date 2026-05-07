@@ -87,15 +87,15 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
 
 def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Get dataservice OpenAPI spec",
+        title="Get third-party API OpenAPI spec",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
     )
     @log_tool
     async def get_dataservice_openapi_spec(dataservice_id: str) -> str:
         """
-        Fetch and summarize the OpenAPI/Swagger spec for a dataservice (external third-party API).
+        Fetch and summarize the OpenAPI/Swagger spec for a third-party API (dataservice).
 
-        Retrieves the machine_documentation_url from the dataservice metadata,
+        Retrieves machine_documentation_url from catalog metadata (dataservice record),
         fetches the spec, and returns a summary of available endpoints with
         their parameters. Use this to understand how to call the API.
 
@@ -110,7 +110,10 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
             title = data.get("title", "Unknown")
 
             if not doc_url:
-                msg = f"Dataservice '{title}' has no machine_documentation_url."
+                msg = (
+                    f"Third-party API '{title}' has no machine_documentation_url "
+                    "(dataservice catalog entry)."
+                )
                 if base_api_url:
                     msg += f" Base API URL is: {base_api_url}"
                 return msg
@@ -131,7 +134,7 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                return f"Error: Dataservice with ID '{dataservice_id}' not found."
+                return f"Error: Third-party API not found (dataservice_id='{dataservice_id}')."
             return f"Error: HTTP {e.response.status_code} - {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error fetching OpenAPI spec: {str(e)}"
