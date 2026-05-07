@@ -366,6 +366,10 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Parameters: `query` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
 
+- **`search_organizations`** - List or search publishing organizations on data.gouv.fr. Returns trimmed rows (id, name, slug, acronym, badges, metrics, URLs).
+
+  Parameters: `query` (optional; AND-style keyword search; omit or leave empty to browse), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100), `sort` (optional; e.g. `datasets`, `-datasets`), `badge` (optional; e.g. `public-service`, `certified`, `association`, `company`, `local-authority`), `name` (optional, exact name filter), `business_number_id` (optional).
+
 - **`get_dataset_info`** - Get detailed information about a specific dataset (metadata, organization, tags, dates, license, etc.).
 
   Parameters: `dataset_id` (required)
@@ -480,7 +484,7 @@ Steps:
 
 We welcome contributions! To keep the project stable and reviews manageable, please observe these rules before submitting:
 
-- **Human review and accountability:** Do not submit raw, unreviewed AI-generated code. Every change must be read, understood, tested, and validated by a human before you open a PR. **By submitting a pull request, you certify that you fully understand the proposed code and could explain and defend it in review without relying on an AI assistant.**
+- **Human review and accountability:** **Issues and pull requests** must not be raw, unreviewed AI output. You must have read, fully understood, and (for code) tested what you submit. **By opening an issue or a pull request, you certify you could explain and defend it in review without relying on an AI assistant.**
 - **Keep it small:** We strictly follow a **1 feature = 1 PR** workflow.
 - **Conventional commits:** Use the [Conventional Commits](https://www.conventionalcommits.org/) format for **git commit messages** and **PR titles** (e.g. `feat: add dataset search`, `fix: handle empty API response`). See the specification for allowed types, scopes, and breaking-change markers.
 

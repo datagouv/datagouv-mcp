@@ -210,6 +210,110 @@ class TestAsyncFunctions:
         assert "data" in result
         assert isinstance(result["data"], list)
 
+    async def test_search_organizations_passes_params_to_api(self):
+        """Organization search uses API v2 path and forwards query params."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "data": [
+                {
+                    "id": "org-id",
+                    "name": "Test Org",
+                    "slug": "test-org",
+                    "badges": [{"kind": "certified"}],
+                    "metrics": {"datasets": 5, "reuses": 1},
+                }
+            ],
+            "page": 1,
+            "page_size": 20,
+            "total": 42,
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+
+        result = await datagouv_api_client.search_organizations(
+            query="insee",
+            page=2,
+            page_size=10,
+            sort="-datasets",
+            badge="public-service",
+            name="Exact Name",
+            business_number_id="123456789",
+            session=mock_client,
+        )
+
+        mock_client.get.assert_called_once()
+        args, kwargs = mock_client.get.call_args
+        assert "2/organizations/search/" in args[0]
+        assert kwargs["params"] == {
+            "page": 2,
+            "page_size": 10,
+            "q": "insee",
+            "sort": "-datasets",
+            "badge": "public-service",
+            "name": "Exact Name",
+            "business_number_id": "123456789",
+        }
+        assert result["total"] == 42
+        assert len(result["data"]) == 1
+        row = result["data"][0]
+        assert row["id"] == "org-id"
+        assert row["name"] == "Test Org"
+        assert row["slug"] == "test-org"
+        assert row["badges"] == ["certified"]
+        assert row["metrics"] == {"datasets": 5, "reuses": 1}
+        assert "url" in row and "organizations" in row["url"]
+
+    async def test_search_organizations_omits_empty_query_param(self):
+        """Listing without q should not send an empty q parameter."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": [], "total": 0}
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+
+        await datagouv_api_client.search_organizations(
+            query="",
+            page=1,
+            page_size=15,
+            session=mock_client,
+        )
+        _args, kwargs = mock_client.get.call_args
+        assert kwargs["params"] == {"page": 1, "page_size": 15}
+        assert "q" not in kwargs["params"]
+
+    async def test_search_organizations_basic(self):
+        """Test basic organization list/search against the public API."""
+        result = await datagouv_api_client.search_organizations(
+            "insee", page=1, page_size=5
+        )
+
+        assert "data" in result
+        assert "page" in result
+        assert "page_size" in result
+        assert "total" in result
+        assert result["page"] == 1
+        assert isinstance(result["data"], list)
+
+    async def test_search_organizations_structure(self):
+        """Trimmed organization rows expose expected keys."""
+        result = await datagouv_api_client.search_organizations("état", page_size=2)
+
+        if result["data"]:
+            org = result["data"][0]
+            assert "id" in org
+            assert "name" in org
+            assert "url" in org
+            assert "badges" in org
+            assert isinstance(org["badges"], list)
+
+    async def test_search_organizations_page_size_cap(self):
+        """page_size is capped at 100."""
+        result = await datagouv_api_client.search_organizations(
+            "", page_size=500, page=1
+        )
+        assert len(result["data"]) <= 100
+
     async def test_get_dataservice_details(self):
         """Test fetching full dataservice details payload."""
         # API Adresse (BAN) — known to have base_api_url and machine_documentation_url

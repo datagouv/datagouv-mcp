@@ -338,3 +338,108 @@ async def search_datasets(
     finally:
         if own:
             await session.aclose()
+
+
+def _organization_metrics_summary(metrics: Any) -> dict[str, Any] | None:
+    """Pick a small subset of organization metrics for tool responses."""
+    if not isinstance(metrics, dict):
+        return None
+    keys = ("datasets", "reuses", "followers", "views")
+    out: dict[str, Any] = {}
+    for k in keys:
+        if k in metrics and metrics[k] is not None:
+            out[k] = metrics[k]
+    return out or None
+
+
+async def search_organizations(
+    query: str = "",
+    page: int = 1,
+    page_size: int = 20,
+    sort: str | None = None,
+    badge: str | None = None,
+    name: str | None = None,
+    business_number_id: str | None = None,
+    session: httpx.AsyncClient | None = None,
+) -> dict[str, Any]:
+    """
+    List or search publishing organizations on data.gouv.fr.
+
+    Args:
+        query: Optional search string; keyword-style search over organization fields.
+        page: Page number (default: 1).
+        page_size: Results per page (default: 20, max: 100).
+        sort: Sort field, optionally prefixed with '-' for descending. Examples: name,
+            datasets, reuses, followers, views, created, last_modified, and -datasets.
+        badge: Filter by badge kind: public-service, certified, association, company,
+            local-authority.
+        name: Filter by exact organization name.
+        business_number_id: Filter by SIREN or other business id when indexed.
+
+    Returns:
+        dict with keys: 'data' (list of trimmed org dicts: id, name, slug, acronym,
+        badges, metrics, profile_url, url), 'page', 'page_size', and 'total' (full
+        match count across pages).
+    """
+    own = session is None
+    if own:
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    assert session is not None
+    try:
+        base_url: str = env_config.get_base_url("datagouv_api")
+        url = f"{base_url}2/organizations/search/"
+        params: dict[str, Any] = {
+            "page": page,
+            "page_size": min(page_size, 100),
+        }
+        if query:
+            params["q"] = query
+        if sort:
+            params["sort"] = sort
+        if badge:
+            params["badge"] = badge
+        if name:
+            params["name"] = name
+        if business_number_id:
+            params["business_number_id"] = business_number_id
+
+        resp = await session.get(url, params=params, timeout=15.0)
+        resp.raise_for_status()
+        data = resp.json()
+
+        orgs: list[dict[str, Any]] = data.get("data", [])
+        site_base = env_config.get_base_url("site").rstrip("/")
+        results: list[dict[str, Any]] = []
+        for org in orgs:
+            raw_badges = org.get("badges") or []
+            badge_kinds: list[str] = []
+            for b in raw_badges:
+                if isinstance(b, dict) and b.get("kind"):
+                    badge_kinds.append(str(b["kind"]))
+
+            metrics_summary = _organization_metrics_summary(org.get("metrics"))
+
+            slug = org.get("slug") or ""
+            org_id = org.get("id")
+            results.append(
+                {
+                    "id": org_id,
+                    "name": org.get("name") or "",
+                    "slug": slug,
+                    "acronym": org.get("acronym"),
+                    "badges": badge_kinds,
+                    "metrics": metrics_summary,
+                    "profile_url": org.get("page"),
+                    "url": f"{site_base}/organizations/{slug or org_id or ''}",
+                }
+            )
+
+        return {
+            "data": results,
+            "page": page,
+            "page_size": len(results),
+            "total": data.get("total", len(results)),
+        }
+    finally:
+        if own:
+            await session.aclose()
