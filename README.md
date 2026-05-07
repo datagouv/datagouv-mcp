@@ -358,7 +358,7 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 
 The MCP server provides tools to interact with data.gouv.fr datasets and third-party APIs cataloged on the platform.
 
-**Note:** These APIs (e.g., Adresse API, Sirene API) are third-party services registered in the national open data catalog. data.gouv.fr exposes them over HTTP under the `dataservices` resource paths; that is separate from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) that power this MCP server.
+**Note:** data.gouv.fr exposes these third-party APIs (e.g., Adresse API, Sirene API) over HTTP under the `dataservices` resource paths; that is separate from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) that power this MCP server.
 
 ### Datasets (static data files)
 
