@@ -177,7 +177,7 @@ class TestAsyncFunctions:
         assert isinstance(details.get("resources", []), list)
 
     async def test_search_dataservices_basic(self):
-        """Test basic dataservice search."""
+        """Test basic third-party API search."""
         result = await datagouv_api_client.search_dataservices(
             "adresse", page=1, page_size=5
         )
@@ -190,7 +190,7 @@ class TestAsyncFunctions:
         assert isinstance(result["data"], list)
 
     async def test_search_dataservices_structure(self):
-        """Test that dataservice search results have correct structure."""
+        """Test that third-party API search results have correct structure."""
         result = await datagouv_api_client.search_dataservices("adresse", page_size=2)
 
         if result["data"]:
@@ -200,12 +200,12 @@ class TestAsyncFunctions:
             assert "url" in ds
             assert "tags" in ds
             assert isinstance(ds["tags"], list)
-            # Dataservice-specific fields
+            # Third-party API-specific fields
             assert "base_api_url" in ds
             assert "machine_documentation_url" in ds
 
     async def test_search_dataservices_empty_query(self):
-        """Test dataservice search with empty query."""
+        """Test third-party API search with empty query."""
         result = await datagouv_api_client.search_dataservices("", page_size=1)
         assert "data" in result
         assert isinstance(result["data"], list)
@@ -315,7 +315,7 @@ class TestAsyncFunctions:
         assert len(result["data"]) <= 100
 
     async def test_get_dataservice_details(self):
-        """Test fetching full dataservice details payload."""
+        """Test fetching full third-party API details payload."""
         # API Adresse (BAN) — known to have base_api_url and machine_documentation_url
         dataservice_id = "672cf67802ef6b1be63b8975"
         details = await datagouv_api_client.get_dataservice_details(dataservice_id)
@@ -326,7 +326,7 @@ class TestAsyncFunctions:
         assert details.get("machine_documentation_url")
 
     async def test_get_dataservice_details_invalid_id(self):
-        """Test that invalid dataservice ID raises error."""
+        """Test that an invalid dataservice_id raises an error."""
         invalid_id = "000000000000000000000000"
         with pytest.raises(Exception):
             await datagouv_api_client.get_dataservice_details(invalid_id)

@@ -356,9 +356,9 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 
 ## 🛠️ Available Tools
 
-The MCP server provides tools to interact with data.gouv.fr datasets and dataservices.
+The MCP server provides tools to interact with data.gouv.fr datasets and third-party APIs cataloged on the platform.
 
-**Note:** "Dataservices" are external third-party APIs (e.g., Adresse API, Sirene API) registered in the data.gouv.fr catalog. They are distinct from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) which power this MCP server.
+**Note:** data.gouv.fr exposes these third-party APIs (e.g., Adresse API, Sirene API) over HTTP under the `dataservices` resource paths; that is separate from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) that power this MCP server.
 
 ### Datasets (static data files)
 
@@ -388,21 +388,23 @@ The MCP server provides tools to interact with data.gouv.fr datasets and dataser
 
   Note: Recommended workflow: 1) Use `search_datasets` to find the dataset, 2) Use `list_dataset_resources` to see available resources, 3) Use `query_resource_data` with default `page_size` (20) to preview data structure. For small datasets (<500 rows), increase `page_size` or paginate. For large datasets (>1000 rows), continue paginating or use `get_resource_info` to retrieve the raw file URL and fetch it directly. Works for CSV/XLS resources within Tabular API size limits (CSV ≤ 100 MB, XLSX ≤ 12.5 MB).
 
-### Dataservices (external APIs)
+### Third-party APIs
 
-- **`search_dataservices`** - Search for dataservices (APIs) registered on data.gouv.fr by keywords. Returns dataservices with metadata (title, description, organization, base API URL, tags).
+These tools use data.gouv.fr HTTP paths under `dataservices`; tool and parameter names match that API (`search_dataservices`, `dataservice_id`).
+
+- **`search_dataservices`** - Search for third-party APIs cataloged on data.gouv.fr by keywords. Returns entries with metadata (title, description, organization, base API URL, tags).
 
   Parameters: `query` (required), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
 
-- **`get_dataservice_info`** - Get detailed metadata about a specific dataservice (title, description, organization, base API URL, OpenAPI spec URL, license, dates, related datasets).
+- **`get_dataservice_info`** - Get detailed metadata for one third-party API (title, description, organization, base API URL, OpenAPI spec URL, license, dates, related datasets).
+
+  Parameters: `dataservice_id` (required) — same as in the data.gouv.fr API and as the `id` from search results.
+
+- **`get_dataservice_openapi_spec`** - Fetch and summarize the OpenAPI/Swagger specification for a third-party API. Returns a concise overview of available endpoints with their parameters.
 
   Parameters: `dataservice_id` (required)
 
-- **`get_dataservice_openapi_spec`** - Fetch and summarize the OpenAPI/Swagger specification for a dataservice. Returns a concise overview of available endpoints with their parameters.
-
-  Parameters: `dataservice_id` (required)
-
-  Note: Recommended workflow: 1) Use `search_dataservices` to find the API, 2) Use `get_dataservice_info` to get its metadata and documentation URL, 3) Use `get_dataservice_openapi_spec` to understand available endpoints and parameters, 4) Call the API using the `base_api_url` per the spec.
+  Note: Recommended workflow: 1) Use `search_dataservices` to find the API, 2) Use `get_dataservice_info` for metadata and documentation URL, 3) Use `get_dataservice_openapi_spec` for endpoints and parameters, 4) Call the API using the `base_api_url` per the spec.
 
 ### Metrics
 

@@ -12,7 +12,7 @@ logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 def register_search_dataservices_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Search dataservices",
+        title="Search third-party APIs",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
     )
     @log_tool
@@ -20,9 +20,9 @@ def register_search_dataservices_tool(mcp: FastMCP) -> None:
         query: str, page: int = 1, page_size: int = 20
     ) -> str:
         """
-        Search for dataservices (external third-party APIs) on data.gouv.fr by keywords.
+        Search for third-party APIs (dataservices) on data.gouv.fr by keywords.
 
-        Dataservices are third-party APIs registered in the data.gouv.fr catalog
+        Third-party APIs (or dataservices) are APIs registered in the data.gouv.fr catalog
         that provide programmatic access to data (unlike datasets which are static files).
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
@@ -50,10 +50,10 @@ def register_search_dataservices_tool(mcp: FastMCP) -> None:
             dataservices = result.get("data", [])
 
         if not dataservices:
-            return f"No dataservices found for query: '{query}'"
+            return f"No third-party APIs found for query: '{query}'"
 
         content_parts = [
-            f"Found {result.get('total', len(dataservices))} dataservice(s) for query: '{query}'",
+            f"Found {result.get('total', len(dataservices))} third-party API(s) for query: '{query}'",
             f"Page {result.get('page', 1)} of results:\n",
         ]
         for i, ds in enumerate(dataservices, 1):
