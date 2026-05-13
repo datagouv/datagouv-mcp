@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 from tools.get_dataservice_info import register_get_dataservice_info_tool
 from tools.get_dataservice_openapi_spec import (
