@@ -13,7 +13,7 @@ Model Context Protocol (MCP) server that allows AI chatbots (Claude, ChatGPT, Ge
 Instead of manually browsing the website, you can simply ask questions like "Quels jeux de données sont disponibles sur les prix de l'immobilier ?" or "Montre-moi les dernières données de population pour Paris" and get instant answers.
 
 > [!IMPORTANT]
-> If you are a developper, read first the documentation of the APIs that power this MCP's tool : [Main](https://guides.data.gouv.fr/api-de-data.gouv.fr/prise-en-main)|[Tabular](https://www.data.gouv.fr/dataservices/api-tabulaire-data-gouv-fr-beta)|[Metrics](https://metric-api.data.gouv.fr/api/doc#/). Our APIs will help you write code that is more robust, reproducible, and sustainable, by preventing unnecessary usages of LLMs.
+> If you are a developper, read first the documentation of the APIs that power this MCP's tool : [Main](https://guides.data.gouv.fr/api-de-data.gouv.fr/prise-en-main) | [Tabular](https://www.data.gouv.fr/dataservices/api-tabulaire-data-gouv-fr-beta) | [Metrics](https://metric-api.data.gouv.fr/api/doc#/). Our APIs will help you write code that is more robust, reproducible, and sustainable, by preventing unnecessary usages of LLMs.
 
 > [!TIP]
 > Use it now: A public instance is available for everyone at https://mcp.data.gouv.fr/mcp with no access restrictions.
