@@ -38,7 +38,11 @@ def _query_resource_data_prefab(rows: list[dict[str, Any]]) -> PrefabApp:
     columns = [DataTableColumn(key=k, header=k, sortable=True) for k in keys]
     with PrefabApp() as app:
         with Column(gap=4):
-            DataTable(columns=columns, rows=rows, search=True)
+            DataTable(
+                columns=columns,
+                rows=rows,  # ty: ignore[invalid-argument-type]
+                search=True,
+            )
     return app
 
 

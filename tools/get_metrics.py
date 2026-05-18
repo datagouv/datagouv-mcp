@@ -92,11 +92,10 @@ def _build_metrics_prefab(panels: list[_MetricsPanel]) -> PrefabApp:
                     BarChart(
                         data=panel.rows,
                         series=[
-                            ChartSeries(data_key="visits", label="Visits"),
-                            ChartSeries(data_key="downloads", label="Downloads"),
+                            ChartSeries(dataKey="visits", label="Visits"),
+                            ChartSeries(dataKey="downloads", label="Downloads"),
                         ],
-                        x_axis="month",
-                        show_legend=True,
+                        xAxis="month",
                     )
                     DataTable(
                         columns=[
@@ -108,17 +107,16 @@ def _build_metrics_prefab(panels: list[_MetricsPanel]) -> PrefabApp:
                                 key="downloads", header="Downloads", sortable=True
                             ),
                         ],
-                        rows=panel.rows,
+                        rows=panel.rows,  # ty: ignore[invalid-argument-type]
                         search=True,
                     )
                 else:
                     BarChart(
                         data=panel.rows,
                         series=[
-                            ChartSeries(data_key="downloads", label="Downloads"),
+                            ChartSeries(dataKey="downloads", label="Downloads"),
                         ],
-                        x_axis="month",
-                        show_legend=True,
+                        xAxis="month",
                     )
                     DataTable(
                         columns=[
@@ -127,7 +125,7 @@ def _build_metrics_prefab(panels: list[_MetricsPanel]) -> PrefabApp:
                                 key="downloads", header="Downloads", sortable=True
                             ),
                         ],
-                        rows=panel.rows,
+                        rows=panel.rows,  # ty: ignore[invalid-argument-type]
                         search=True,
                     )
     return app
