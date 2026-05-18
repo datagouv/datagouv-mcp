@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.25 (2026-05-18)
+
+- chore: upgrade dependencies
+- chore(deps): remove provisional urllib3 constraint
+- chore(github): add issue/PR AI policy templates and reminder workflow ([#107](https://github.com/datagouv/datagouv-mcp/pull/107))
+- feat(tools): add search_organizations MCP tool ([#103](https://github.com/datagouv/datagouv-mcp/pull/103))
+- feat(tools): align third-party API wording with dataservice identifiers ([#110](https://github.com/datagouv/datagouv-mcp/pull/110))
+- fix(deps): constrain urllib3 for CVE-2026-44432 ([#112](https://github.com/datagouv/datagouv-mcp/pull/112))
+- fix(type): fix type issues
+
+
 ## 0.2.24 (2026-04-22)
 
 - chore: update gitignore
