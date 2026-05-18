@@ -16,12 +16,6 @@ dependencies = [
 requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-
-# Provisional: drop when sentry-sdk requires a patched urllib3 lower bound (GHSA-mf9v-mfxr-j63j).
-[tool.uv]
-constraint-dependencies = ["urllib3>=2.7.0"]
-
 [dependency-groups]
 dev = [
     "pytest>=9.0.0",
@@ -30,6 +24,8 @@ dev = [
     "ruff>=0.14.0",
     "ty>=0.0.18",
 ]
+
+[tool.setuptools_scm]
 
 [tool.ruff.lint]
 # Match CI: `ruff check --select I .` — default Ruff select does not include isort (I).
