@@ -109,7 +109,7 @@ def _list_resources_prefab(rows: list[dict[str, Any]]) -> PrefabApp:
                     DataTableColumn(key="mime", header="MIME", sortable=True),
                     DataTableColumn(key="url", header="URL", sortable=False),
                 ],
-                rows=rows,
+                rows=rows,  # ty: ignore[invalid-argument-type]
                 search=True,
             )
     return app

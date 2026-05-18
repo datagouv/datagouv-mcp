@@ -122,7 +122,7 @@ def _search_dataservices_prefab(rows: list[dict[str, Any]]) -> PrefabApp:
                         key="description", header="Description", sortable=False
                     ),
                 ],
-                rows=rows,
+                rows=rows,  # ty: ignore[invalid-argument-type]
                 search=True,
             )
     return app

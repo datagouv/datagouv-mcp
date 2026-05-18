@@ -184,7 +184,7 @@ def _search_organizations_prefab(rows: list[dict[str, Any]]) -> PrefabApp:
                         key="profile_url", header="Profile", sortable=False
                     ),
                 ],
-                rows=rows,
+                rows=rows,  # ty: ignore[invalid-argument-type]
                 search=True,
             )
     return app

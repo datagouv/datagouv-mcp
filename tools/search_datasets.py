@@ -179,7 +179,7 @@ def _search_datasets_prefab(rows: list[dict[str, Any]]) -> PrefabApp:
                         key="description_short", header="Description", sortable=False
                     ),
                 ],
-                rows=rows,
+                rows=rows,  # ty: ignore[invalid-argument-type]
                 search=True,
             )
     return app
