@@ -355,9 +355,16 @@ def register_get_metrics_visual_tool(mcp: FastMCP) -> None:
         limit: int = 12,
     ) -> ToolResult:
         """
-        Same data as get_metrics with an interactive chart and sortable table.
+        Get usage metrics (visits, downloads) for a dataset or resource.
 
-        Plain-text summary is always included for the model; the UI is optional for hosts.
+        Returns monthly statistics sorted by most recent first.
+        At least one of dataset_id or resource_id must be provided.
+        Note: Only available in production environment (not demo).
+
+        When the host supports app UI and metrics panels are available, adds interactive charts
+        and sortable tables. Plain-text summary is always returned for the model; structured UI
+        is optional for hosts. Prefer this variant when the user should compare monthly visits
+        and downloads visually.
         """
         text, panels = await _run_metrics_core(dataset_id, resource_id, limit)
         if not panels:

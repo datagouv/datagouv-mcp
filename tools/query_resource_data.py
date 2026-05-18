@@ -288,7 +288,17 @@ def register_query_resource_data_visual_tool(mcp: FastMCP) -> None:
         sort_direction: str = "asc",
     ) -> ToolResult:
         """
-        Same as query_resource_data with a sortable table for the current page.
+        Query tabular data from a resource via the Tabular API (no download needed).
+
+        Works for CSV/XLSX files. Start with small page_size (20) to preview structure.
+        Use filter_column/filter_value/filter_operator to filter, sort_column/sort_direction to sort.
+        Filter operators: exact, contains, less, greater, strictly_less, strictly_greater.
+        For large datasets requiring full analysis, paginate through pages or use
+        get_resource_info to retrieve the raw file URL and fetch it directly.
+
+        When the host supports app UI and the current page has rows, includes a sortable table
+        for that page. Plain-text content is always returned for the model. Prefer this variant
+        when the user should inspect column values for the loaded page in tabular form.
         """
         text, rows = await _query_resource_data_core(
             resource_id,
