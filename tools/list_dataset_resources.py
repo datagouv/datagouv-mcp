@@ -142,7 +142,14 @@ def register_list_dataset_resources_visual_tool(mcp: FastMCP) -> None:
     @log_tool
     async def list_dataset_resources_visual(dataset_id: str) -> ToolResult:
         """
-        Same as list_dataset_resources with a sortable, searchable table where supported.
+        List all resources (files) in a dataset with their metadata.
+
+        Returns resource ID, title, format, size, and URL for each file.
+        Next step: use query_resource_data for CSV/XLSX files via the Tabular API,
+        or fetch the resource URL directly for other formats (JSON, JSONL) or large datasets.
+
+        When the host supports app UI and the dataset has resources, includes a sortable,
+        searchable table. Prefer this variant when the user should browse files in tabular form.
         """
         text, rows = await _list_dataset_resources_data(dataset_id)
         if not rows:

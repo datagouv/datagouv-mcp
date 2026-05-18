@@ -163,7 +163,18 @@ def register_search_dataservices_visual_tool(mcp: FastMCP) -> None:
         query: str, page: int = 1, page_size: int = 20
     ) -> ToolResult:
         """
-        Same as search_dataservices with a sortable, searchable results table.
+        Search for third-party APIs (dataservices) on data.gouv.fr by keywords.
+
+        Third-party APIs (or dataservices) are APIs registered in the data.gouv.fr catalog
+        that provide programmatic access to data (unlike datasets which are static files).
+        Use short, specific queries (the API uses AND logic, so generic words
+        like "données" or "fichier" may return zero results).
+
+        Typical workflow: search_dataservices → get_dataservice_info →
+        get_dataservice_openapi_spec → call the API using base_api_url per spec.
+
+        When the host supports app UI, includes a sortable, searchable table of results.
+        Prefer this variant when the user should scan or compare many APIs in tabular form.
         """
         text, rows = await _search_dataservices_data(query, page, page_size)
         if not rows:

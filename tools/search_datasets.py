@@ -234,7 +234,16 @@ def register_search_datasets_visual_tool(mcp: FastMCP) -> None:
         last_update_range: str | None = None,
     ) -> ToolResult:
         """
-        Same as search_datasets with a sortable, searchable results table.
+        Search for datasets on data.gouv.fr by keywords.
+
+        This is typically the first step in exploring data.gouv.fr.
+        Use short, specific queries (the API uses AND logic, so generic words
+        like "données" or "fichier" may return zero results).
+
+        Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
+
+        When the host supports app UI, includes a sortable, searchable table of results.
+        Prefer this variant when the user should scan or compare many datasets in tabular form.
         """
         text, rows = await _search_datasets_data(
             query, page, page_size, sort, last_update_range
