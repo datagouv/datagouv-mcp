@@ -158,6 +158,53 @@ class TestAsyncFunctions:
         assert "data" in result
         assert isinstance(result["data"], list)
 
+    async def test_search_datasets_passes_optional_params(self):
+        """search_datasets forwards sort and last_update_range to the API."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": [], "total": 0}
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+
+        await datagouv_api_client.search_datasets(
+            query="IRVE",
+            page=2,
+            page_size=10,
+            sort="-created",
+            last_update_range="last_30_days",
+            session=mock_client,
+        )
+
+        mock_client.get.assert_called_once()
+        _args, kwargs = mock_client.get.call_args
+        assert "2/datasets/search/" in _args[0]
+        assert kwargs["params"] == {
+            "q": "IRVE",
+            "page": 2,
+            "page_size": 10,
+            "sort": "-created",
+            "last_update_range": "last_30_days",
+        }
+
+    async def test_search_datasets_omits_none_optional_params(self):
+        """None sort and last_update_range are not sent to the API."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": [], "total": 0}
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+
+        await datagouv_api_client.search_datasets(
+            query="transport",
+            page=1,
+            page_size=5,
+            session=mock_client,
+        )
+
+        _args, kwargs = mock_client.get.call_args
+        assert "sort" not in kwargs["params"]
+        assert "last_update_range" not in kwargs["params"]
+
     async def test_get_resource_details(self, known_resource_id):
         """Test fetching full resource details payload."""
         details = await datagouv_api_client.get_resource_details(known_resource_id)
