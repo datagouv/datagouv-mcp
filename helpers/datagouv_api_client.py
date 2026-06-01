@@ -277,6 +277,8 @@ async def search_datasets(
     query: str,
     page: int = 1,
     page_size: int = 20,
+    sort: str | None = None,
+    last_update_range: str | None = None,
     session: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
     """
@@ -286,6 +288,10 @@ async def search_datasets(
         query: Search query string (searches in title, description, tags)
         page: Page number (default: 1)
         page_size: Number of results per page (default: 20, max: 100)
+        sort: Sort field. Accepted values: created, last_update, reuses,
+            followers, views. Optionally prefixed with '-' for descending.
+        last_update_range: Filter datasets by their last update date. Allowed
+            values: last_30_days, last_12_months, last_3_years.
 
     Returns:
         dict with 'data' (list of datasets), 'page', 'page_size', and 'total'
@@ -298,11 +304,15 @@ async def search_datasets(
         base_url: str = env_config.get_base_url("datagouv_api")
         # Use API v2 for dataset search
         url = f"{base_url}2/datasets/search/"
-        params = {
+        params: dict[str, Any] = {
             "q": query,
             "page": page,
             "page_size": min(page_size, 100),  # API limit
         }
+        if sort:
+            params["sort"] = sort
+        if last_update_range:
+            params["last_update_range"] = last_update_range
         resp = await session.get(url, params=params, timeout=15.0)
         resp.raise_for_status()
         data = resp.json()
