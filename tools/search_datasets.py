@@ -78,8 +78,9 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
 
-        Use `sort` to order results (e.g. created, -created, title, -title).
-        A leading '-' means descending order. Use `last_update_range` to restrict
+        Use `sort` to order results. Accepted values: created, last_update,
+        reuses, followers, views. Optionally prefixed with '-' for descending
+        (e.g. -last_update). Use `last_update_range` to restrict
         results to recently updated datasets: last_30_days, last_12_months,
         last_3_years.
 

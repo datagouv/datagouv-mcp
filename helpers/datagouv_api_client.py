@@ -288,8 +288,8 @@ async def search_datasets(
         query: Search query string (searches in title, description, tags)
         page: Page number (default: 1)
         page_size: Number of results per page (default: 20, max: 100)
-        sort: Sort field, optionally prefixed with '-' for descending. Examples:
-            created, -created, title, -title.
+        sort: Sort field. Accepted values: created, last_update, reuses,
+            followers, views. Optionally prefixed with '-' for descending.
         last_update_range: Filter datasets by their last update date. Allowed
             values: last_30_days, last_12_months, last_3_years.
 
