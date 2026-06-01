@@ -324,7 +324,7 @@ async def search_datasets(
                     if ds.get("organization")
                     else None,
                     "tags": tags,
-                    "resources_count": len(ds.get("resources", [])),
+                    "resources_count": ds.get("resources", {}).get("total", 0),
                     "url": f"{env_config.get_base_url('site')}datasets/{ds.get('slug', ds.get('id', ''))}",
                 }
             )
