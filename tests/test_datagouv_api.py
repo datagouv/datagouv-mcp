@@ -205,6 +205,29 @@ class TestAsyncFunctions:
         assert "sort" not in kwargs["params"]
         assert "last_update_range" not in kwargs["params"]
 
+    async def test_search_datasets_resources_length(self):
+        """Test search_datasets reports the real resource count from resources.total."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "data": [
+                {"resources": {"rel": "...", "href": "...", "type": "...", "total": 3}},
+                {"resources": {"rel": "...", "href": "...", "type": "...", "total": 7}},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+        mock_client.aclose = AsyncMock(return_value=None)
+
+        with patch(
+            "helpers.datagouv_api_client.httpx.AsyncClient",
+            return_value=mock_client,
+        ):
+            result = await datagouv_api_client.search_datasets("", page_size=1)
+
+        assert result["data"][0]["resources_count"] == 3
+        assert result["data"][1]["resources_count"] == 7
+
     async def test_get_resource_details(self, known_resource_id):
         """Test fetching full resource details payload."""
         details = await datagouv_api_client.get_resource_details(known_resource_id)
