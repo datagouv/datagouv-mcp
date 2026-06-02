@@ -1,4 +1,4 @@
-"""Unit tests for shared helpers backing plain + visual MCP tools."""
+"""Unit tests for shared helpers backing plain + interactive MCP tools."""
 
 from fastmcp.tools import ToolResult
 

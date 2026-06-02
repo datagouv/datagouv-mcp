@@ -342,14 +342,14 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_get_metrics_visual_tool(mcp: FastMCP) -> None:
+def register_get_metrics_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Get usage metrics (visual)",
+        title="Get usage metrics (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def get_metrics_visual(
+    async def get_metrics_interactive(
         dataset_id: str | None = None,
         resource_id: str | None = None,
         limit: int = 12,

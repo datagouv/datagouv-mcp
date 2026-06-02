@@ -270,14 +270,14 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_query_resource_data_visual_tool(mcp: FastMCP) -> None:
+def register_query_resource_data_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Query resource data (visual)",
+        title="Query resource data (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def query_resource_data_visual(
+    async def query_resource_data_interactive(
         resource_id: str,
         page: int = 1,
         page_size: int = 20,

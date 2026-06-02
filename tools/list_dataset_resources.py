@@ -133,14 +133,14 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_list_dataset_resources_visual_tool(mcp: FastMCP) -> None:
+def register_list_dataset_resources_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="List dataset resources (visual)",
+        title="List dataset resources (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def list_dataset_resources_visual(dataset_id: str) -> ToolResult:
+    async def list_dataset_resources_interactive(dataset_id: str) -> ToolResult:
         """
         List all resources (files) in a dataset with their metadata.
 
