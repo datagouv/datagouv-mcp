@@ -152,14 +152,14 @@ def register_search_dataservices_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_search_dataservices_visual_tool(mcp: FastMCP) -> None:
+def register_search_dataservices_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Search third-party APIs (visual)",
+        title="Search third-party APIs (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_dataservices_visual(
+    async def search_dataservices_interactive(
         query: str, page: int = 1, page_size: int = 20
     ) -> ToolResult:
         """

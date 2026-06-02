@@ -238,14 +238,14 @@ def register_search_organizations_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_search_organizations_visual_tool(mcp: FastMCP) -> None:
+def register_search_organizations_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Search organizations (visual)",
+        title="Search organizations (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_organizations_visual(
+    async def search_organizations_interactive(
         query: str = "",
         page: int = 1,
         page_size: int = 20,

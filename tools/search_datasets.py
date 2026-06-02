@@ -219,14 +219,14 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         return text
 
 
-def register_search_datasets_visual_tool(mcp: FastMCP) -> None:
+def register_search_datasets_interactive_tool(mcp: FastMCP) -> None:
     @mcp.tool(
-        title="Search datasets (visual)",
+        title="Search datasets (interactive)",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_datasets_visual(
+    async def search_datasets_interactive(
         query: str,
         page: int = 1,
         page_size: int = 20,
@@ -239,6 +239,12 @@ def register_search_datasets_visual_tool(mcp: FastMCP) -> None:
         This is typically the first step in exploring data.gouv.fr.
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
+
+        Use `sort` to order results. Accepted values: created, last_update,
+        reuses, followers, views. Optionally prefixed with '-' for descending
+        (e.g. -last_update). Use `last_update_range` to restrict
+        results to recently updated datasets: last_30_days, last_12_months,
+        last_3_years.
 
         Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
 
