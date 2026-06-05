@@ -132,34 +132,10 @@ def register_search_dataservices_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Search third-party APIs",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def search_dataservices(
-        query: str, page: int = 1, page_size: int = 20
-    ) -> str:
-        """
-        Search for third-party APIs (dataservices) on data.gouv.fr by keywords.
-
-        Third-party APIs (or dataservices) are APIs registered in the data.gouv.fr catalog
-        that provide programmatic access to data (unlike datasets which are static files).
-        Use short, specific queries (the API uses AND logic, so generic words
-        like "données" or "fichier" may return zero results).
-
-        Typical workflow: search_dataservices → get_dataservice_info →
-        get_dataservice_openapi_spec → call the API using base_api_url per spec.
-        """
-        text, _rows = await _search_dataservices_data(query, page, page_size)
-        return text
-
-
-def register_search_dataservices_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="Search third-party APIs (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_dataservices_interactive(
+    async def search_dataservices(
         query: str, page: int = 1, page_size: int = 20
     ) -> ToolResult:
         """
@@ -173,8 +149,8 @@ def register_search_dataservices_interactive_tool(mcp: FastMCP) -> None:
         Typical workflow: search_dataservices → get_dataservice_info →
         get_dataservice_openapi_spec → call the API using base_api_url per spec.
 
-        When the host supports app UI, includes a sortable, searchable table of results.
-        Prefer this variant when the user should scan or compare many APIs in tabular form.
+        Always returns a plain-text summary for the model. When the host supports app UI,
+        also includes a sortable, searchable table of results.
         """
         text, rows = await _search_dataservices_data(query, page, page_size)
         if not rows:

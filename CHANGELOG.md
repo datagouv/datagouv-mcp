@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- refactor(tools): merge `*_interactive` tools into canonical names; tabular tools return `ToolResult` with optional Prefab UI when the host supports app tools
+
 ## 0.2.26 (2026-06-02)
 
 - feat: add sort and last_update_range params to search_datasets ([#113](https://github.com/datagouv/datagouv-mcp/pull/113))

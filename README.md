@@ -360,20 +360,9 @@ The MCP server provides tools to interact with data.gouv.fr datasets and third-p
 
 **Note:** data.gouv.fr exposes these third-party APIs (e.g., Adresse API, Sirene API) over HTTP under the `dataservices` resource paths; that is separate from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) that power this MCP server.
 
-### Interactive tools
+### Interactive tool results
 
-Parallel `*_interactive` tools return the **same plain-text summary** as their base tool for the model, and may add an **interactive Prefab** view (sortable table or chart) when the MCP host supports [FastMCP app tools](https://gofastmcp.com/apps/prefab). Use the base tools if you only need text or your client does not render interactive apps.
-
-| Base tool | Interactive tool |
-|-----------|-------------------|
-| `search_datasets` | `search_datasets_interactive` |
-| `search_organizations` | `search_organizations_interactive` |
-| `search_dataservices` | `search_dataservices_interactive` |
-| `list_dataset_resources` | `list_dataset_resources_interactive` |
-| `query_resource_data` | `query_resource_data_interactive` |
-| `get_metrics` | `get_metrics_interactive` |
-
-Parameters match the base tool in each case.
+These tools always return a **plain-text summary** for the model and, when the MCP host supports [FastMCP app tools](https://gofastmcp.com/apps/prefab), may also attach an **interactive Prefab** view (sortable table or chart): `search_datasets`, `search_organizations`, `search_dataservices`, `list_dataset_resources`, `query_resource_data`, and `get_metrics`. Hosts without Prefab support use the text only.
 
 ### Datasets (static data files)
 

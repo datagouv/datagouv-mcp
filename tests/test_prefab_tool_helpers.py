@@ -1,4 +1,4 @@
-"""Unit tests for shared helpers backing plain + interactive MCP tools."""
+"""Unit tests for shared helpers backing MCP tools with optional Prefab UI."""
 
 from fastmcp.tools import ToolResult
 

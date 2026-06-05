@@ -189,44 +189,10 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Search datasets",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def search_datasets(
-        query: str,
-        page: int = 1,
-        page_size: int = 20,
-        sort: str | None = None,
-        last_update_range: str | None = None,
-    ) -> str:
-        """
-        Search for datasets on data.gouv.fr by keywords.
-
-        This is typically the first step in exploring data.gouv.fr.
-        Use short, specific queries (the API uses AND logic, so generic words
-        like "données" or "fichier" may return zero results).
-
-        Use `sort` to order results. Accepted values: created, last_update,
-        reuses, followers, views. Optionally prefixed with '-' for descending
-        (e.g. -last_update). Use `last_update_range` to restrict
-        results to recently updated datasets: last_30_days, last_12_months,
-        last_3_years.
-
-        Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
-        """
-        text, _rows = await _search_datasets_data(
-            query, page, page_size, sort, last_update_range
-        )
-        return text
-
-
-def register_search_datasets_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="Search datasets (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_datasets_interactive(
+    async def search_datasets(
         query: str,
         page: int = 1,
         page_size: int = 20,
@@ -248,8 +214,8 @@ def register_search_datasets_interactive_tool(mcp: FastMCP) -> None:
 
         Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
 
-        When the host supports app UI, includes a sortable, searchable table of results.
-        Prefer this variant when the user should scan or compare many datasets in tabular form.
+        Always returns a plain-text summary for the model. When the host supports app UI,
+        also includes a sortable, searchable table of results.
         """
         text, rows = await _search_datasets_data(
             query, page, page_size, sort, last_update_range

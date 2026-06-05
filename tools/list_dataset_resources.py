@@ -119,28 +119,10 @@ def register_list_dataset_resources_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="List dataset resources",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def list_dataset_resources(dataset_id: str) -> str:
-        """
-        List all resources (files) in a dataset with their metadata.
-
-        Returns resource ID, title, format, size, and URL for each file.
-        Next step: use query_resource_data for CSV/XLSX files via the Tabular API,
-        or fetch the resource URL directly for other formats (JSON, JSONL) or large datasets.
-        """
-        text, _rows = await _list_dataset_resources_data(dataset_id)
-        return text
-
-
-def register_list_dataset_resources_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="List dataset resources (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def list_dataset_resources_interactive(dataset_id: str) -> ToolResult:
+    async def list_dataset_resources(dataset_id: str) -> ToolResult:
         """
         List all resources (files) in a dataset with their metadata.
 
@@ -148,8 +130,8 @@ def register_list_dataset_resources_interactive_tool(mcp: FastMCP) -> None:
         Next step: use query_resource_data for CSV/XLSX files via the Tabular API,
         or fetch the resource URL directly for other formats (JSON, JSONL) or large datasets.
 
-        When the host supports app UI and the dataset has resources, includes a sortable,
-        searchable table. Prefer this variant when the user should browse files in tabular form.
+        Always returns a plain-text summary for the model. When the host supports app UI
+        and the dataset has resources, also includes a sortable, searchable table.
         """
         text, rows = await _list_dataset_resources_data(dataset_id)
         if not rows:

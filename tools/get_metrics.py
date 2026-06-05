@@ -324,32 +324,10 @@ def register_get_metrics_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Get usage metrics",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def get_metrics(
-        dataset_id: str | None = None,
-        resource_id: str | None = None,
-        limit: int = 12,
-    ) -> str:
-        """
-        Get usage metrics (visits, downloads) for a dataset or resource.
-
-        Returns monthly statistics sorted by most recent first.
-        At least one of dataset_id or resource_id must be provided.
-        Note: Only available in production environment (not demo).
-        """
-        text, _panels = await _run_metrics_core(dataset_id, resource_id, limit)
-        return text
-
-
-def register_get_metrics_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="Get usage metrics (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def get_metrics_interactive(
+    async def get_metrics(
         dataset_id: str | None = None,
         resource_id: str | None = None,
         limit: int = 12,
@@ -361,10 +339,8 @@ def register_get_metrics_interactive_tool(mcp: FastMCP) -> None:
         At least one of dataset_id or resource_id must be provided.
         Note: Only available in production environment (not demo).
 
-        When the host supports app UI and metrics panels are available, adds interactive charts
-        and sortable tables. Plain-text summary is always returned for the model; structured UI
-        is optional for hosts. Prefer this variant when the user should compare monthly visits
-        and downloads visually.
+        Always returns a plain-text summary for the model. When the host supports app UI
+        and metrics panels are available, also includes interactive charts and sortable tables.
         """
         text, panels = await _run_metrics_core(dataset_id, resource_id, limit)
         if not panels:
