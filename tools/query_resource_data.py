@@ -236,48 +236,10 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Query resource data",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def query_resource_data(
-        resource_id: str,
-        page: int = 1,
-        page_size: int = 20,
-        filter_column: str | None = None,
-        filter_value: str | None = None,
-        filter_operator: str = "exact",
-        sort_column: str | None = None,
-        sort_direction: str = "asc",
-    ) -> str:
-        """
-        Query tabular data from a resource via the Tabular API (no download needed).
-
-        Works for CSV/XLSX files. Start with small page_size (20) to preview structure.
-        Use filter_column/filter_value/filter_operator to filter, sort_column/sort_direction to sort.
-        Filter operators: exact, contains, less, greater, strictly_less, strictly_greater.
-        For large datasets requiring full analysis, paginate through pages or use
-        get_resource_info to retrieve the raw file URL and fetch it directly.
-        """
-        text, _rows = await _query_resource_data_core(
-            resource_id,
-            page,
-            page_size,
-            filter_column,
-            filter_value,
-            filter_operator,
-            sort_column,
-            sort_direction,
-        )
-        return text
-
-
-def register_query_resource_data_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="Query resource data (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def query_resource_data_interactive(
+    async def query_resource_data(
         resource_id: str,
         page: int = 1,
         page_size: int = 20,
@@ -296,9 +258,8 @@ def register_query_resource_data_interactive_tool(mcp: FastMCP) -> None:
         For large datasets requiring full analysis, paginate through pages or use
         get_resource_info to retrieve the raw file URL and fetch it directly.
 
-        When the host supports app UI and the current page has rows, includes a sortable table
-        for that page. Plain-text content is always returned for the model. Prefer this variant
-        when the user should inspect column values for the loaded page in tabular form.
+        Always returns a plain-text summary for the model. When the host supports app UI
+        and the current page has rows, also includes a sortable table for that page.
         """
         text, rows = await _query_resource_data_core(
             resource_id,

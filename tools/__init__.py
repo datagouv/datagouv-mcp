@@ -5,48 +5,24 @@ from tools.get_dataservice_openapi_spec import (
     register_get_dataservice_openapi_spec_tool,
 )
 from tools.get_dataset_info import register_get_dataset_info_tool
-from tools.get_metrics import (
-    register_get_metrics_interactive_tool,
-    register_get_metrics_tool,
-)
+from tools.get_metrics import register_get_metrics_tool
 from tools.get_resource_info import register_get_resource_info_tool
-from tools.list_dataset_resources import (
-    register_list_dataset_resources_interactive_tool,
-    register_list_dataset_resources_tool,
-)
-from tools.query_resource_data import (
-    register_query_resource_data_interactive_tool,
-    register_query_resource_data_tool,
-)
-from tools.search_dataservices import (
-    register_search_dataservices_interactive_tool,
-    register_search_dataservices_tool,
-)
-from tools.search_datasets import (
-    register_search_datasets_interactive_tool,
-    register_search_datasets_tool,
-)
-from tools.search_organizations import (
-    register_search_organizations_interactive_tool,
-    register_search_organizations_tool,
-)
+from tools.list_dataset_resources import register_list_dataset_resources_tool
+from tools.query_resource_data import register_query_resource_data_tool
+from tools.search_dataservices import register_search_dataservices_tool
+from tools.search_datasets import register_search_datasets_tool
+from tools.search_organizations import register_search_organizations_tool
 
 
 def register_tools(mcp: FastMCP) -> None:
     """Register all MCP tools with the provided FastMCP instance."""
     register_search_datasets_tool(mcp)
-    register_search_datasets_interactive_tool(mcp)
     register_search_organizations_tool(mcp)
-    register_search_organizations_interactive_tool(mcp)
     register_search_dataservices_tool(mcp)
-    register_search_dataservices_interactive_tool(mcp)
     register_get_dataservice_info_tool(mcp)
     register_get_dataservice_openapi_spec_tool(mcp)
     register_query_resource_data_tool(mcp)
-    register_query_resource_data_interactive_tool(mcp)
     register_get_dataset_info_tool(mcp)
     register_list_dataset_resources_tool(mcp)
-    register_list_dataset_resources_interactive_tool(mcp)
     register_get_resource_info_tool(mcp)
     register_get_metrics_tool(mcp)
-    register_get_metrics_interactive_tool(mcp)

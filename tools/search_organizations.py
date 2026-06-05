@@ -194,58 +194,10 @@ def register_search_organizations_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Search organizations",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
-    )
-    @log_tool
-    async def search_organizations(
-        query: str = "",
-        page: int = 1,
-        page_size: int = 20,
-        sort: str | None = None,
-        badge: str | None = None,
-        name: str | None = None,
-        business_number_id: str | None = None,
-    ) -> str:
-        """
-        Find publishing organizations on data.gouv.fr (who publishes datasets and
-        reuses).
-
-        Pass a short `query` with distinctive words (acronym, ministry name, city,
-        \"INSEE\", etc.). Generic or very broad terms often return large result sets;
-        combine with `page` / `page_size` or add `badge` / `name` / `business_number_id`
-        when you need a narrow list.
-
-        Leave `query` empty to list organizations with pagination (same as browsing
-        the catalog). Use `sort` to order results (e.g. name, datasets, reuses,
-        followers, views, created, last_modified, or the same with a leading '-' for
-        descending, such as -datasets).
-
-        `badge` filters by publisher type: public-service, certified, association,
-        company, local-authority.
-
-        The reply includes how many organizations matched, the current page, and for
-        each hit: name (and acronym if any), id, slug, badges, optional usage
-        metrics, and links to the organization page.
-        """
-        text, _rows = await _search_organizations_data(
-            query,
-            page,
-            page_size,
-            sort,
-            badge,
-            name,
-            business_number_id,
-        )
-        return text
-
-
-def register_search_organizations_interactive_tool(mcp: FastMCP) -> None:
-    @mcp.tool(
-        title="Search organizations (interactive)",
-        annotations=READ_ONLY_EXTERNAL_API_TOOL,
         app=True,
     )
     @log_tool
-    async def search_organizations_interactive(
+    async def search_organizations(
         query: str = "",
         page: int = 1,
         page_size: int = 20,
@@ -275,8 +227,8 @@ def register_search_organizations_interactive_tool(mcp: FastMCP) -> None:
         each hit: name (and acronym if any), id, slug, badges, optional usage
         metrics, and links to the organization page.
 
-        When the host supports app UI, includes a sortable, searchable table of results.
-        Prefer this variant when the user should scan or compare many organizations in tabular form.
+        Always returns a plain-text summary for the model. When the host supports app UI,
+        also includes a sortable, searchable table of results.
         """
         text, rows = await _search_organizations_data(
             query,
