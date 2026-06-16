@@ -2,7 +2,7 @@ import ast
 import logging
 
 import pytest
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from pytest_httpx import HTTPXMock
 
 from helpers.logging import TOOLS_LOGGER_NAME

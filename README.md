@@ -360,6 +360,10 @@ The MCP server provides tools to interact with data.gouv.fr datasets and third-p
 
 **Note:** data.gouv.fr exposes these third-party APIs (e.g., Adresse API, Sirene API) over HTTP under the `dataservices` resource paths; that is separate from data.gouv.fr's own internal APIs (Main/Tabular/Metrics) that power this MCP server.
 
+### Interactive tool results
+
+These tools always return a **plain-text summary** for the model and, when the MCP host supports [FastMCP app tools](https://gofastmcp.com/apps/prefab), may also attach an **interactive Prefab** view (sortable table or chart): `search_datasets`, `search_organizations`, `search_dataservices`, `list_dataset_resources`, `query_resource_data`, and `get_metrics`. Hosts without Prefab support use the text only.
+
 ### Datasets (static data files)
 
 - **`search_datasets`** - Search for datasets by keywords. Returns datasets with metadata (title, description, organization, tags, resource count).
