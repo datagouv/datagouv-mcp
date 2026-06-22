@@ -180,8 +180,8 @@ class TestAsyncFunctions:
         assert "2/datasets/search/" in _args[0]
         assert kwargs["params"] == {
             "q": "IRVE",
-            "page": 2,
-            "page_size": 10,
+            "page": "2",
+            "page_size": "10",
             "sort": "-created",
             "last_update_range": "last_30_days",
         }
@@ -316,8 +316,8 @@ class TestAsyncFunctions:
         args, kwargs = mock_client.get.call_args
         assert "2/organizations/search/" in args[0]
         assert kwargs["params"] == {
-            "page": 2,
-            "page_size": 10,
+            "page": "2",
+            "page_size": "10",
             "q": "insee",
             "sort": "-datasets",
             "badge": "public-service",
@@ -349,7 +349,7 @@ class TestAsyncFunctions:
             session=mock_client,
         )
         _args, kwargs = mock_client.get.call_args
-        assert kwargs["params"] == {"page": 1, "page_size": 15}
+        assert kwargs["params"] == {"page": "1", "page_size": "15"}
         assert "q" not in kwargs["params"]
 
     async def test_search_organizations_basic(self):

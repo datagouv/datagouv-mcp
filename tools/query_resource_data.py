@@ -196,7 +196,10 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
                 logger.warning(f"Tabular API request failed: {resource_id} - {str(e)}")
                 content_parts.append(f"⚠️  {str(e)}")
             except niquests.HTTPError as e:
-                error_details = f"HTTP {e.response.status_code}: {str(e)}"
+                status = e.response.status_code if e.response is not None else None
+                error_details = (
+                    f"HTTP {status}: {str(e)}" if status is not None else str(e)
+                )
                 if e.request:
                     error_details += f" - URL: {e.request.url}"
                 logger.warning(
@@ -210,6 +213,9 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
             return "\n".join(content_parts)
 
         except niquests.HTTPError as e:
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+            status = e.response.status_code if e.response is not None else None
+            if status is not None:
+                return f"Error: HTTP {status} - {str(e)}"
+            return f"Error: {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"

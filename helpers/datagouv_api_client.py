@@ -173,6 +173,8 @@ async def fetch_openapi_spec(
         resp = await session.get(url, timeout=15.0, allow_redirects=True)
         resp.raise_for_status()
         content = resp.text
+        if content is None:
+            raise ValueError(f"Empty OpenAPI spec response from {url}")
 
         # Try JSON first, then YAML
         try:
@@ -235,8 +237,8 @@ async def search_dataservices(
         url = f"{base_url}2/dataservices/search/"
         params = {
             "q": query,
-            "page": page,
-            "page_size": min(page_size, 100),
+            "page": str(page),
+            "page_size": str(min(page_size, 100)),
         }
         resp = await session.get(url, params=params, timeout=15.0)
         resp.raise_for_status()
@@ -304,10 +306,10 @@ async def search_datasets(
         base_url: str = env_config.get_base_url("datagouv_api")
         # Use API v2 for dataset search
         url = f"{base_url}2/datasets/search/"
-        params: dict[str, Any] = {
+        params: dict[str, str] = {
             "q": query,
-            "page": page,
-            "page_size": min(page_size, 100),  # API limit
+            "page": str(page),
+            "page_size": str(min(page_size, 100)),  # API limit
         }
         if sort:
             params["sort"] = sort
@@ -398,9 +400,9 @@ async def search_organizations(
     try:
         base_url: str = env_config.get_base_url("datagouv_api")
         url = f"{base_url}2/organizations/search/"
-        params: dict[str, Any] = {
-            "page": page,
-            "page_size": min(page_size, 100),
+        params: dict[str, str] = {
+            "page": str(page),
+            "page_size": str(min(page_size, 100)),
         }
         if query:
             params["q"] = query

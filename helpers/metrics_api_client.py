@@ -66,7 +66,7 @@ async def get_metrics(
         params = {
             f"{id_field}__exact": id_value,
             f"{time_field}__sort": sort_order,
-            "page_size": max(1, min(limit, 50)),
+            "page_size": str(max(1, min(limit, 50))),
         }
         logger.debug(
             f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "
@@ -138,7 +138,10 @@ async def get_metrics_csv(
         )
         resp = await sess.get(url, params=params, timeout=30.0)
         resp.raise_for_status()
-        return resp.text
+        text = resp.text
+        if text is None:
+            raise ValueError(f"Empty CSV response from {url}")
+        return text
     finally:
         if owns_session:
             await sess.close()

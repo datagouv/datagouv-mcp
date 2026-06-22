@@ -112,6 +112,9 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
             return "\n".join(content_parts)
 
         except niquests.HTTPError as e:
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+            status = e.response.status_code if e.response is not None else None
+            if status is not None:
+                return f"Error: HTTP {status} - {str(e)}"
+            return f"Error: {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"

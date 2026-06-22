@@ -90,8 +90,8 @@ def _raise_for_tabular_failure(
     resource_id: str,
     endpoint: str,
 ) -> None:
-    status = resp.status_code
-    body = resp.text
+    status = resp.status_code or 0
+    body = resp.text or ""
     logger.warning(
         f"Tabular API: HTTP {status} for resource {resource_id} ({endpoint} endpoint)"
     )
@@ -144,12 +144,12 @@ async def fetch_resource_data(
     try:
         base_url: str = env_config.get_base_url("tabular_api")
         url = f"{base_url}resources/{resource_id}/data/"
-        query_params = {
-            "page": max(page, 1),
-            "page_size": max(page_size, 1),
+        query_params: dict[str, str] = {
+            "page": str(max(page, 1)),
+            "page_size": str(max(page_size, 1)),
         }
         if params:
-            query_params.update(params)
+            query_params.update({k: str(v) for k, v in params.items()})
 
         full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in query_params.items())}"
         logger.info(
@@ -158,11 +158,12 @@ async def fetch_resource_data(
         )
 
         resp = await sess.get(url, params=query_params, timeout=30.0)
-        if resp.status_code == 404:
+        status_code = resp.status_code
+        if status_code == 404:
             logger.warning(f"Tabular API: Resource {resource_id} not found (404)")
             raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
-        if resp.status_code >= 400:
+        if status_code is not None and status_code >= 400:
             _raise_for_tabular_failure(resp, resource_id, endpoint="data")
 
         return resp.json()
@@ -190,13 +191,14 @@ async def fetch_resource_profile(
         )
 
         resp = await sess.get(url, timeout=30.0)
-        if resp.status_code == 404:
+        status_code = resp.status_code
+        if status_code == 404:
             logger.warning(
                 f"Tabular API: Resource profile {resource_id} not found (404)"
             )
             raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
-        if resp.status_code >= 400:
+        if status_code is not None and status_code >= 400:
             _raise_for_tabular_failure(resp, resource_id, endpoint="profile")
 
         profile_data: dict[str, Any] = resp.json()
