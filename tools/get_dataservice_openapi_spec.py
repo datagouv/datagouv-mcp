@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-import httpx
+import niquests
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
@@ -132,7 +132,7 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
-        except httpx.HTTPStatusError as e:
+        except niquests.HTTPError as e:
             if e.response.status_code == 404:
                 return f"Error: Third-party API not found (dataservice_id='{dataservice_id}')."
             return f"Error: HTTP {e.response.status_code} - {str(e)}"

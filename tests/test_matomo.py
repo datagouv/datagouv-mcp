@@ -3,19 +3,26 @@
 from urllib.parse import parse_qs
 
 import pytest
+from niquests_mock import MockRouter
 
 import helpers.matomo as matomo
+
+_MATOMO_POST_URL = "https://matomo.example/matomo.php"
+
+
+@pytest.fixture
+def matomo_post_route(niquests_mock: MockRouter):
+    return niquests_mock.post(_MATOMO_POST_URL).respond(status_code=200)
 
 
 @pytest.mark.asyncio
 async def test_track_matomo_request_sends_expected_form_fields(
-    httpx_mock,
+    matomo_post_route,
     monkeypatch,
 ):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
     monkeypatch.setattr(matomo, "MATOMO_AUTH_TOKEN", "tok")
-    httpx_mock.add_response()
 
     await matomo.track_matomo_request(
         "https://mcp.example/mcp",
@@ -23,10 +30,8 @@ async def test_track_matomo_request_sends_expected_form_fields(
         {"user-agent": "MCPTest/1"},
     )
 
-    requests = httpx_mock.get_requests()
-    assert len(requests) == 1
-    assert str(requests[0].url) == "https://matomo.example/matomo.php"
-    body = requests[0].content.decode()
+    assert matomo_post_route.called
+    body = matomo_post_route.calls[0].request.body
     params = parse_qs(body, strict_parsing=True)
     assert params["idsite"] == ["7"]
     assert params["rec"] == ["1"]
@@ -39,7 +44,7 @@ async def test_track_matomo_request_sends_expected_form_fields(
 
 
 @pytest.mark.asyncio
-async def test_track_matomo_tool_sends_event_fields(httpx_mock, monkeypatch):
+async def test_track_matomo_tool_sends_event_fields(matomo_post_route, monkeypatch):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
     monkeypatch.setattr(matomo, "MATOMO_AUTH_TOKEN", None)  # omitted from POST body
@@ -47,15 +52,13 @@ async def test_track_matomo_tool_sends_event_fields(httpx_mock, monkeypatch):
         {"user-agent": "ToolUA/2", "host": "mcp.example"},
         "/mcp",
     )
-    httpx_mock.add_response()
     try:
         await matomo.track_matomo_tool("search_datasets")
     finally:
         matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
 
-    requests = httpx_mock.get_requests()
-    assert len(requests) == 1
-    body = requests[0].content.decode()
+    assert matomo_post_route.called
+    body = matomo_post_route.calls[0].request.body
     params = parse_qs(body, strict_parsing=True)
     assert params["idsite"] == ["7"]
     assert params["e_c"] == ["MCP"]
@@ -67,11 +70,10 @@ async def test_track_matomo_tool_sends_event_fields(httpx_mock, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_track_matomo_request_forwards_cip(httpx_mock, monkeypatch):
+async def test_track_matomo_request_forwards_cip(matomo_post_route, monkeypatch):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
     monkeypatch.setattr(matomo, "MATOMO_AUTH_TOKEN", "tok")
-    httpx_mock.add_response()
 
     await matomo.track_matomo_request(
         "https://mcp.example/mcp",
@@ -79,14 +81,17 @@ async def test_track_matomo_request_forwards_cip(httpx_mock, monkeypatch):
         {"user-agent": "MCPTest/1", "x-forwarded-for": "203.0.113.42, 198.51.100.2"},
     )
 
-    body = httpx_mock.get_requests()[0].content.decode()
+    body = matomo_post_route.calls[0].request.body
     params = parse_qs(body, strict_parsing=True)
     assert params["cip"] == ["203.0.113.42"]
     assert params["token_auth"] == ["tok"]
 
 
 @pytest.mark.asyncio
-async def test_track_matomo_tool_forwards_cip_from_context(httpx_mock, monkeypatch):
+async def test_track_matomo_tool_forwards_cip_from_context(
+    matomo_post_route,
+    monkeypatch,
+):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
     monkeypatch.setattr(matomo, "MATOMO_AUTH_TOKEN", "tok")
@@ -98,20 +103,19 @@ async def test_track_matomo_tool_forwards_cip_from_context(httpx_mock, monkeypat
         },
         "/mcp",
     )
-    httpx_mock.add_response()
     try:
         await matomo.track_matomo_tool("search_datasets")
     finally:
         matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
 
-    body = httpx_mock.get_requests()[0].content.decode()
+    body = matomo_post_route.calls[0].request.body
     params = parse_qs(body, strict_parsing=True)
     assert params["cip"] == ["203.0.113.42"]
     assert params["token_auth"] == ["tok"]
 
 
 @pytest.mark.asyncio
-async def test_post_matomo_skips_when_not_configured(httpx_mock, monkeypatch):
+async def test_post_matomo_skips_when_not_configured(matomo_post_route, monkeypatch):
     monkeypatch.setattr(matomo, "MATOMO_URL", "")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "1")
     await matomo.track_matomo_request(
@@ -119,4 +123,4 @@ async def test_post_matomo_skips_when_not_configured(httpx_mock, monkeypatch):
         "/y",
         {},
     )
-    assert len(httpx_mock.get_requests()) == 0
+    assert not matomo_post_route.called

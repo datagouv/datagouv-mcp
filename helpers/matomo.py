@@ -3,7 +3,7 @@ import os
 import random
 from contextvars import ContextVar, Token
 
-import httpx
+import niquests
 
 from helpers.logging import MAIN_LOGGER_NAME
 
@@ -22,8 +22,8 @@ _request_user_agent: ContextVar[str] = ContextVar(
 _request_cip: ContextVar[str] = ContextVar("matomo_request_cip", default="")
 
 # Shared client reused across all tracking calls to avoid creating a new
-# TCP connection + SSL handshake + httpx overhead on every MCP request.
-_client = httpx.AsyncClient(timeout=1.5)
+# TCP connection + SSL handshake + HTTP client overhead on every MCP request.
+_client = niquests.AsyncSession(timeout=1.5)
 
 
 def apply_matomo_request_context(

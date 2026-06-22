@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Any
 
-import httpx
+import niquests
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
@@ -86,7 +86,7 @@ def _tabular_error_payload_and_messages(
 
 
 def _raise_for_tabular_failure(
-    resp: httpx.Response,
+    resp: niquests.Response,
     resource_id: str,
     endpoint: str,
 ) -> None:
@@ -121,11 +121,11 @@ def _raise_for_tabular_failure(
 
 
 async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
+    session: niquests.AsyncSession | None,
+) -> tuple[niquests.AsyncSession, bool]:
     if session is not None:
         return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    new_session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
     return new_session, True
 
 
@@ -135,7 +135,7 @@ async def fetch_resource_data(
     page: int = 1,
     page_size: int = 100,
     params: dict[str, Any] | None = None,
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> dict[str, Any]:
     """
     Fetch data for a resource via the Tabular API.
@@ -168,13 +168,13 @@ async def fetch_resource_data(
         return resp.json()
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()
 
 
 async def fetch_resource_profile(
     resource_id: str,
     *,
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> dict[str, Any]:
     """
     Fetch the profile metadata for a resource via the Tabular API.
@@ -211,4 +211,4 @@ async def fetch_resource_profile(
         return profile_data
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()

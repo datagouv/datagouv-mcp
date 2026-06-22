@@ -46,10 +46,10 @@ class TestAsyncFunctions:
         }
         mock_response.raise_for_status = MagicMock()
         mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock(return_value=None)
+        mock_client.close = AsyncMock(return_value=None)
 
         with patch(
-            "helpers.datagouv_api_client.httpx.AsyncClient",
+            "helpers.datagouv_api_client.niquests.AsyncSession",
             return_value=mock_client,
         ) as mock_async_client:
             await datagouv_api_client.get_dataset_metadata(
@@ -217,10 +217,10 @@ class TestAsyncFunctions:
         }
         mock_response.raise_for_status = MagicMock()
         mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.aclose = AsyncMock(return_value=None)
+        mock_client.close = AsyncMock(return_value=None)
 
         with patch(
-            "helpers.datagouv_api_client.httpx.AsyncClient",
+            "helpers.datagouv_api_client.niquests.AsyncSession",
             return_value=mock_client,
         ):
             result = await datagouv_api_client.search_datasets("", page_size=1)

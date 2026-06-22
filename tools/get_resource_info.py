@@ -1,4 +1,4 @@
-import httpx
+import niquests
 from mcp.server.fastmcp import FastMCP
 
 from helpers import crawler_api_client, datagouv_api_client, env_config
@@ -91,7 +91,7 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
 
                 # Try to get profile to check if it's tabular
                 profile_url = f"{env_config.get_base_url('tabular_api')}resources/{resource_id}/profile/"
-                async with httpx.AsyncClient() as session:
+                async with niquests.AsyncSession() as session:
                     resp = await session.get(profile_url, timeout=10.0)
                     if resp.status_code == 200:
                         if is_exception:
@@ -111,7 +111,7 @@ def register_get_resource_info_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
-        except httpx.HTTPStatusError as e:
+        except niquests.HTTPError as e:
             return f"Error: HTTP {e.response.status_code} - {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"
