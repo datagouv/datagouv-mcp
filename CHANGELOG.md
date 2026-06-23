@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.28 (2026-06-23)
+
+- fix(docs): fix link in github issues template
+- fix(matomo): remove matomo request on/mcp, keep only tools events ([#120](https://github.com/datagouv/datagouv-mcp/pull/120))
+
+
 ## 0.2.27 (2026-06-19)
 
 - add cip for tool tracking as well
