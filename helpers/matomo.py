@@ -63,25 +63,6 @@ async def _post_matomo(payload: dict) -> None:
         )
 
 
-async def track_matomo_request(url: str, path: str, headers: dict[str, str]) -> None:
-    """Track one HTTP-level MCP request (page-action style)."""
-    user_agent = headers.get("user-agent", "")
-    payload = {
-        "idsite": MATOMO_SITE_ID,
-        "rec": 1,
-        "url": url,
-        "action_name": f"MCP Request: {path}",
-        "ua": user_agent,
-        "rand": str(random.randint(10**15, 10**16 - 1)),
-    }
-    if MATOMO_AUTH_TOKEN:
-        payload["token_auth"] = MATOMO_AUTH_TOKEN
-        cip = headers.get("x-forwarded-for", "").split(",")[0].strip()
-        if cip:
-            payload["cip"] = cip
-    await _post_matomo(payload)
-
-
 async def track_matomo_tool(tool_name: str) -> None:
     """
     Track an MCP tool invocation as a Matomo event (Behavior > Events).
