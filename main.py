@@ -73,7 +73,7 @@ def with_monitoring(
                 except PackageNotFoundError:
                     app_version = "unknown"
 
-                is_healthy = await _run_health_check()
+                is_healthy = await _run_health_check(mcp)
                 if is_healthy:
                     body = json.dumps(
                         {

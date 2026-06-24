@@ -352,7 +352,7 @@ The MCP server is built using the [official Python SDK for MCP servers and clien
 
 **Streamable HTTP transport (standards-compliant):**
 - `POST /mcp` - JSON-RPC messages (client → server)
-- `GET /health` - Health check endpoint: runs a full MCP handshake and tool call. Returns `{"status":"ok",...}` with HTTP 200 if healthy, or `{"status":"mcp_unavailable"}` with HTTP 503 if the MCP stack is not responding correctly.
+- `GET /health` - Health check endpoint: runs `search_datasets` in-process (no recursive HTTP call). Returns `{"status":"ok",...}` with HTTP 200 if healthy, or `{"status":"mcp_unavailable"}` with HTTP 503 if the MCP stack is not responding correctly.
 
 ## 🛠️ Available Tools
 
@@ -450,10 +450,9 @@ Currently includes a test that mixes normal requests with abrupt client TCP disc
 
 ### 🩺 Run a Health Check from the CLI
 
-Runs a full MCP handshake and calls `search_datasets` to validate end-to-end stack health. Requires a running server and is excluded from default `pytest` runs.
+Runs `search_datasets` in-process to validate end-to-end stack health (tool layer + data.gouv.fr API). Requires network access to data.gouv.fr. Excluded from default `pytest` runs.
 
 ```shell
-# Start the server first, then in another terminal:
 uv run pytest -m health_check
 ```
 

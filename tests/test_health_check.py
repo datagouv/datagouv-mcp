@@ -1,8 +1,8 @@
 """
-Health check: full MCP handshake + search_datasets tool call.
+Health check: in-process search_datasets tool call.
 
-Requires a running MCP server (not started by the test).
-Excluded from normal pytest runs -- launch explicitly with:
+Calls the tool layer directly (no HTTP round-trip to localhost/mcp).
+Requires network access to data.gouv.fr. Excluded from normal pytest runs:
 
     uv run pytest -m health_check
 """
@@ -10,16 +10,15 @@ Excluded from normal pytest runs -- launch explicitly with:
 import pytest
 
 from helpers.health_probe import _run_health_check
+from main import mcp
 
 pytestmark = pytest.mark.health_check
 
 
 async def test_health_check():
     """
-    Runs the full MCP handshake and calls search_datasets with page_size=1.
+    Calls search_datasets with page_size=1 in-process.
     Asserts a valid non-empty response to confirm end-to-end stack is healthy.
     """
-    is_healthy = await _run_health_check()
-    assert is_healthy, (
-        "Health check failed: MCP handshake or tool call returned unexpected result"
-    )
+    is_healthy = await _run_health_check(mcp)
+    assert is_healthy, "Health check failed: tool call returned unexpected result"
