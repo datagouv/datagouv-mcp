@@ -25,11 +25,10 @@ async def _run_health_check(mcp: FastMCP) -> bool:
             {"query": "transport", "page_size": 1},
         )
         # search_datasets always returns a TextContent block
-        # we check it's non-empty to confirm a valid round-trip
-        if not content or not isinstance(content[0], TextContent):
+        if not content or not isinstance(content[0], TextContent):  # type: ignore
             logger.error("health probe: unexpected response from search_datasets")
             return False
-        if not content[0].text:
+        if not content[0].text:  # type: ignore
             logger.error("health probe: empty response from search_datasets")
             return False
 
