@@ -41,9 +41,9 @@ logger = logging.getLogger(TOOLS_LOGGER_NAME)
 def log_tool(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
-        from helpers.matomo import track_matomo_tool
+        from helpers.matomo import matomo_tool_event_for, track_matomo_tool
 
-        asyncio.create_task(track_matomo_tool(func.__name__))
+        asyncio.create_task(track_matomo_tool(matomo_tool_event_for(func.__name__)))
         logger.info("Tool called: %s | kwargs=%s", func.__name__, kwargs)
         return await func(*args, **kwargs)
 

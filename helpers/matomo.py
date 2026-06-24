@@ -21,6 +21,10 @@ _request_user_agent: ContextVar[str] = ContextVar(
 )
 _request_cip: ContextVar[str] = ContextVar("matomo_request_cip", default="")
 
+_matomo_tool_event_action: ContextVar[str | None] = ContextVar(
+    "matomo_tool_event_action", default=None
+)
+
 # Shared client reused across all tracking calls to avoid creating a new
 # TCP connection + SSL handshake + HTTP client overhead on every MCP request.
 _client = niquests.AsyncSession(timeout=1.5)
@@ -48,6 +52,20 @@ def reset_matomo_request_context(
     _request_page_url.reset(url_token)
     _request_user_agent.reset(ua_token)
     _request_cip.reset(cip_token)
+
+
+def apply_matomo_tool_event_action(action: str) -> Token[str | None]:
+    """Override Matomo e_a for tool call(s) in this async context."""
+    return _matomo_tool_event_action.set(action)
+
+
+def reset_matomo_tool_event_action(token: Token[str | None]) -> None:
+    _matomo_tool_event_action.reset(token)
+
+
+def matomo_tool_event_for(tool_name: str) -> str:
+    """Return Matomo event action for a tool call (override or tool name)."""
+    return _matomo_tool_event_action.get() or tool_name
 
 
 async def _post_matomo(payload: dict) -> None:
