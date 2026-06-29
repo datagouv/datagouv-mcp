@@ -34,7 +34,7 @@ async def test_track_matomo_tool_sends_event_fields(matomo_post_route, monkeypat
     body = matomo_post_route.calls[0].request.body
     params = parse_qs(body, strict_parsing=True)
     assert params["idsite"] == ["7"]
-    assert params["e_c"] == ["MCP"]
+    assert params["e_c"] == ["tools"]
     assert params["e_a"] == ["search_datasets"]
     assert params["ca"] == ["1"]
     assert params["url"] == ["https://mcp.example/mcp"]
@@ -76,9 +76,13 @@ async def test_post_matomo_skips_when_not_configured(matomo_post_route, monkeypa
     assert not matomo_post_route.called
 
 
-def test_matomo_tool_event_for_uses_override():
-    token = matomo.apply_matomo_tool_event_action("health_check")
+def test_matomo_tool_event_override():
+    override = matomo.apply_matomo_tool_event_override(
+        action="health_check",
+        category="health_check",
+    )
     try:
         assert matomo.matomo_tool_event_for("search_datasets") == "health_check"
+        assert matomo.matomo_tool_event_category_for() == "health_check"
     finally:
-        matomo.reset_matomo_tool_event_action(token)
+        matomo.reset_matomo_tool_event_override(*override)
