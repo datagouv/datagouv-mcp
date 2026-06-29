@@ -65,7 +65,7 @@ def with_monitoring(
         if scope["type"] == "http":
             path: str = scope.get("path", "")
 
-            # Handle /health endpoint (no tracking)
+            # Handle /health endpoint (no HTTP request context binding for Matomo)
             if path == "/health":
                 # Get version from package metadata (managed by setuptools-scm)
                 try:

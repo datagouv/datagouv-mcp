@@ -14,8 +14,8 @@ from mcp.types import TextContent
 
 from helpers.logging import MAIN_LOGGER_NAME
 from helpers.matomo import (
-    apply_matomo_tool_event_override,
-    reset_matomo_tool_event_override,
+    apply_matomo_event_override,
+    reset_matomo_event_override,
 )
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -24,7 +24,7 @@ logger = logging.getLogger(MAIN_LOGGER_NAME)
 async def _run_health_check(mcp: FastMCP) -> bool:
     logger.debug("health probe: starting health check")
     try:
-        override = apply_matomo_tool_event_override(
+        override_token = apply_matomo_event_override(
             action="health_check",
             category="health_check",
         )
@@ -34,7 +34,7 @@ async def _run_health_check(mcp: FastMCP) -> bool:
                 {"query": "transport", "page_size": 1},
             )
         finally:
-            reset_matomo_tool_event_override(*override)
+            reset_matomo_event_override(override_token)
         # search_datasets always returns a TextContent block
         if not content or not isinstance(content[0], TextContent):  # type: ignore
             logger.error("health probe: unexpected response from search_datasets")

@@ -11,7 +11,7 @@ from helpers.logging import MAIN_LOGGER_NAME
 MATOMO_URL = os.getenv("MATOMO_URL")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH_TOKEN")
-MATOMO_TOOL_EVENT_CATEGORY = "tools"
+MATOMO_DEFAULT_EVENT_CATEGORY = "tools"
 
 _request_page_url: ContextVar[str] = ContextVar(
     "matomo_request_page_url", default="https://localhost/mcp"
@@ -21,11 +21,8 @@ _request_user_agent: ContextVar[str] = ContextVar(
 )
 _request_cip: ContextVar[str] = ContextVar("matomo_request_cip", default="")
 
-_matomo_tool_event_action: ContextVar[str | None] = ContextVar(
-    "matomo_tool_event_action", default=None
-)
-_matomo_tool_event_category: ContextVar[str | None] = ContextVar(
-    "matomo_tool_event_category", default=None
+_matomo_event_override: ContextVar[tuple[str | None, str | None]] = ContextVar(
+    "matomo_event_override", default=(None, None)
 )
 
 # Shared client reused across all tracking calls to avoid creating a new
@@ -57,36 +54,24 @@ def reset_matomo_request_context(
     _request_cip.reset(cip_token)
 
 
-def apply_matomo_tool_event_override(
-    *,
+def apply_matomo_event_override(
     action: str | None = None,
     category: str | None = None,
-) -> tuple[Token[str | None] | None, Token[str | None] | None]:
+) -> Token[tuple[str | None, str | None]]:
     """Override Matomo e_a and/or e_c for tool call(s) in this async context."""
-    return (
-        _matomo_tool_event_action.set(action) if action is not None else None,
-        _matomo_tool_event_category.set(category) if category is not None else None,
+    current_action, current_category = _matomo_event_override.get()
+    return _matomo_event_override.set(
+        (
+            action if action is not None else current_action,
+            category if category is not None else current_category,
+        )
     )
 
 
-def reset_matomo_tool_event_override(
-    action_token: Token[str | None] | None,
-    category_token: Token[str | None] | None,
+def reset_matomo_event_override(
+    token: Token[tuple[str | None, str | None]],
 ) -> None:
-    if action_token is not None:
-        _matomo_tool_event_action.reset(action_token)
-    if category_token is not None:
-        _matomo_tool_event_category.reset(category_token)
-
-
-def matomo_tool_event_for(tool_name: str) -> str:
-    """Return Matomo event action for a tool call (override or tool name)."""
-    return _matomo_tool_event_action.get() or tool_name
-
-
-def matomo_tool_event_category_for() -> str:
-    """Return Matomo event category for a tool call (override or default)."""
-    return _matomo_tool_event_category.get() or MATOMO_TOOL_EVENT_CATEGORY
+    _matomo_event_override.reset(token)
 
 
 async def _post_matomo(payload: dict) -> None:
@@ -102,18 +87,23 @@ async def _post_matomo(payload: dict) -> None:
         )
 
 
-async def track_matomo_tool(tool_name: str) -> None:
+async def track_matomo_event(
+    name: str,
+    action: str | None = None,
+    category: str | None = None,
+) -> None:
     """
-    Track an MCP tool invocation as a Matomo event (Behavior > Events).
+    Track a Matomo event (Behavior > Events).
     Uses e_c / e_a and ca=1 per the HTTP Tracking API.
     """
+    action_override, category_override = _matomo_event_override.get()
     payload = {
         "idsite": MATOMO_SITE_ID,
         "rec": 1,
         "url": _request_page_url.get(),
         "ca": 1,
-        "e_c": matomo_tool_event_category_for(),
-        "e_a": tool_name,
+        "e_c": category or category_override or MATOMO_DEFAULT_EVENT_CATEGORY,
+        "e_a": action or action_override or name,
         "ua": _request_user_agent.get(),
         "rand": str(random.randint(10**15, 10**16 - 1)),
     }

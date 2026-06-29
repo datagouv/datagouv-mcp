@@ -17,7 +17,7 @@ def matomo_post_route(niquests_mock: MockRouter) -> MockRoute:
 
 
 @pytest.mark.asyncio
-async def test_track_matomo_tool_sends_event_fields(matomo_post_route, monkeypatch):
+async def test_track_matomo_event_sends_event_fields(matomo_post_route, monkeypatch):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
     monkeypatch.setattr(matomo, "MATOMO_AUTH_TOKEN", None)  # omitted from POST body
@@ -26,7 +26,7 @@ async def test_track_matomo_tool_sends_event_fields(matomo_post_route, monkeypat
         "/mcp",
     )
     try:
-        await matomo.track_matomo_tool("search_datasets")
+        await matomo.track_matomo_event("search_datasets")
     finally:
         matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
 
@@ -43,7 +43,7 @@ async def test_track_matomo_tool_sends_event_fields(matomo_post_route, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_track_matomo_tool_forwards_cip_from_context(
+async def test_track_matomo_event_forwards_cip_from_context(
     matomo_post_route, monkeypatch
 ):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
@@ -58,7 +58,7 @@ async def test_track_matomo_tool_forwards_cip_from_context(
         "/mcp",
     )
     try:
-        await matomo.track_matomo_tool("search_datasets")
+        await matomo.track_matomo_event("search_datasets")
     finally:
         matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
 
@@ -72,17 +72,37 @@ async def test_track_matomo_tool_forwards_cip_from_context(
 async def test_post_matomo_skips_when_not_configured(matomo_post_route, monkeypatch):
     monkeypatch.setattr(matomo, "MATOMO_URL", "")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "1")
-    await matomo.track_matomo_tool("search_datasets")
+    await matomo.track_matomo_event("search_datasets")
     assert not matomo_post_route.called
 
 
-def test_matomo_tool_event_override():
-    override = matomo.apply_matomo_tool_event_override(
+@pytest.mark.asyncio
+async def test_track_matomo_event_action_and_category_override(
+    matomo_post_route, monkeypatch
+):
+    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
+    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
+
+    await matomo.track_matomo_event(
+        "search_datasets",
+        action="health_check",
+        category="health_check",
+    )
+    explicit_body = matomo_post_route.calls[0].request.body
+    explicit_params = parse_qs(explicit_body, strict_parsing=True)
+    assert explicit_params["e_c"] == ["health_check"]
+    assert explicit_params["e_a"] == ["health_check"]
+
+    override_token = matomo.apply_matomo_event_override(
         action="health_check",
         category="health_check",
     )
     try:
-        assert matomo.matomo_tool_event_for("search_datasets") == "health_check"
-        assert matomo.matomo_tool_event_category_for() == "health_check"
+        await matomo.track_matomo_event("search_datasets")
     finally:
-        matomo.reset_matomo_tool_event_override(*override)
+        matomo.reset_matomo_event_override(override_token)
+
+    context_body = matomo_post_route.calls[1].request.body
+    context_params = parse_qs(context_body, strict_parsing=True)
+    assert context_params["e_c"] == ["health_check"]
+    assert context_params["e_a"] == ["health_check"]
