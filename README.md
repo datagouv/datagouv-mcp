@@ -1,5 +1,7 @@
 # data.gouv.fr MCP Server
 
+[![MCP Toplist](https://mcptoplist.com/badge/glama%2Fdatagouv%2Fdatagouv-mcp.svg)](https://mcptoplist.com/server/glama%2Fdatagouv%2Fdatagouv-mcp)
+
 <img width="1200" height="675" alt="image" src="https://github.com/user-attachments/assets/5d20e992-349a-4b3b-9a0a-ebe308735cc9" />
 
 > [!TIP]
