@@ -7,6 +7,7 @@ import yaml
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
+from helpers.ssrf import SSRFProtectedAsyncSession
 from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -150,24 +151,31 @@ async def get_resources_for_dataset(
             await session.close()
 
 
-async def fetch_openapi_spec(
-    url: str, session: niquests.AsyncSession | None = None
-) -> dict[str, Any]:
+async def fetch_openapi_spec(url: str) -> dict[str, Any]:
     """
-    Fetch and parse an OpenAPI/Swagger spec from a URL.
-    Supports both JSON and YAML formats.
+    Fetch and parse an OpenAPI/Swagger spec from a producer URL.
+
+    The URL comes from catalog metadata (``machine_documentation_url``) and is
+    fetched with an SSRF-hardened client: http/https only, destination IP
+    checked at connect time (same policy as udata ``URLS_ALLOW_*``), no
+    environment proxy, redirects re-validated on each hop.
+
+    Catalog / Tabular / Metrics hosts are operator-configured and must not go
+    through this client.
 
     Returns:
         Parsed OpenAPI spec as a dict.
 
     Raises:
         niquests.HTTPError: If the HTTP request fails.
+        BlockedAddressError: If the URL (or a redirect hop) is not a public
+            http(s) destination.
         ValueError: If the response cannot be parsed as JSON or YAML.
     """
-    own = session is None
-    if own:
-        session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
-    assert session is not None
+    session = SSRFProtectedAsyncSession(
+        policy=env_config.get_ssrf_policy(),
+        headers={"User-Agent": USER_AGENT},
+    )
     try:
         logger.debug("Fetching OpenAPI spec from %s", url)
         resp = await session.get(url, timeout=15.0, allow_redirects=True)
@@ -188,8 +196,7 @@ async def fetch_openapi_spec(
 
         raise ValueError(f"Could not parse OpenAPI spec from {url} as JSON or YAML")
     finally:
-        if own:
-            await session.close()
+        await session.close()
 
 
 async def get_dataservice_details(
