@@ -178,6 +178,35 @@ async def test_session_refuses_an_environment_proxy(monkeypatch):
         await session.get("http://142.42.1.1/", timeout=2)
 
 
+def test_proxy_url_ignores_no_proxy_bypass_list():
+    from helpers.ssrf import _proxy_url
+
+    assert (
+        _proxy_url({"no": "127.0.0.1,localhost,circleci-internal-outer-build-agent"})
+        is None
+    )
+    assert _proxy_url({"no_proxy": "localhost"}) is None
+    assert (
+        _proxy_url({"http": "http://198.51.100.1:3128"}) == "http://198.51.100.1:3128"
+    )
+
+
+@pytest.mark.asyncio
+async def test_session_does_not_treat_environment_no_proxy_as_a_proxy(monkeypatch):
+    """CircleCI sets NO_PROXY without HTTP_PROXY; that is a bypass list, not a proxy."""
+    monkeypatch.delenv("HTTP_PROXY", raising=False)
+    monkeypatch.delenv("HTTPS_PROXY", raising=False)
+    monkeypatch.delenv("http_proxy", raising=False)
+    monkeypatch.delenv("https_proxy", raising=False)
+    monkeypatch.setenv(
+        "NO_PROXY", "127.0.0.1,localhost,circleci-internal-outer-build-agent"
+    )
+    _clear_niquests_proxy_cache()
+    session = SSRFProtectedAsyncSession()
+    with pytest.raises(BlockedAddressError, match="loopback"):
+        await session.get("http://127.0.0.1:9/", timeout=2)
+
+
 @pytest.mark.asyncio
 async def test_session_refuses_explicit_proxy():
     session = SSRFProtectedAsyncSession()

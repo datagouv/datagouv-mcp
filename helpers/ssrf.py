@@ -222,11 +222,21 @@ class SSRFProtectedAsyncSession(niquests.AsyncSession):
             proxies = resolve_proxies(request, dict(self.proxies), self.trust_env)
         else:
             proxies = kwargs["proxies"] or {}
-        for proxy in proxies.values():
-            if proxy:
-                raise BlockedAddressError(
-                    f"refusing to reach {proxy}: the SSRF guard does not cover "
-                    "proxied connections"
-                )
+        proxy = _proxy_url(proxies)
+        if proxy:
+            raise BlockedAddressError(
+                f"refusing to reach {proxy}: the SSRF guard does not cover "
+                "proxied connections"
+            )
         kwargs["proxies"] = {}
         return await super().send(request, **kwargs)
+
+
+def _proxy_url(proxies: dict[str, Any]) -> str | None:
+    """Return a configured proxy URL, ignoring NO_PROXY bypass lists."""
+    for key, value in proxies.items():
+        if key.lower() in {"no", "no_proxy"}:
+            continue
+        if value:
+            return str(value)
+    return None
