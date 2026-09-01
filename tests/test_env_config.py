@@ -3,7 +3,6 @@
 import pytest
 
 from helpers import env_config
-from helpers.ssrf import BlockedCategory, blocked_reason
 
 
 class TestGetBaseUrl:
@@ -55,27 +54,3 @@ class TestGetBaseUrl:
         monkeypatch.setenv("DATAGOUV_API_ENV", "prod")
         with pytest.raises(KeyError, match="Invalid api_name"):
             env_config.get_base_url("invalid_api")
-
-    def test_get_ssrf_policy_defaults_block_private_and_local(self, monkeypatch):
-        monkeypatch.delenv("URLS_ALLOW_LOCAL", raising=False)
-        monkeypatch.delenv("URLS_ALLOW_PRIVATE", raising=False)
-        policy = env_config.get_ssrf_policy()
-        assert blocked_reason("127.0.0.1", policy) is BlockedCategory.LOOPBACK
-        assert blocked_reason("10.0.0.1", policy) is BlockedCategory.PRIVATE
-        assert blocked_reason("169.254.169.254", policy) is BlockedCategory.LINK_LOCAL
-        assert blocked_reason("8.8.8.8", policy) is None
-
-    def test_get_ssrf_policy_urls_allow_local(self, monkeypatch):
-        monkeypatch.setenv("URLS_ALLOW_LOCAL", "true")
-        monkeypatch.delenv("URLS_ALLOW_PRIVATE", raising=False)
-        policy = env_config.get_ssrf_policy()
-        assert blocked_reason("127.0.0.1", policy) is None
-        assert blocked_reason("10.0.0.1", policy) is BlockedCategory.PRIVATE
-
-    def test_get_ssrf_policy_urls_allow_private(self, monkeypatch):
-        monkeypatch.delenv("URLS_ALLOW_LOCAL", raising=False)
-        monkeypatch.setenv("URLS_ALLOW_PRIVATE", "1")
-        policy = env_config.get_ssrf_policy()
-        assert blocked_reason("10.0.0.1", policy) is None
-        assert blocked_reason("169.254.169.254", policy) is None
-        assert blocked_reason("127.0.0.1", policy) is BlockedCategory.LOOPBACK

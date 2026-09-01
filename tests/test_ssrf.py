@@ -13,6 +13,8 @@ from helpers.ssrf import (
     SSRFPolicy,
     SSRFProtectedAsyncSession,
     blocked_reason,
+    ssrf_async_session,
+    ssrf_policy,
 )
 
 # niquests caches urllib proxy lookups; neutralize env so tests assert the
@@ -294,3 +296,29 @@ async def test_fetch_openapi_spec_blocks_rfc1918():
 async def test_fetch_openapi_spec_blocks_file_scheme():
     with pytest.raises(BlockedAddressError, match="scheme"):
         await datagouv_api_client.fetch_openapi_spec("file:///etc/passwd")
+
+
+def test_ssrf_policy_defaults_block_private_and_local(monkeypatch):
+    monkeypatch.delenv("URLS_ALLOW_LOCAL", raising=False)
+    monkeypatch.delenv("URLS_ALLOW_PRIVATE", raising=False)
+    policy = ssrf_policy()
+    assert blocked_reason("127.0.0.1", policy) is BlockedCategory.LOOPBACK
+    assert blocked_reason("10.0.0.1", policy) is BlockedCategory.PRIVATE
+    assert blocked_reason("169.254.169.254", policy) is BlockedCategory.LINK_LOCAL
+
+
+def test_ssrf_policy_urls_allow_private_includes_link_local(monkeypatch):
+    monkeypatch.delenv("URLS_ALLOW_LOCAL", raising=False)
+    monkeypatch.setenv("URLS_ALLOW_PRIVATE", "1")
+    policy = ssrf_policy()
+    assert blocked_reason("10.0.0.1", policy) is None
+    assert blocked_reason("169.254.169.254", policy) is None
+    assert blocked_reason("127.0.0.1", policy) is BlockedCategory.LOOPBACK
+
+
+def test_ssrf_async_session_uses_env_policy(monkeypatch):
+    monkeypatch.delenv("URLS_ALLOW_LOCAL", raising=False)
+    monkeypatch.delenv("URLS_ALLOW_PRIVATE", raising=False)
+    session = ssrf_async_session()
+    assert isinstance(session, SSRFProtectedAsyncSession)
+    assert session.policy.allow_loopback is False

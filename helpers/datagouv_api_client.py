@@ -7,7 +7,7 @@ import yaml
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
-from helpers.ssrf import SSRFProtectedAsyncSession
+from helpers.ssrf import ssrf_async_session
 from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -155,13 +155,9 @@ async def fetch_openapi_spec(url: str) -> dict[str, Any]:
     """
     Fetch and parse an OpenAPI/Swagger spec from a producer URL.
 
-    The URL comes from catalog metadata (``machine_documentation_url``) and is
-    fetched with an SSRF-hardened client: http/https only, destination IP
-    checked at connect time (same policy as udata ``URLS_ALLOW_*``), no
-    environment proxy, redirects re-validated on each hop.
-
-    Catalog / Tabular / Metrics hosts are operator-configured and must not go
-    through this client.
+    Fetched via an SSRF-hardened client (connect-time IP check, http/https only).
+    Catalog / Tabular / Metrics hosts are operator-configured and must not use
+    this client.
 
     Returns:
         Parsed OpenAPI spec as a dict.
@@ -172,10 +168,7 @@ async def fetch_openapi_spec(url: str) -> dict[str, Any]:
             http(s) destination.
         ValueError: If the response cannot be parsed as JSON or YAML.
     """
-    session = SSRFProtectedAsyncSession(
-        policy=env_config.get_ssrf_policy(),
-        headers={"User-Agent": USER_AGENT},
-    )
+    session = ssrf_async_session()
     try:
         logger.debug("Fetching OpenAPI spec from %s", url)
         resp = await session.get(url, timeout=15.0, allow_redirects=True)

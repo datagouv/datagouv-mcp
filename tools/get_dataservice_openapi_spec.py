@@ -134,10 +134,7 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
             return "\n".join(content_parts)
 
         except BlockedAddressError as e:
-            return (
-                "Error: refused to fetch OpenAPI spec from an unsafe URL "
-                f"(SSRF guard): {e}"
-            )
+            return f"Error: refused to fetch OpenAPI spec from an unsafe URL: {e}"
         except niquests.HTTPError as e:
             status = e.response.status_code if e.response is not None else None
             if status == 404:

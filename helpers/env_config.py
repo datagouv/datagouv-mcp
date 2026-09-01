@@ -1,7 +1,5 @@
 import os
 
-from helpers.ssrf import SSRFPolicy, ssrf_policy_for
-
 _ENV_TARGETS = {
     "demo": {
         "datagouv_api": "https://demo.data.gouv.fr/api/",
@@ -46,21 +44,3 @@ def get_base_url(api_name: str) -> str:
             f"Valid values are: {', '.join(config.keys())}"
         )
     return config[api_name]
-
-
-def _env_flag(name: str) -> bool:
-    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
-
-
-def get_ssrf_policy() -> SSRFPolicy:
-    """
-    Operator SSRF policy, matching udata ``URLS_ALLOW_*`` (prod = no local/private).
-
-    Set ``URLS_ALLOW_LOCAL`` / ``URLS_ALLOW_PRIVATE`` to true only for trusted
-    local tooling. Hosted MCP must keep the defaults.
-    """
-    private = _env_flag("URLS_ALLOW_PRIVATE")
-    return ssrf_policy_for(
-        local=_env_flag("URLS_ALLOW_LOCAL"),
-        private=private,
-    )
