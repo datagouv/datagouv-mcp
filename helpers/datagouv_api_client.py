@@ -155,9 +155,7 @@ async def fetch_openapi_spec(url: str) -> dict[str, Any]:
     """
     Fetch and parse an OpenAPI/Swagger spec from a producer URL.
 
-    Fetched via an SSRF-hardened client (connect-time IP check, http/https only).
-    Catalog / Tabular / Metrics hosts are operator-configured and must not use
-    this client.
+    Uses an SSRF-hardened client (connect-time IP check, http/https only).
 
     Returns:
         Parsed OpenAPI spec as a dict.

@@ -12,6 +12,7 @@ from helpers.ssrf import (
     BlockedCategory,
     SSRFPolicy,
     SSRFProtectedAsyncSession,
+    _proxy_url,
     blocked_reason,
     ssrf_async_session,
     ssrf_policy,
@@ -179,8 +180,6 @@ async def test_session_refuses_an_environment_proxy(monkeypatch):
 
 
 def test_proxy_url_ignores_no_proxy_bypass_list():
-    from helpers.ssrf import _proxy_url
-
     assert (
         _proxy_url({"no": "127.0.0.1,localhost,circleci-internal-outer-build-agent"})
         is None

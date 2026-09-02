@@ -10,8 +10,6 @@ By default only public http(s) is allowed (no loopback, private, or link-local).
 Catalog, Tabular and Metrics stay on plain niquests sessions.
 """
 
-from __future__ import annotations
-
 import ipaddress
 import os
 import socket
@@ -73,11 +71,6 @@ def ssrf_policy() -> SSRFPolicy:
         allow_link_local=private,
         allow_reserved=private,
     )
-
-
-def ssrf_async_session(**kwargs: Any) -> SSRFProtectedAsyncSession:
-    kwargs.setdefault("headers", {"User-Agent": USER_AGENT})
-    return SSRFProtectedAsyncSession(ssrf_policy(), **kwargs)
 
 
 def _env_flag(name: str) -> bool:
@@ -208,10 +201,9 @@ class SSRFProtectedAsyncSession(niquests.AsyncSession):
         kwargs["resolver"] = _GuardedAsyncResolver(
             create_async_resolver(None), self.policy
         )
-        kwargs.setdefault("happy_eyeballs", False)
         super().__init__(**kwargs)
+        # niquests only closes a resolver it created; we injected ours.
         self._own_resolver = True
-        self.adapters.pop("http+unix://", None)
 
     async def send(self, request: PreparedRequest, **kwargs: Any) -> Any:
         scheme = urlsplit(request.url or "").scheme.lower()
@@ -230,6 +222,11 @@ class SSRFProtectedAsyncSession(niquests.AsyncSession):
             )
         kwargs["proxies"] = {}
         return await super().send(request, **kwargs)
+
+
+def ssrf_async_session(**kwargs: Any) -> SSRFProtectedAsyncSession:
+    kwargs.setdefault("headers", {"User-Agent": USER_AGENT})
+    return SSRFProtectedAsyncSession(ssrf_policy(), **kwargs)
 
 
 def _proxy_url(proxies: dict[str, Any]) -> str | None:
