@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 (2026-09-04)
+
+- feat: harden SSRF on external APIs ([#126](https://github.com/datagouv/datagouv-mcp/pull/126)) (as reported by Syed Anas Mohiuddin)
+- fix(deps): upgrade cryptography to 50.0.1 for CVE-2026-69247
+
+
 ## 0.2.30 (2026-07-17)
 
 - chore: upgrade dependencies
