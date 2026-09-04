@@ -7,6 +7,7 @@ from mcp.server.fastmcp import FastMCP
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
 from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
+from helpers.ssrf import BlockedAddressError
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -132,6 +133,8 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
+        except BlockedAddressError as e:
+            return f"Error: refused to fetch OpenAPI spec from an unsafe URL: {e}"
         except niquests.HTTPError as e:
             status = e.response.status_code if e.response is not None else None
             if status == 404:

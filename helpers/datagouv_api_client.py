@@ -7,6 +7,7 @@ import yaml
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
+from helpers.ssrf import ssrf_async_session
 from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -150,24 +151,22 @@ async def get_resources_for_dataset(
             await session.close()
 
 
-async def fetch_openapi_spec(
-    url: str, session: niquests.AsyncSession | None = None
-) -> dict[str, Any]:
+async def fetch_openapi_spec(url: str) -> dict[str, Any]:
     """
-    Fetch and parse an OpenAPI/Swagger spec from a URL.
-    Supports both JSON and YAML formats.
+    Fetch and parse an OpenAPI/Swagger spec from a producer URL.
+
+    Uses an SSRF-hardened client (connect-time IP check, http/https only).
 
     Returns:
         Parsed OpenAPI spec as a dict.
 
     Raises:
         niquests.HTTPError: If the HTTP request fails.
+        BlockedAddressError: If the URL (or a redirect hop) is not a public
+            http(s) destination.
         ValueError: If the response cannot be parsed as JSON or YAML.
     """
-    own = session is None
-    if own:
-        session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
-    assert session is not None
+    session = ssrf_async_session()
     try:
         logger.debug("Fetching OpenAPI spec from %s", url)
         resp = await session.get(url, timeout=15.0, allow_redirects=True)
@@ -188,8 +187,7 @@ async def fetch_openapi_spec(
 
         raise ValueError(f"Could not parse OpenAPI spec from {url} as JSON or YAML")
     finally:
-        if own:
-            await session.close()
+        await session.close()
 
 
 async def get_dataservice_details(
