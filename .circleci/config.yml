@@ -87,19 +87,22 @@ jobs:
             DOCKER_TAG_SCM=$(echo "$RELEASE_VERSION" | tr '+' '-')
             DOCKER_TAG_SHA_SHORT="${CIRCLE_SHA1:0:7}"
             DOCKER_TAG_SHA_LONG="$CIRCLE_SHA1"
-            DOCKER_TAG_BRANCH=$(printf '%s' "$CIRCLE_BRANCH" | tr '/' '-' | sed 's/[^a-zA-Z0-9_.-]/-/g')
+            # CIRCLE_BRANCH is often empty on tag pipelines; skip an invalid empty Docker tag.
+            DOCKER_TAG_BRANCH=$(printf '%s' "${CIRCLE_BRANCH:-}" | tr '/' '-' | sed 's/[^a-zA-Z0-9_.-]/-/g')
             DOCKER_TAG_GIT="${CIRCLE_TAG:-$(git describe --tags --exact-match 2>/dev/null || true)}"
             docker build \
               -t "${REPO}:${DOCKER_TAG_SCM}" \
               -t "${REPO}:${DOCKER_TAG_SHA_SHORT}" \
               -t "${REPO}:${DOCKER_TAG_SHA_LONG}" \
-              -t "${REPO}:${DOCKER_TAG_BRANCH}" \
+              ${DOCKER_TAG_BRANCH:+-t "${REPO}:${DOCKER_TAG_BRANCH}"} \
               ${DOCKER_TAG_GIT:+-t "${REPO}:${DOCKER_TAG_GIT}"} \
               .
             docker push "${REPO}:${DOCKER_TAG_SCM}"
             docker push "${REPO}:${DOCKER_TAG_SHA_SHORT}"
             docker push "${REPO}:${DOCKER_TAG_SHA_LONG}"
-            docker push "${REPO}:${DOCKER_TAG_BRANCH}"
+            if [ -n "$DOCKER_TAG_BRANCH" ]; then
+              docker push "${REPO}:${DOCKER_TAG_BRANCH}"
+            fi
             if [ -n "$DOCKER_TAG_GIT" ]; then
               docker push "${REPO}:${DOCKER_TAG_GIT}"
             fi
@@ -107,8 +110,15 @@ jobs:
 workflows:
   lint-test:
     jobs:
-      - lint
-      - test
+      # Tag filters must be on every job in the chain, or tag pipelines skip dependents.
+      - lint:
+          filters:
+            tags:
+              only: /^v.+/
+      - test:
+          filters:
+            tags:
+              only: /^v.+/
       - build:
           requires:
             - lint
@@ -116,4 +126,6 @@ workflows:
           filters:
             branches:
               only: << pipeline.parameters.publish-branch >>
+            tags:
+              only: /^v.+/
           context: org-global
