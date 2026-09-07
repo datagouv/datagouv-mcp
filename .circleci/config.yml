@@ -4,6 +4,15 @@ parameters:
   python-version:
     type: string
     default: "3.14"
+  publish-branch:
+    type: string
+    default: "main"
+  container-registry-namespace:
+    type: string
+    default: "datagouv_datagouv-mcp"
+  docker-image:
+    type: string
+    default: "datagouv-mcp"
 
 jobs:
   lint:
@@ -41,8 +50,70 @@ jobs:
       - store_test_results:
           path: test-results
 
+  build:
+    machine:
+      image: ubuntu-2404:current
+    steps:
+      - checkout
+      - run:
+          name: Compute RELEASE_VERSION via setuptools_scm
+          command: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            export PATH="$HOME/.local/bin:$PATH"
+            git fetch --tags --force origin
+            RELEASE_VERSION=$(uvx --from setuptools-scm python -m setuptools_scm)
+            echo "Building image with version $RELEASE_VERSION"
+            echo "Build number: $CIRCLE_BUILD_NUM"
+            echo "Commit hash: ${CIRCLE_SHA1:0:7}"
+            echo "Git tag: $CIRCLE_TAG"
+            echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$BASH_ENV"
+      - run:
+          name: Log in to Docker registry
+          command: |
+            : "${CONTAINER_REGISTRY_SERVER:?missing CONTAINER_REGISTRY_SERVER}"
+            : "${CONTAINER_REGISTRY_USERNAME:?missing CONTAINER_REGISTRY_USERNAME}"
+            : "${CONTAINER_REGISTRY_PASSWORD:?missing CONTAINER_REGISTRY_PASSWORD}"
+            echo "${CONTAINER_REGISTRY_PASSWORD}" | docker login \
+              -u "${CONTAINER_REGISTRY_USERNAME}" \
+              --password-stdin "${CONTAINER_REGISTRY_SERVER}"
+      - run:
+          name: Build and push Docker image
+          command: |
+            source "$BASH_ENV"
+            : "${CONTAINER_REGISTRY_SERVER:?missing CONTAINER_REGISTRY_SERVER}"
+            REPO="${CONTAINER_REGISTRY_SERVER}/<< pipeline.parameters.container-registry-namespace >>/<< pipeline.parameters.docker-image >>"
+            # Five distinct tags (SCM version, SHA short/long, branch, optional git tag (always v-prefixed, e.g. v1.0.0)).
+            # Docker tags allow only [a-zA-Z0-9_.-]; setuptools_scm can output e.g. 1.0.0.dev5+gabc1234
+            DOCKER_TAG_SCM=$(echo "$RELEASE_VERSION" | tr '+' '-')
+            DOCKER_TAG_SHA_SHORT="${CIRCLE_SHA1:0:7}"
+            DOCKER_TAG_SHA_LONG="$CIRCLE_SHA1"
+            DOCKER_TAG_BRANCH=$(printf '%s' "$CIRCLE_BRANCH" | tr '/' '-' | sed 's/[^a-zA-Z0-9_.-]/-/g')
+            DOCKER_TAG_GIT="${CIRCLE_TAG:-$(git describe --tags --exact-match 2>/dev/null || true)}"
+            docker build \
+              -t "${REPO}:${DOCKER_TAG_SCM}" \
+              -t "${REPO}:${DOCKER_TAG_SHA_SHORT}" \
+              -t "${REPO}:${DOCKER_TAG_SHA_LONG}" \
+              -t "${REPO}:${DOCKER_TAG_BRANCH}" \
+              ${DOCKER_TAG_GIT:+-t "${REPO}:${DOCKER_TAG_GIT}"} \
+              .
+            docker push "${REPO}:${DOCKER_TAG_SCM}"
+            docker push "${REPO}:${DOCKER_TAG_SHA_SHORT}"
+            docker push "${REPO}:${DOCKER_TAG_SHA_LONG}"
+            docker push "${REPO}:${DOCKER_TAG_BRANCH}"
+            if [ -n "$DOCKER_TAG_GIT" ]; then
+              docker push "${REPO}:${DOCKER_TAG_GIT}"
+            fi
+
 workflows:
   lint-test:
     jobs:
       - lint
       - test
+      - build:
+          requires:
+            - lint
+            - test
+          filters:
+            branches:
+              only: << pipeline.parameters.publish-branch >>
+          context: org-global
