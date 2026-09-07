@@ -4,9 +4,6 @@ parameters:
   python-version:
     type: string
     default: "3.14"
-  publish-branch:
-    type: string
-    default: "main"
   container-registry-namespace:
     type: string
     default: "datagouv_datagouv-mcp"
@@ -124,8 +121,6 @@ workflows:
             - lint
             - test
           filters:
-            branches:
-              only: << pipeline.parameters.publish-branch >>
             tags:
               only: /^v.+/
           context: org-global
