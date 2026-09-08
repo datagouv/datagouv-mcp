@@ -1,12 +1,13 @@
 import logging
 from typing import Any
 
-import httpx
+import niquests
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
 from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
+from helpers.ssrf import BlockedAddressError
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -132,9 +133,14 @@ def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
+        except BlockedAddressError as e:
+            return f"Error: refused to fetch OpenAPI spec from an unsafe URL: {e}"
+        except niquests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status == 404:
                 return f"Error: Third-party API not found (dataservice_id='{dataservice_id}')."
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+            if status is not None:
+                return f"Error: HTTP {status} - {str(e)}"
+            return f"Error: {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error fetching OpenAPI spec: {str(e)}"

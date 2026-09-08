@@ -1,4 +1,4 @@
-import httpx
+import niquests
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, env_config
@@ -79,9 +79,12 @@ def register_get_dataset_info_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
+        except niquests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status == 404:
                 return f"Error: Dataset with ID '{dataset_id}' not found."
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+            if status is not None:
+                return f"Error: HTTP {status} - {str(e)}"
+            return f"Error: {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"

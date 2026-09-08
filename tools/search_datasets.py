@@ -64,13 +64,25 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
     )
     @log_tool
-    async def search_datasets(query: str, page: int = 1, page_size: int = 20) -> str:
+    async def search_datasets(
+        query: str,
+        page: int = 1,
+        page_size: int = 20,
+        sort: str | None = None,
+        last_update_range: str | None = None,
+    ) -> str:
         """
         Search for datasets on data.gouv.fr by keywords.
 
         This is typically the first step in exploring data.gouv.fr.
         Use short, specific queries (the API uses AND logic, so generic words
         like "données" or "fichier" may return zero results).
+
+        Use `sort` to order results. Accepted values: created, last_update,
+        reuses, followers, views. Optionally prefixed with '-' for descending
+        (e.g. -last_update). Use `last_update_range` to restrict
+        results to recently updated datasets: last_30_days, last_12_months,
+        last_3_years.
 
         Typical workflow: search_datasets → list_dataset_resources → query_resource_data.
         """
@@ -79,7 +91,11 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
 
         # Try with cleaned query first
         result = await datagouv_api_client.search_datasets(
-            query=cleaned_query, page=page, page_size=page_size
+            query=cleaned_query,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+            last_update_range=last_update_range,
         )
 
         # Format the result as text content
@@ -94,7 +110,11 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
                 query,
             )
             result = await datagouv_api_client.search_datasets(
-                query=query, page=page, page_size=page_size
+                query=query,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                last_update_range=last_update_range,
             )
             datasets = result.get("data", [])
 

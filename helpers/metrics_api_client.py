@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-import httpx
+import niquests
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
@@ -11,11 +11,11 @@ logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
 async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
+    session: niquests.AsyncSession | None,
+) -> tuple[niquests.AsyncSession, bool]:
     if session is not None:
         return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    new_session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
     return new_session, True
 
 
@@ -27,7 +27,7 @@ async def get_metrics(
     time_granularity: str = "month",
     limit: int = 12,
     sort_order: str = "desc",
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> list[dict[str, Any]]:
     """
     Fetch metrics for a given model and ID with specified time granularity.
@@ -40,7 +40,7 @@ async def get_metrics(
             supported by the API, but this parameter allows for future extensibility (e.g. "day", "week", "year").
         limit: Maximum number of records to return (default: 12, max: 50).
         sort_order: Sort order for time field ("asc" or "desc", default: "desc").
-        session: Optional httpx session for reuse across calls.
+        session: Optional niquests session for reuse across calls.
 
     Returns:
         List of metric records, sorted by the time field in the specified order.
@@ -66,7 +66,7 @@ async def get_metrics(
         params = {
             f"{id_field}__exact": id_value,
             f"{time_field}__sort": sort_order,
-            "page_size": max(1, min(limit, 50)),
+            "page_size": str(max(1, min(limit, 50))),
         }
         logger.debug(
             f"Fetching metrics from {url} with params: {id_field}__exact={id_value}, "
@@ -80,7 +80,7 @@ async def get_metrics(
         return data
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()
 
 
 async def get_metrics_csv(
@@ -90,7 +90,7 @@ async def get_metrics_csv(
     id_field: str | None = None,
     time_granularity: str = "month",
     sort_order: str = "desc",
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> str:
     """
     Fetch metrics as CSV for a given model and ID with specified time granularity.
@@ -105,7 +105,7 @@ async def get_metrics_csv(
         time_granularity: Time granularity for metrics (default: "month"). Currently only "month" is
             supported by the API, but this parameter allows for future extensibility (e.g. "day", "week", "year").
         sort_order: Sort order for time field ("asc" or "desc", default: "desc").
-        session: Optional httpx session for reuse across calls.
+        session: Optional niquests session for reuse across calls.
 
     Returns:
         CSV content as a string, including header row.
@@ -138,7 +138,10 @@ async def get_metrics_csv(
         )
         resp = await sess.get(url, params=params, timeout=30.0)
         resp.raise_for_status()
-        return resp.text
+        text = resp.text
+        if text is None:
+            raise ValueError(f"Empty CSV response from {url}")
+        return text
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()

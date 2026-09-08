@@ -3,7 +3,7 @@
 import re
 
 import pytest
-from pytest_httpx import HTTPXMock
+from niquests_mock import MockRouter
 
 from helpers import tabular_api_client
 
@@ -11,9 +11,9 @@ _MOCK_RID = "11111111-1111-1111-1111-111111111111"
 
 
 @pytest.mark.asyncio
-async def test_fetch_resource_data_404_llm_hint(httpx_mock: HTTPXMock) -> None:
+async def test_fetch_resource_data_404_llm_hint(niquests_mock: MockRouter) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
-    httpx_mock.add_response(method="GET", url=pattern, status_code=404)
+    niquests_mock.get(pattern).respond(status_code=404)
     with pytest.raises(tabular_api_client.ResourceNotAvailableError) as exc:
         await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
     msg = str(exc.value)
@@ -22,9 +22,9 @@ async def test_fetch_resource_data_404_llm_hint(httpx_mock: HTTPXMock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_resource_data_502_server_hint(httpx_mock: HTTPXMock) -> None:
+async def test_fetch_resource_data_502_server_hint(niquests_mock: MockRouter) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
-    httpx_mock.add_response(method="GET", url=pattern, status_code=502)
+    niquests_mock.get(pattern).respond(status_code=502)
     with pytest.raises(tabular_api_client.TabularApiRequestError) as exc:
         await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
     assert "try again" in str(exc.value).lower()
@@ -32,7 +32,7 @@ async def test_fetch_resource_data_502_server_hint(httpx_mock: HTTPXMock) -> Non
 
 @pytest.mark.asyncio
 async def test_fetch_resource_data_400_with_column_detail(
-    httpx_mock: HTTPXMock,
+    niquests_mock: MockRouter,
 ) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
     payload = {
@@ -47,7 +47,7 @@ async def test_fetch_resource_data_400_with_column_detail(
             }
         ]
     }
-    httpx_mock.add_response(method="GET", url=pattern, status_code=400, json=payload)
+    niquests_mock.get(pattern).respond(status_code=400, json=payload)
     with pytest.raises(tabular_api_client.TabularApiRequestError) as exc:
         await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
     msg = str(exc.value)
@@ -59,7 +59,7 @@ async def test_fetch_resource_data_400_with_column_detail(
 
 @pytest.mark.asyncio
 async def test_fetch_resource_data_400_includes_api_uuid_message(
-    httpx_mock: HTTPXMock,
+    niquests_mock: MockRouter,
 ) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
     payload = {
@@ -71,7 +71,7 @@ async def test_fetch_resource_data_400_includes_api_uuid_message(
             }
         ]
     }
-    httpx_mock.add_response(method="GET", url=pattern, status_code=400, json=payload)
+    niquests_mock.get(pattern).respond(status_code=400, json=payload)
     with pytest.raises(tabular_api_client.TabularApiRequestError) as exc:
         await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
     msg = str(exc.value)
@@ -82,18 +82,18 @@ async def test_fetch_resource_data_400_includes_api_uuid_message(
 
 @pytest.mark.asyncio
 async def test_fetch_resource_data_400_no_http_status_error(
-    httpx_mock: HTTPXMock,
+    niquests_mock: MockRouter,
 ) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/data/")
-    httpx_mock.add_response(method="GET", url=pattern, status_code=400, text="bad")
+    niquests_mock.get(pattern).respond(status_code=400, text="bad")
     with pytest.raises(tabular_api_client.TabularApiRequestError):
         await tabular_api_client.fetch_resource_data(_MOCK_RID, page_size=1)
 
 
 @pytest.mark.asyncio
-async def test_fetch_resource_profile_404_same_hint(httpx_mock: HTTPXMock) -> None:
+async def test_fetch_resource_profile_404_same_hint(niquests_mock: MockRouter) -> None:
     pattern = re.compile(rf".*/resources/{re.escape(_MOCK_RID)}/profile/")
-    httpx_mock.add_response(method="GET", url=pattern, status_code=404)
+    niquests_mock.get(pattern).respond(status_code=404)
     with pytest.raises(tabular_api_client.ResourceNotAvailableError) as exc:
         await tabular_api_client.fetch_resource_profile(_MOCK_RID)
     assert "search_datasets" in str(exc.value)

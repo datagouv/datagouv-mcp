@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -16,7 +15,6 @@ from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from helpers.matomo import (
     apply_matomo_request_context,
     reset_matomo_request_context,
-    track_matomo_request,
 )
 from helpers.sentry import init_sentry
 from tools import register_tools
@@ -67,7 +65,7 @@ def with_monitoring(
         if scope["type"] == "http":
             path: str = scope.get("path", "")
 
-            # Handle /health endpoint (no tracking)
+            # Handle /health endpoint (no HTTP request context binding for Matomo)
             if path == "/health":
                 # Get version from package metadata (managed by setuptools-scm)
                 try:
@@ -75,7 +73,7 @@ def with_monitoring(
                 except PackageNotFoundError:
                     app_version = "unknown"
 
-                is_healthy = await _run_health_check()
+                is_healthy = await _run_health_check(mcp)
                 if is_healthy:
                     body = json.dumps(
                         {
@@ -105,21 +103,18 @@ def with_monitoring(
                 await send({"type": "http.response.body", "body": body})
                 return
 
-            # Matomo: bind request URL/UA for tool event tracking; HTTP-level hit in background
+            # Matomo: bind request URL/UA for tool event tracking
             headers_dict: dict[str, str] = {
                 k.decode("utf-8"): v.decode("utf-8")
                 for k, v in scope.get("headers", [])
             }
-            url_token, ua_token = apply_matomo_request_context(headers_dict, path)
-            host: str = headers_dict.get("host", "localhost")
-            full_url: str = f"https://{host}{path}"
+            url_token, ua_token, cip_token = apply_matomo_request_context(
+                headers_dict, path
+            )
             try:
-                asyncio.create_task(
-                    track_matomo_request(url=full_url, path=path, headers=headers_dict)
-                )
                 await inner_app(scope, receive, send)
             finally:
-                reset_matomo_request_context(url_token, ua_token)
+                reset_matomo_request_context(url_token, ua_token, cip_token)
             return
 
         # Continue the MCP server logic (non-HTTP scopes, e.g. lifespan)

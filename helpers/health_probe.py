@@ -1,36 +1,45 @@
 """
-Health probe that runs a check on the MCP itself (doing a full handshake)
-and calls the `search_datasets` tool with page_size=1 for a full round-trip validation.
+Health probe that validates MCP tool execution in-process.
 
-Checks if the call response actually contains `data` for valid MCP response
+Calls `search_datasets` with page_size=1 to confirm the tool layer and
+data.gouv.fr API access work end-to-end, without a recursive HTTP round-trip.
 
-returns True if OK
-        False if round-trip failed (meaning the probe failed)
+Returns True if OK, False if the probe failed.
 """
 
 import logging
 
+from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
 
 from helpers.logging import MAIN_LOGGER_NAME
-from helpers.mcp_client import call_tool_on_mcp
+from helpers.matomo import (
+    apply_matomo_event_override,
+    reset_matomo_event_override,
+)
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
-async def _run_health_check() -> bool:
+async def _run_health_check(mcp: FastMCP) -> bool:
     logger.debug("health probe: starting health check")
     try:
-        result = await call_tool_on_mcp(
-            "search_datasets", {"query": "transport", "page_size": 1}
+        override_token = apply_matomo_event_override(
+            action="health_check",
+            category="health_check",
         )
-        # result.content is a list of content blocks from the tool response
+        try:
+            content, _ = await mcp.call_tool(
+                "search_datasets",
+                {"query": "transport", "page_size": 1},
+            )
+        finally:
+            reset_matomo_event_override(override_token)
         # search_datasets always returns a TextContent block
-        # we check it's non-empty to confirm a valid round-trip
-        if not result.content or not isinstance(result.content[0], TextContent):
+        if not content or not isinstance(content[0], TextContent):  # type: ignore
             logger.error("health probe: unexpected response from search_datasets")
             return False
-        if not result.content[0].text:
+        if not content[0].text:  # type: ignore
             logger.error("health probe: empty response from search_datasets")
             return False
 

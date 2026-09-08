@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Any
 
-import httpx
+import niquests
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
@@ -17,16 +17,16 @@ CACHE_TTL_SECONDS: float = 3600.0  # 1 hour
 
 
 async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
+    session: niquests.AsyncSession | None,
+) -> tuple[niquests.AsyncSession, bool]:
     if session is not None:
         return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    new_session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
     return new_session, True
 
 
 async def fetch_resource_exceptions(
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
     force_refresh: bool = False,
 ) -> set[str]:
     """
@@ -38,7 +38,7 @@ async def fetch_resource_exceptions(
     Results are cached for 1 hour to avoid excessive API calls.
 
     Args:
-        session: Optional httpx.AsyncClient to reuse
+        session: Optional niquests.AsyncSession to reuse
         force_refresh: If True, bypass the cache and fetch fresh data
 
     Returns:
@@ -84,7 +84,7 @@ async def fetch_resource_exceptions(
         logger.info(f"Crawler API: Cached {len(exceptions)} resource exceptions")
         return exceptions
 
-    except httpx.HTTPError as e:
+    except niquests.HTTPError as e:
         logger.warning(f"Crawler API: Failed to fetch exceptions: {e}")
         # Return cached data if available, even if stale
         if _exceptions_cache is not None:
@@ -94,12 +94,12 @@ async def fetch_resource_exceptions(
         return set()
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()
 
 
 async def is_in_exceptions_list(
     resource_id: str,
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> bool:
     """
     Check if a resource is in the exceptions list for Tabular API.
@@ -109,7 +109,7 @@ async def is_in_exceptions_list(
 
     Args:
         resource_id: The ID of the resource to check
-        session: Optional httpx.AsyncClient to reuse
+        session: Optional niquests.AsyncSession to reuse
 
     Returns:
         True if the resource is in the exceptions list, False otherwise

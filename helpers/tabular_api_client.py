@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Any
 
-import httpx
+import niquests
 
 from helpers import env_config
 from helpers.logging import MAIN_LOGGER_NAME
@@ -86,12 +86,12 @@ def _tabular_error_payload_and_messages(
 
 
 def _raise_for_tabular_failure(
-    resp: httpx.Response,
+    resp: niquests.Response,
     resource_id: str,
     endpoint: str,
 ) -> None:
-    status = resp.status_code
-    body = resp.text
+    status = resp.status_code or 0
+    body = resp.text or ""
     logger.warning(
         f"Tabular API: HTTP {status} for resource {resource_id} ({endpoint} endpoint)"
     )
@@ -121,11 +121,11 @@ def _raise_for_tabular_failure(
 
 
 async def _get_session(
-    session: httpx.AsyncClient | None,
-) -> tuple[httpx.AsyncClient, bool]:
+    session: niquests.AsyncSession | None,
+) -> tuple[niquests.AsyncSession, bool]:
     if session is not None:
         return session, False
-    new_session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+    new_session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
     return new_session, True
 
 
@@ -135,7 +135,7 @@ async def fetch_resource_data(
     page: int = 1,
     page_size: int = 100,
     params: dict[str, Any] | None = None,
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> dict[str, Any]:
     """
     Fetch data for a resource via the Tabular API.
@@ -144,12 +144,12 @@ async def fetch_resource_data(
     try:
         base_url: str = env_config.get_base_url("tabular_api")
         url = f"{base_url}resources/{resource_id}/data/"
-        query_params = {
-            "page": max(page, 1),
-            "page_size": max(page_size, 1),
+        query_params: dict[str, str] = {
+            "page": str(max(page, 1)),
+            "page_size": str(max(page_size, 1)),
         }
         if params:
-            query_params.update(params)
+            query_params.update({k: str(v) for k, v in params.items()})
 
         full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in query_params.items())}"
         logger.info(
@@ -158,23 +158,24 @@ async def fetch_resource_data(
         )
 
         resp = await sess.get(url, params=query_params, timeout=30.0)
-        if resp.status_code == 404:
+        status_code = resp.status_code
+        if status_code == 404:
             logger.warning(f"Tabular API: Resource {resource_id} not found (404)")
             raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
-        if resp.status_code >= 400:
+        if status_code is not None and status_code >= 400:
             _raise_for_tabular_failure(resp, resource_id, endpoint="data")
 
         return resp.json()
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()
 
 
 async def fetch_resource_profile(
     resource_id: str,
     *,
-    session: httpx.AsyncClient | None = None,
+    session: niquests.AsyncSession | None = None,
 ) -> dict[str, Any]:
     """
     Fetch the profile metadata for a resource via the Tabular API.
@@ -190,13 +191,14 @@ async def fetch_resource_profile(
         )
 
         resp = await sess.get(url, timeout=30.0)
-        if resp.status_code == 404:
+        status_code = resp.status_code
+        if status_code == 404:
             logger.warning(
                 f"Tabular API: Resource profile {resource_id} not found (404)"
             )
             raise ResourceNotAvailableError(MSG_RESOURCE_NOT_IN_TABULAR)
 
-        if resp.status_code >= 400:
+        if status_code is not None and status_code >= 400:
             _raise_for_tabular_failure(resp, resource_id, endpoint="profile")
 
         profile_data: dict[str, Any] = resp.json()
@@ -211,4 +213,4 @@ async def fetch_resource_profile(
         return profile_data
     finally:
         if owns_session:
-            await sess.aclose()
+            await sess.close()

@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.0.0 (2026-09-04)
+
+- feat: harden SSRF on external APIs ([#126](https://github.com/datagouv/datagouv-mcp/pull/126)) (as reported by Syed Anas Mohiuddin)
+- fix(deps): upgrade cryptography to 50.0.1 for CVE-2026-69247
+
+
+## 0.2.30 (2026-07-17)
+
+- chore: upgrade dependencies
+- docs: add Autohand Code MCP setup ([#124](https://github.com/datagouv/datagouv-mcp/pull/124))
+- fix: matomo healthcheck stats ([#122](https://github.com/datagouv/datagouv-mcp/pull/122))
+
+
+## 0.2.29 (2026-06-24)
+
+- fix(health): run health probe in-process to avoid FD leak ([#121](https://github.com/datagouv/datagouv-mcp/pull/121))
+- Replace HTTPX with niquests ([#119](https://github.com/datagouv/datagouv-mcp/pull/119))
+
+
+## 0.2.28 (2026-06-23)
+
+- fix(docs): fix link in github issues template
+- fix(matomo): remove matomo request on/mcp, keep only tools events ([#120](https://github.com/datagouv/datagouv-mcp/pull/120))
+
+
+## 0.2.27 (2026-06-19)
+
+- add cip for tool tracking as well
+- chore: upgrade dependencies ([#117](https://github.com/datagouv/datagouv-mcp/pull/117))
+- chore(matomo): try to fix tracking
+- fix lint
+- fix(ci): fix lint check in CI
+- use f-string for error
+
+
+## 0.2.26 (2026-06-02)
+
+- feat: add sort and last_update_range params to search_datasets ([#113](https://github.com/datagouv/datagouv-mcp/pull/113))
+- fix: report real resource count from resources.total in search_datasets ([#115](https://github.com/datagouv/datagouv-mcp/pull/115))
+
+
 ## 0.2.25 (2026-05-18)
 
 - chore: upgrade dependencies

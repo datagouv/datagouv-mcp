@@ -3,7 +3,7 @@ import logging
 
 import pytest
 from mcp.server.fastmcp import FastMCP
-from pytest_httpx import HTTPXMock
+from niquests_mock import MockRouter
 
 from helpers.logging import TOOLS_LOGGER_NAME
 from tools import register_tools
@@ -41,7 +41,7 @@ def mcp():
 async def test_tool_logs_kwargs(
     mcp: FastMCP,
     caplog,
-    httpx_mock: HTTPXMock,
+    niquests_mock: MockRouter,
     monkeypatch,
     tool_name: str,
     call_args: dict,
@@ -49,8 +49,8 @@ async def test_tool_logs_kwargs(
 ):
     monkeypatch.setattr("helpers.matomo.MATOMO_URL", "https://matomo.example.com")
     monkeypatch.setattr("helpers.matomo.MATOMO_SITE_ID", "1")
-    httpx_mock.add_response(json={})  # Mock tool call
-    httpx_mock.add_response(json={})  # Mock Matomo call
+    niquests_mock.route().respond(json={})  # Mock tool call
+    niquests_mock.route().respond(json={})  # Mock Matomo call
     with caplog.at_level(logging.INFO, logger=TOOLS_LOGGER_NAME):
         await mcp.call_tool(tool_name, call_args)
 

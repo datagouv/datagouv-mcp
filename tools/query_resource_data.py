@@ -1,6 +1,6 @@
 import logging
 
-import httpx
+import niquests
 from mcp.server.fastmcp import FastMCP
 
 from helpers import datagouv_api_client, tabular_api_client
@@ -195,8 +195,11 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
             except tabular_api_client.TabularApiRequestError as e:
                 logger.warning(f"Tabular API request failed: {resource_id} - {str(e)}")
                 content_parts.append(f"⚠️  {str(e)}")
-            except httpx.HTTPStatusError as e:
-                error_details = f"HTTP {e.response.status_code}: {str(e)}"
+            except niquests.HTTPError as e:
+                status = e.response.status_code if e.response is not None else None
+                error_details = (
+                    f"HTTP {status}: {str(e)}" if status is not None else str(e)
+                )
                 if e.request:
                     error_details += f" - URL: {e.request.url}"
                 logger.warning(
@@ -209,7 +212,10 @@ def register_query_resource_data_tool(mcp: FastMCP) -> None:
 
             return "\n".join(content_parts)
 
-        except httpx.HTTPStatusError as e:
-            return f"Error: HTTP {e.response.status_code} - {str(e)}"
+        except niquests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status is not None:
+                return f"Error: HTTP {status} - {str(e)}"
+            return f"Error: {str(e)}"
         except Exception as e:  # noqa: BLE001
             return f"Error: {str(e)}"

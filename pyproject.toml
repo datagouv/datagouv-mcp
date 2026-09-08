@@ -6,8 +6,8 @@ authors = [{ name = "data.gouv.fr", email = "opendatateam@data.gouv.fr" }]
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
-    "httpx>=0.28.0",
     "mcp>=1.25.0,<2",
+    "niquests>=3.19.1",
     "pyyaml>=6.0",
     "sentry-sdk>=2.54.0",
 ]
@@ -18,8 +18,8 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
+    "niquests-mock>=0.4.0",
     "pytest>=9.0.0",
-    "pytest-httpx>=0.35.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.14.0",
     "ty>=0.0.18",
