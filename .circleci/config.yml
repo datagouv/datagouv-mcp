@@ -105,7 +105,7 @@ jobs:
             fi
 
 workflows:
-  lint-test:
+  lint-test-build:
     jobs:
       # Tag filters must be on every job in the chain, or tag pipelines skip dependents.
       - lint:
