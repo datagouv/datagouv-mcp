@@ -453,3 +453,106 @@ async def search_organizations(
     finally:
         if own:
             await session.close()
+
+
+async def search_topics(
+    query: str = "",
+    page: int = 1,
+    page_size: int = 20,
+    session: niquests.AsyncSession | None = None,
+) -> dict[str, Any]:
+    """
+    Search topics on data.gouv.fr by keywords.
+
+    Args:
+        query: Optional search string; omit or leave empty to browse.
+        page: Page number (default: 1).
+        page_size: Results per page (default: 20, max: 100).
+
+    Returns:
+        Raw API v2 payload with keys 'data', 'page', 'page_size', 'total'.
+    """
+    own = session is None
+    if own:
+        session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
+    assert session is not None
+    try:
+        base_url: str = env_config.get_base_url("datagouv_api")
+        url = f"{base_url}2/topics/"
+        params: dict[str, str] = {
+            "page": str(page),
+            "page_size": str(min(page_size, 100)),
+        }
+        if query:
+            params["q"] = query
+
+        resp = await session.get(url, params=params, timeout=15.0)
+        resp.raise_for_status()
+        return resp.json()
+    finally:
+        if own:
+            await session.close()
+
+
+async def get_topic_details(
+    topic_id: str, session: niquests.AsyncSession | None = None
+) -> dict[str, Any]:
+    """
+    Fetch the complete topic payload from the API v2 endpoint.
+    """
+    own = session is None
+    if own:
+        session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
+    assert session is not None
+
+    try:
+        base_url: str = env_config.get_base_url("datagouv_api")
+        url = f"{base_url}2/topics/{topic_id}/"
+        return await _fetch_json(session, url)
+    finally:
+        if own:
+            await session.close()
+
+
+async def get_topic_elements(
+    topic_id: str,
+    page: int = 1,
+    page_size: int = 20,
+    element_class: str | None = "Dataset",
+    session: niquests.AsyncSession | None = None,
+) -> dict[str, Any]:
+    """
+    Fetch elements attached to a data.gouv.fr topic.
+
+    Args:
+        topic_id: Topic slug or ID.
+        page: Page number (default: 1).
+        page_size: Results per page (default: 20, max: 100).
+        element_class: Optional API class filter (e.g. "Dataset", "Reuse").
+
+    Returns:
+        Raw API v2 payload with keys 'data', 'page', 'page_size', 'total'.
+    """
+    own = session is None
+    if own:
+        session = niquests.AsyncSession(headers={"User-Agent": USER_AGENT})
+    assert session is not None
+
+    try:
+        base_url: str = env_config.get_base_url("datagouv_api")
+        url = f"{base_url}2/topics/{topic_id}/elements/"
+
+        params: dict[str, str] = {
+            "page": str(page),
+            "page_size": str(min(page_size, 100)),
+        }
+
+        if element_class:
+            params["class"] = element_class
+
+        resp = await session.get(url, params=params, timeout=15.0)
+        resp.raise_for_status()
+        return resp.json()
+    finally:
+        if own:
+            await session.close()

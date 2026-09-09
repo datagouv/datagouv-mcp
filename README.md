@@ -398,6 +398,22 @@ The MCP server provides tools to interact with data.gouv.fr datasets and third-p
 
   Note: Recommended workflow: 1) Use `search_datasets` to find the dataset, 2) Use `list_dataset_resources` to see available resources, 3) Use `query_resource_data` with default `page_size` (20) to preview data structure. For small datasets (<500 rows), increase `page_size` or paginate. For large datasets (>1000 rows), continue paginating or use `get_resource_info` to retrieve the raw file URL and fetch it directly. Works for CSV/XLS resources within Tabular API size limits (CSV ≤ 100 MB, XLSX ≤ 12.5 MB).
 
+### Topics (thematic perimeters)
+
+- **`search_topics`** - Search thematic topics on data.gouv.fr by keywords. Returns topics with their slug, description, organization, tags and whether a contextualization catalog is declared.
+
+  Parameters: `query` (optional; omit or leave empty to browse), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100)
+
+- **`list_topic_elements`** - List the elements (datasets by default) attached to a topic. Dataset elements are enriched with their title, organization, tags and URL (one API call per dataset on the page, capped at 5 concurrent requests).
+
+  Parameters: `topic_id` (required; slug or ID), `page` (optional, default: 1), `page_size` (optional, default: 20, max: 100), `element_class` (optional, default: `Dataset`; e.g. `Reuse`, or `None` for all classes)
+
+- **`get_topic_catalog`** - Get the contextualization catalog declared by a topic through `extras.mcp.catalog_dataset_id`: the catalog dataset and its resources (datasets list, column schemas), queryable with `query_resource_data`.
+
+  Parameters: `topic_id` (required; slug or ID)
+
+  Note: Recommended workflow: 1) Use `search_topics` to find a topic and its slug, 2) Use `list_topic_elements` to browse its datasets, 3) When available, use `get_topic_catalog` and read its resources with `query_resource_data` to select the right dataset before querying it.
+
 ### Third-party APIs
 
 These tools use data.gouv.fr HTTP paths under `dataservices`; tool and parameter names match that API (`search_dataservices`, `dataservice_id`).

@@ -7,11 +7,14 @@ from tools.get_dataservice_openapi_spec import (
 from tools.get_dataset_info import register_get_dataset_info_tool
 from tools.get_metrics import register_get_metrics_tool
 from tools.get_resource_info import register_get_resource_info_tool
+from tools.get_topic_catalog import register_get_topic_catalog_tool
 from tools.list_dataset_resources import register_list_dataset_resources_tool
+from tools.list_topic_elements import register_list_topic_elements_tool
 from tools.query_resource_data import register_query_resource_data_tool
 from tools.search_dataservices import register_search_dataservices_tool
 from tools.search_datasets import register_search_datasets_tool
 from tools.search_organizations import register_search_organizations_tool
+from tools.search_topics import register_search_topics_tool
 
 
 def register_tools(mcp: FastMCP) -> None:
@@ -26,3 +29,6 @@ def register_tools(mcp: FastMCP) -> None:
     register_list_dataset_resources_tool(mcp)
     register_get_resource_info_tool(mcp)
     register_get_metrics_tool(mcp)
+    register_search_topics_tool(mcp)
+    register_list_topic_elements_tool(mcp)
+    register_get_topic_catalog_tool(mcp)
