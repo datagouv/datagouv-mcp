@@ -23,6 +23,12 @@ def known_resource_id() -> str:
     return "3b6b2281-b9d9-4959-ae9d-c2c166dff118"
 
 
+@pytest.fixture
+def known_topic_id() -> str:
+    """Fixture providing a known topic slug for testing."""
+    return os.getenv("TEST_TOPIC_ID", "univers-culture-deps")
+
+
 @pytest.mark.asyncio
 class TestAsyncFunctions:
     """Tests for async API functions."""
@@ -77,6 +83,34 @@ class TestAsyncFunctions:
         assert result["resource"]["id"] == known_resource_id
         if result["dataset"]:
             assert "id" in result["dataset"]
+
+    async def test_search_topics(self):
+        """Test searching topics by keyword."""
+        result = await datagouv_api_client.search_topics("culture", page_size=5)
+
+        assert "data" in result
+        assert isinstance(result["data"], list)
+        assert "total" in result
+        if result["data"]:
+            assert "slug" in result["data"][0]
+
+    async def test_get_topic_details(self, known_topic_id):
+        """Test fetching topic details."""
+        topic = await datagouv_api_client.get_topic_details(known_topic_id)
+
+        assert "id" in topic
+        assert topic.get("slug") == known_topic_id
+        assert "name" in topic
+
+    async def test_get_topic_elements(self, known_topic_id):
+        """Test fetching elements attached to a topic."""
+        result = await datagouv_api_client.get_topic_elements(
+            known_topic_id, page=1, page_size=5
+        )
+
+        assert "data" in result
+        assert isinstance(result["data"], list)
+        assert len(result["data"]) <= 5
 
     async def test_get_resources_for_dataset(self, known_dataset_id):
         """Test fetching resources for a dataset."""
