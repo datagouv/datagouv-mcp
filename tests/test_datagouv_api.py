@@ -13,8 +13,8 @@ from helpers.user_agent import USER_AGENT
 @pytest.fixture
 def known_dataset_id() -> str:
     """Fixture providing a known dataset ID for testing."""
-    # Dataset ID for "Transports" (known to exist in demo and prod)
-    return os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    # Dataset ID for "Répertoire national des élus" (parent of known_resource_id)
+    return os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
 
 
 @pytest.fixture
