@@ -8,8 +8,8 @@ from helpers import metrics_api_client
 
 @pytest.fixture
 def known_dataset_id() -> str:
-    # Same dataset id used in other integration tests (Transports dataset).
-    return os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    # Same dataset id used in other integration tests ("Répertoire national des élus" dataset).
+    return os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ async def test_get_metrics_resources(known_resource_id):
 async def test_get_metrics_custom_id_field():
     """Test that custom id_field parameter works."""
     # Using a known dataset ID with explicit field name
-    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
     metrics = await metrics_api_client.get_metrics(
         "datasets",
         known_dataset_id,
@@ -111,7 +111,7 @@ async def test_get_metrics_invalid_model():
         # Use a valid ID format but invalid model
         await metrics_api_client.get_metrics(
             "unknown_model",
-            "55e4129788ee386899a46ec1",
+            "5c34c4d1634f4173183a64f1",
         )
 
 
@@ -153,7 +153,7 @@ async def test_get_metrics_csv_resources(known_resource_id):
 @pytest.mark.asyncio
 async def test_get_metrics_csv_with_custom_params():
     """Test that get_metrics_csv works with various parameters."""
-    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
     csv_content = await metrics_api_client.get_metrics_csv(
         "datasets",
         known_dataset_id,
@@ -177,7 +177,7 @@ async def test_get_metrics_csv_with_custom_params():
 @pytest.mark.asyncio
 async def test_get_metrics_limit(limit, expected_max_len):
     """Test that limit parameter is handled correctly (minimum 1, maximum 50)."""
-    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
 
     metrics = await metrics_api_client.get_metrics(
         "datasets",
@@ -192,7 +192,7 @@ async def test_get_metrics_limit(limit, expected_max_len):
 @pytest.mark.asyncio
 async def test_get_metrics_with_none_values_dataset():
     """Test that None values in metrics are handled gracefully (defaulting to 0)."""
-    known_dataset_id = os.getenv("TEST_DATASET_ID", "55e4129788ee386899a46ec1")
+    known_dataset_id = os.getenv("TEST_DATASET_ID", "5c34c4d1634f4173183a64f1")
 
     # This integration test ensures the API response with None values doesn't crash
     metrics = await metrics_api_client.get_metrics(
