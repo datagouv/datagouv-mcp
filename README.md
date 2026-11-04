@@ -22,7 +22,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-[AnythingLLM](#anythingllm) | [Autohand Code](#autohand-code) | [ChatGPT](#chatgpt) | [Claude](#claude) | [Claude Code](#claude-code) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+[AnythingLLM](#anythingllm) | [Autohand Code](#autohand-code) | [ChatGPT](#chatgpt) | [Claude](#claude) | [Claude Code](#claude-code) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Jan](#jan) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [LM Studio](#lm-studio) | [Mistral Vibe](#mistral-vibe) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode) | [Open WebUI](#open-webui) | [VS Code](#vs-code) | [Windsurf](#windsurf)
 
 ### AnythingLLM
 
@@ -146,6 +146,14 @@ Both files use JSON format with an mcpServers object containing named server con
 }
 ```
 
+### Jan
+
+1. **Go to MCP servers**: Open `Settings` > `MCP Servers` and click **+ Add MCP Server**.
+2. **Configure the server**: Set **Transport** to **HTTP** and the **Command / URL** field to `https://mcp.data.gouv.fr/mcp`. No authentication is needed.
+3. **Enable it**: Toggle the server on. It shows a green indicator when active.
+
+See the official docs: [MCP servers](https://docs.jan.ai/desktop/integrations/mcp-servers).
+
 ### Kiro CLI
 
 Add the following to `~/.kiro/settings/mcp.json` (Linux: `~/.kiro/settings/mcp.json`, MacOS: `~/.kiro/settings/mcp.json`, Windows: `%USERPROFILE%\.kiro\settings\mcp.json`):
@@ -173,6 +181,24 @@ Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json`
   }
 }
 ```
+
+### LM Studio
+
+*Requires LM Studio 0.3.17 or later.*
+
+In the right-hand sidebar, open the **Program** tab and click **Install** > **Edit mcp.json**, then add the server:
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+See the official docs: [MCP in LM Studio](https://lmstudio.ai/docs/app/mcp).
 
 ### Mistral Vibe
 
@@ -214,6 +240,17 @@ Add to `opencode.json` (e.g. `~/.config/opencode/opencode.json` or your project 
   }
 }
 ```
+
+### Open WebUI
+
+*Requires Open WebUI 0.6.31 or later. Only administrators can add MCP servers.*
+
+1. **Go to Integrations**: Open `Settings` > `Admin` > `Integrations`.
+2. **Add a connection**: Under **External Tool Servers**, click **+ Add Connection**.
+3. **Configure the connection**: Set **Type** to **MCP (Streamable HTTP)**, set the **Server URL** to `https://mcp.data.gouv.fr/mcp`, set **Auth** to **None**, and click **Save**.
+4. **Enable the tools**: In a chat, open **+** > `Integrations` > `Tools` and enable the server.
+
+See the official docs: [MCP support](https://docs.openwebui.com/features/extensibility/mcp).
 
 ### VS Code
 
