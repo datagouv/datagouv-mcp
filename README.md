@@ -16,6 +16,8 @@ Instead of manually browsing the website, you can simply ask questions like "Que
 > Use it now: A public instance is available for everyone at https://mcp.data.gouv.fr/mcp with no access restrictions.
 > To connect your favorite chatbot, simply follow [the connection instructions below](#-connect-your-chatbot-to-the-mcp-server).
 
+For a French introduction to the server, see the [data.gouv.fr guides](https://guides.data.gouv.fr/intelligence-artificielle/le-serveur-mcp-de-data.gouv.fr).
+
 ## 🌐 Connect your chatbot to the MCP server
 
 Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you self-host, swap in your own URL.
