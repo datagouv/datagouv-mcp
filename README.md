@@ -24,7 +24,7 @@ Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you sel
 
 The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
 
-[AnythingLLM](#anythingllm) | [Autohand Code](#autohand-code) | [ChatGPT](#chatgpt) | [Claude](#claude) | [Claude Code](#claude-code) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [L'Assistant](#lassistant) | [Mistral Vibe](#mistral-vibe) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+[AnythingLLM](#anythingllm) | [L'Assistant](#lassistant) | [Autohand Code](#autohand-code) | [ChatGPT](#chatgpt) | [Claude](#claude) | [Claude Code](#claude-code) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode) | [VS Code](#vs-code) | [Windsurf](#windsurf)
 
 ### AnythingLLM
 
@@ -47,6 +47,12 @@ The MCP server configuration depends on your client. Use the appropriate configu
 ```
 
 For more details, see the [AnythingLLM MCP documentation](https://docs.anythingllm.com/mcp-compatibility/overview).
+
+### L'Assistant
+
+*For French public servants only.*
+
+The data.gouv.fr MCP connector is available directly to French public servants. Log in to [L'Assistant](https://assistant.numerique.gouv.fr/home), then select the data.gouv.fr connector to use it in your conversations.
 
 ### Autohand Code
 
@@ -175,12 +181,6 @@ Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json`
   }
 }
 ```
-
-### L'Assistant
-
-*For French public servants only.*
-
-The data.gouv.fr MCP connector is available directly to French public servants. Log in to [L'Assistant](https://assistant.numerique.gouv.fr/home), then select the data.gouv.fr connector to use it in your conversations.
 
 ### Mistral Vibe
 
