@@ -22,11 +22,58 @@ For a French introduction to the server, see the [data.gouv.fr guides](https://g
 
 Use the hosted endpoint `https://mcp.data.gouv.fr/mcp` (recommended). If you self-host, swap in your own URL.
 
-The MCP server configuration depends on your client. Use the appropriate configuration format for your client:
+The MCP server configuration depends on your client. Choose your client below by category:
 
-[AnythingLLM](#anythingllm) | [L'Assistant](#lassistant) | [Autohand Code](#autohand-code) | [ChatGPT](#chatgpt) | [Claude](#claude) | [Claude Code](#claude-code) | [Cursor](#cursor) | [Gemini CLI](#gemini-cli) | [HuggingChat](#huggingchat) | [IBM Bob](#ibm-bob) | [Kiro CLI](#kiro-cli) | [Kiro IDE](#kiro-ide) | [Mistral Vibe](#mistral-vibe) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+- **Chat apps:** [ChatGPT](#chatgpt) | [Claude](#claude) | [HuggingChat](#huggingchat) | [Mistral Vibe](#mistral-vibe) | [L'Assistant](#lassistant) | [AnythingLLM](#anythingllm)
+- **Code editors:** [Cursor](#cursor) | [IBM Bob](#ibm-bob) | [Kiro IDE](#kiro-ide) | [VS Code](#vs-code) | [Windsurf](#windsurf)
+- **Command-line tools:** [Autohand Code](#autohand-code) | [Claude Code](#claude-code) | [Gemini CLI](#gemini-cli) | [Kiro CLI](#kiro-cli) | [Mistral Vibe CLI](#mistral-vibe-cli) | [OpenCode](#opencode)
 
-### AnythingLLM
+### Chat apps
+
+#### ChatGPT
+
+*Available for paid plans only (Plus, Pro, Team, and Enterprise).*
+
+1. **Access Settings**: Open ChatGPT in your browser, go to `Settings`, then `Apps and connectors`.
+2. **Enable Dev Mode**: Open `Advanced settings` and enable **Developer mode**.
+3. **Add Connector**: Return to `Settings` > `Connectors` > `Browse connectors` and click **Add a new connector**.
+4. **Configure the connector**: Set the URL to `https://mcp.data.gouv.fr/mcp` and save to activate the tools.
+
+#### Claude
+
+*Available on claude.ai, Claude Desktop and Cowork, on all plans (Free plans are limited to one custom connector).*
+
+1. **Go to Connectors**: Open `Customize` > `Connectors`.
+2. **Add a custom connector**: Click **+ Add** > **Add custom connector**.
+3. **Configure the connector**: Give it a name (for example `datagouv`), set the URL to `https://mcp.data.gouv.fr/mcp`, and click **Add**. No authentication is needed.
+
+See the official docs: [About custom connectors using remote MCP](https://support.claude.com/en/articles/11175166-about-custom-connectors-using-remote-mcp).
+
+#### HuggingChat
+
+1. **Access Settings:** In the chat interface, click the + icon, select `MCP Servers`, and click `Manage MCP Servers`.
+2. **Add Server:** Click the + `Add Server` button in the server management window.
+3. **Configure the Server:** Enter a **Server Name** (e.g., "Data Gouv") and set the **Server URL** to `https://mcp.data.gouv.fr/mcp`. Click `Add Server` to save.
+4. **Verify Connection:** Click the `Health Check` button on the new server card to confirm it displays as **Connected**. Ensure the toggle is activated to use the tools in your chat.
+
+#### Mistral Vibe
+
+*Formerly Le Chat. Available on all plans, including free.*
+
+1. **Go to Connectors**: Open Mistral Vibe in your browser, then go to `Connectors`.
+2. **Add a custom connector**: Click **+ Add Connector** and open the **Custom MCP Connector** tab.
+3. **Configure the connector**: Give it a name (for example `datagouv`) and set the server URL to `https://mcp.data.gouv.fr/mcp`. Leave authentication disabled.
+4. **Create**: Click **Create**.
+
+See the official docs: [MCP connectors](https://docs.mistral.ai/vibe/work/connectors/mcp-connectors).
+
+#### L'Assistant
+
+*For French public servants only.*
+
+The data.gouv.fr MCP connector is available directly to French public servants. Log in to [L'Assistant](https://assistant.numerique.gouv.fr/home), then select the data.gouv.fr connector to use it in your conversations.
+
+#### AnythingLLM
 
 1. Locate the `anythingllm_mcp_servers.json` file in your AnythingLLM storage plugins directory:
    - **Linux**: `~/.config/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json`
@@ -48,50 +95,9 @@ The MCP server configuration depends on your client. Use the appropriate configu
 
 For more details, see the [AnythingLLM MCP documentation](https://docs.anythingllm.com/mcp-compatibility/overview).
 
-### L'Assistant
+### Code editors
 
-*For French public servants only.*
-
-The data.gouv.fr MCP connector is available directly to French public servants. Log in to [L'Assistant](https://assistant.numerique.gouv.fr/home), then select the data.gouv.fr connector to use it in your conversations.
-
-### Autohand Code
-
-Use the [Autohand Code](https://github.com/autohandai/code-cli/) CLI to register the hosted endpoint:
-
-```shell
-autohand mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
-```
-
-Add `--scope project` to keep the registration in the current workspace.
-
-### ChatGPT
-
-*Available for paid plans only (Plus, Pro, Team, and Enterprise).*
-
-1. **Access Settings**: Open ChatGPT in your browser, go to `Settings`, then `Apps and connectors`.
-2. **Enable Dev Mode**: Open `Advanced settings` and enable **Developer mode**.
-3. **Add Connector**: Return to `Settings` > `Connectors` > `Browse connectors` and click **Add a new connector**.
-4. **Configure the connector**: Set the URL to `https://mcp.data.gouv.fr/mcp` and save to activate the tools.
-
-### Claude
-
-*Available on claude.ai, Claude Desktop and Cowork, on all plans (Free plans are limited to one custom connector).*
-
-1. **Go to Connectors**: Open `Customize` > `Connectors`.
-2. **Add a custom connector**: Click **+ Add** > **Add custom connector**.
-3. **Configure the connector**: Give it a name (for example `datagouv`), set the URL to `https://mcp.data.gouv.fr/mcp`, and click **Add**. No authentication is needed.
-
-See the official docs: [About custom connectors using remote MCP](https://support.claude.com/en/articles/11175166-about-custom-connectors-using-remote-mcp).
-
-### Claude Code
-
-Use the `claude mcp` command to add the MCP server:
-
-```shell
-claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
-```
-
-### Cursor
+#### Cursor
 
 Cursor supports MCP servers through its settings. To configure the server:
 
@@ -110,28 +116,7 @@ Cursor supports MCP servers through its settings. To configure the server:
 }
 ```
 
-### Gemini CLI
-
-Add the following to your `~/.gemini/settings.json` file (Linux: `~/.gemini/settings.json`, MacOS: `~/.gemini/settings.json`, Windows: `%USERPROFILE%\.gemini\settings.json`):
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "httpUrl": "https://mcp.data.gouv.fr/mcp"
-    }
-  }
-}
-```
-
-### HuggingChat
-
-1. **Access Settings:** In the chat interface, click the + icon, select `MCP Servers`, and click `Manage MCP Servers`.
-2. **Add Server:** Click the + `Add Server` button in the server management window.
-3. **Configure the Server:** Enter a **Server Name** (e.g., "Data Gouv") and set the **Server URL** to `https://mcp.data.gouv.fr/mcp`. Click `Add Server` to save.
-4. **Verify Connection:** Click the `Health Check` button on the new server card to confirm it displays as **Connected**. Ensure the toggle is activated to use the tools in your chat.
-
-### IBM Bob
+#### IBM Bob
 
 IBM Bob supports MCP servers through its settings. To configure the server:
 
@@ -154,21 +139,7 @@ Both files use JSON format with an mcpServers object containing named server con
 }
 ```
 
-### Kiro CLI
-
-Add the following to `~/.kiro/settings/mcp.json` (Linux: `~/.kiro/settings/mcp.json`, MacOS: `~/.kiro/settings/mcp.json`, Windows: `%USERPROFILE%\.kiro\settings\mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "datagouv": {
-      "url": "https://mcp.data.gouv.fr/mcp"
-    }
-  }
-}
-```
-
-### Kiro IDE
+#### Kiro IDE
 
 Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json` in your workspace, or for global config: Linux: `~/.kiro/settings/mcp.json`, MacOS: `~/.kiro/settings/mcp.json`, Windows: `%USERPROFILE%\.kiro\settings\mcp.json`):
 
@@ -182,48 +153,7 @@ Add the following to your Kiro MCP configuration file (`.kiro/settings/mcp.json`
 }
 ```
 
-### Mistral Vibe
-
-*Formerly Le Chat. Available on all plans, including free.*
-
-1. **Go to Connectors**: Open Mistral Vibe in your browser, then go to `Connectors`.
-2. **Add a custom connector**: Click **+ Add Connector** and open the **Custom MCP Connector** tab.
-3. **Configure the connector**: Give it a name (for example `datagouv`) and set the server URL to `https://mcp.data.gouv.fr/mcp`. Leave authentication disabled.
-4. **Create**: Click **Create**.
-
-See the official docs: [MCP connectors](https://docs.mistral.ai/vibe/work/connectors/mcp-connectors).
-
-### Mistral Vibe CLI
-
-Edit your Vibe config (default: Linux: `~/.vibe/config.toml`, MacOS: `~/.vibe/config.toml`, Windows: `%USERPROFILE%\.vibe\config.toml`) and add the MCP server:
-
-```toml
-[[mcp_servers]]
-name = "datagouv"
-transport = "streamable-http"
-url = "https://mcp.data.gouv.fr/mcp"
-```
-
-See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
-
-### OpenCode
-
-Add to `opencode.json` (e.g. `~/.config/opencode/opencode.json` or your project root). Remote servers use the top-level `mcp` object with `type: "remote"`. See [OpenCode MCP servers](https://opencode.ai/docs/mcp-servers/).
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "datagouv": {
-      "type": "remote",
-      "url": "https://mcp.data.gouv.fr/mcp",
-      "enabled": true
-    }
-  }
-}
-```
-
-### VS Code
+#### VS Code
 
 Add the following to your VS Code `mcp.json` file (Linux: `~/.config/Code/User/mcp.json`, MacOS: `~/Library/Application Support/Code/User/mcp.json`, Windows: `%APPDATA%\Code\User\mcp.json`). Run **MCP: Open User Configuration** from the Command Palette to open it.
 
@@ -238,7 +168,7 @@ Add the following to your VS Code `mcp.json` file (Linux: `~/.config/Code/User/m
 }
 ```
 
-### Windsurf
+#### Windsurf
 
 Add the following to your `~/.codeium/windsurf/mcp_config.json` (Linux: `~/.codeium/windsurf/mcp_config.json`, MacOS: `~/.codeium/windsurf/mcp_config.json`, Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`):
 
@@ -252,6 +182,84 @@ Add the following to your `~/.codeium/windsurf/mcp_config.json` (Linux: `~/.code
         "mcp-remote",
         "https://mcp.data.gouv.fr/mcp"
       ]
+    }
+  }
+}
+```
+
+### Command-line tools
+
+#### Autohand Code
+
+Use the [Autohand Code](https://github.com/autohandai/code-cli/) CLI to register the hosted endpoint:
+
+```shell
+autohand mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
+```
+
+Add `--scope project` to keep the registration in the current workspace.
+
+#### Claude Code
+
+Use the `claude mcp` command to add the MCP server:
+
+```shell
+claude mcp add --transport http datagouv https://mcp.data.gouv.fr/mcp
+```
+
+#### Gemini CLI
+
+Add the following to your `~/.gemini/settings.json` file (Linux: `~/.gemini/settings.json`, MacOS: `~/.gemini/settings.json`, Windows: `%USERPROFILE%\.gemini\settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "httpUrl": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+#### Kiro CLI
+
+Add the following to `~/.kiro/settings/mcp.json` (Linux: `~/.kiro/settings/mcp.json`, MacOS: `~/.kiro/settings/mcp.json`, Windows: `%USERPROFILE%\.kiro\settings\mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "datagouv": {
+      "url": "https://mcp.data.gouv.fr/mcp"
+    }
+  }
+}
+```
+
+#### Mistral Vibe CLI
+
+Edit your Vibe config (default: Linux: `~/.vibe/config.toml`, MacOS: `~/.vibe/config.toml`, Windows: `%USERPROFILE%\.vibe\config.toml`) and add the MCP server:
+
+```toml
+[[mcp_servers]]
+name = "datagouv"
+transport = "streamable-http"
+url = "https://mcp.data.gouv.fr/mcp"
+```
+
+See the full Vibe MCP options in the official docs: [MCP server configuration](https://github.com/mistralai/mistral-vibe?tab=readme-ov-file#mcp-server-configuration).
+
+#### OpenCode
+
+Add to `opencode.json` (e.g. `~/.config/opencode/opencode.json` or your project root). Remote servers use the top-level `mcp` object with `type: "remote"`. See [OpenCode MCP servers](https://opencode.ai/docs/mcp-servers/).
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "datagouv": {
+      "type": "remote",
+      "url": "https://mcp.data.gouv.fr/mcp",
+      "enabled": true
     }
   }
 }
