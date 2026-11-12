@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 import niquests
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
@@ -86,7 +86,7 @@ def _summarize_spec(spec: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-def register_get_dataservice_openapi_spec_tool(mcp: FastMCP) -> None:
+def register_get_dataservice_openapi_spec_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Get third-party API OpenAPI spec",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,

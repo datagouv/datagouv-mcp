@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 
 import uvicorn
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 
 from helpers.health_probe import _run_health_check
@@ -49,11 +49,7 @@ transport_security = TransportSecuritySettings(
 # that don't properly maintain the mcp-session-id header across requests
 # (e.g. Claude Code, Cline, OpenAI Codex). Since this server does not use
 # server-initiated notifications, stateful sessions are not needed.
-mcp = FastMCP(
-    "data.gouv.fr MCP server",
-    transport_security=transport_security,
-    stateless_http=True,
-)
+mcp = MCPServer("data.gouv.fr MCP server")
 register_tools(mcp)
 
 
@@ -123,7 +119,12 @@ def with_monitoring(
     return app
 
 
-asgi_app = with_monitoring(mcp.streamable_http_app())
+asgi_app = with_monitoring(
+    mcp.streamable_http_app(
+        stateless_http=True,
+        transport_security=transport_security,
+    )
+)
 
 
 # Run with streamable HTTP transport
