@@ -8,6 +8,9 @@ RUN apt-get update -y && \
 # Install dependencies
 WORKDIR /app
 ADD . /app/
+# Skip dev dependencies. Set as ENV rather than a `--no-dev` flag: the `uv run`
+# of the CMD syncs the environment again at startup.
+ENV UV_NO_DEV=1
 RUN uv sync --frozen
 
 # Expose port (default 8000, configurable via MCP_PORT env var)
