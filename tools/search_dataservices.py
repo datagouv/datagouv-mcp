@@ -1,6 +1,6 @@
 import logging
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
@@ -10,7 +10,7 @@ from tools.search_datasets import clean_search_query
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
-def register_search_dataservices_tool(mcp: FastMCP) -> None:
+def register_search_dataservices_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Search third-party APIs",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
