@@ -2,7 +2,7 @@ import ast
 import logging
 
 import pytest
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from niquests_mock import MockRouter
 
 from helpers.logging import TOOLS_LOGGER_NAME
@@ -11,7 +11,7 @@ from tools import register_tools
 
 @pytest.fixture
 def mcp():
-    app = FastMCP()
+    app = MCPServer()
     register_tools(app)
     return app
 
@@ -39,7 +39,7 @@ def mcp():
     ],
 )
 async def test_tool_logs_kwargs(
-    mcp: FastMCP,
+    mcp: MCPServer,
     caplog,
     niquests_mock: MockRouter,
     monkeypatch,

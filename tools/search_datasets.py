@@ -1,6 +1,6 @@
 import logging
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from helpers import datagouv_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
@@ -58,7 +58,7 @@ def clean_search_query(query: str) -> str:
     return cleaned_query
 
 
-def register_search_datasets_tool(mcp: FastMCP) -> None:
+def register_search_datasets_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Search datasets",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,

@@ -14,7 +14,7 @@ async def call_tool_on_mcp(tool_name: str, params: dict) -> CallToolResult:
     url = f"http://localhost:{port}/mcp"
 
     async with (
-        streamable_http_client(url) as (read, write, _),
+        streamable_http_client(url) as (read, write),
         ClientSession(read, write) as session,
     ):
         await session.initialize()

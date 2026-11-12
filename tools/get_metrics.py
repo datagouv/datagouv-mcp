@@ -1,7 +1,7 @@
 import logging
 import os
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from helpers import datagouv_api_client, metrics_api_client
 from helpers.logging import MAIN_LOGGER_NAME, log_tool
@@ -10,7 +10,7 @@ from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
-def register_get_metrics_tool(mcp: FastMCP) -> None:
+def register_get_metrics_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Get usage metrics",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,
