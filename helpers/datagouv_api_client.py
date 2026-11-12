@@ -279,6 +279,7 @@ async def search_datasets(
     page_size: int = 20,
     sort: str | None = None,
     last_update_range: str | None = None,
+    tag: str | None = None,
     session: niquests.AsyncSession | None = None,
 ) -> dict[str, Any]:
     """
@@ -292,6 +293,7 @@ async def search_datasets(
             followers, views. Optionally prefixed with '-' for descending.
         last_update_range: Filter datasets by their last update date. Allowed
             values: last_30_days, last_12_months, last_3_years.
+        tag: Filter datasets by tag slug (e.g. 'hvd' for High-Value Datasets).
 
     Returns:
         dict with 'data' (list of datasets), 'page', 'page_size', and 'total'
@@ -313,6 +315,8 @@ async def search_datasets(
             params["sort"] = sort
         if last_update_range:
             params["last_update_range"] = last_update_range
+        if tag:
+            params["tag"] = tag
         resp = await session.get(url, params=params, timeout=15.0)
         resp.raise_for_status()
         data = resp.json()

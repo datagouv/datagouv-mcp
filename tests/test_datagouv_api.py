@@ -206,6 +206,112 @@ class TestAsyncFunctions:
         _args, kwargs = mock_client.get.call_args
         assert "sort" not in kwargs["params"]
         assert "last_update_range" not in kwargs["params"]
+        assert "tag" not in kwargs["params"]
+
+    async def test_search_datasets_passes_tag_param(self):
+        """search_datasets forwards tag (e.g. hvd) to the API."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": [], "total": 0}
+        mock_response.raise_for_status = MagicMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+
+        await datagouv_api_client.search_datasets(
+            query="",
+            page=1,
+            page_size=5,
+            tag="hvd",
+            session=mock_client,
+        )
+
+        _args, kwargs = mock_client.get.call_args
+        assert kwargs["params"]["tag"] == "hvd"
+
+    async def test_list_high_value_datasets_tool(self):
+        """list_high_value_datasets queries tag=hvd and includes the HVD disclaimer."""
+        from mcp.server.fastmcp import FastMCP
+        from tools import register_tools
+        from tools.search_datasets import HVD_DISCLAIMER
+
+        app = FastMCP()
+        register_tools(app)
+
+        with patch(
+            "helpers.datagouv_api_client.search_datasets",
+            new=AsyncMock(
+                return_value={
+                    "data": [
+                        {
+                            "id": "hvd-1",
+                            "title": "Base Adresse Nationale",
+                            "description_short": "National address database",
+                            "organization": "DINUM",
+                            "tags": ["hvd", "ban"],
+                            "resources_count": 4,
+                            "url": "https://www.data.gouv.fr/datasets/ban",
+                        }
+                    ],
+                    "page": 1,
+                    "page_size": 1,
+                    "total": 728,
+                }
+            ),
+        ) as mock_search:
+            res = await app.call_tool("list_high_value_datasets", {"query": ""})
+            text = res[0].text if isinstance(res, list) else str(res)
+            assert HVD_DISCLAIMER in text
+            assert "Base Adresse Nationale" in text
+            mock_search.assert_awaited_once_with(
+                query="",
+                page=1,
+                page_size=20,
+                sort=None,
+                last_update_range=None,
+                tag="hvd",
+            )
+
+    async def test_search_datasets_generic_query_falls_back_to_hvd(self):
+        """Generic dataset query falls back to HVD listing with disclaimer."""
+        from mcp.server.fastmcp import FastMCP
+        from tools import register_tools
+        from tools.search_datasets import HVD_DISCLAIMER
+
+        app = FastMCP()
+        register_tools(app)
+
+        with patch(
+            "helpers.datagouv_api_client.search_datasets",
+            new=AsyncMock(
+                return_value={
+                    "data": [
+                        {
+                            "id": "hvd-2",
+                            "title": "Base Sirene",
+                            "description_short": "Company registry",
+                            "organization": "INSEE",
+                            "tags": ["hvd", "sirene"],
+                            "resources_count": 5,
+                            "url": "https://www.data.gouv.fr/datasets/sirene",
+                        }
+                    ],
+                    "page": 1,
+                    "page_size": 1,
+                    "total": 728,
+                }
+            ),
+        ) as mock_search:
+            res = await app.call_tool("search_datasets", {"query": "datasets"})
+            text = res[0].text if isinstance(res, list) else str(res)
+            assert HVD_DISCLAIMER in text
+            assert "Base Sirene" in text
+            mock_search.assert_awaited_once_with(
+                query="",
+                page=1,
+                page_size=20,
+                sort=None,
+                last_update_range=None,
+                tag="hvd",
+            )
 
     async def test_search_datasets_resources_length(self):
         """Test search_datasets reports the real resource count from resources.total."""

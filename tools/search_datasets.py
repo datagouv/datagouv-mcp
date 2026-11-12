@@ -40,6 +40,8 @@ def clean_search_query(query: str) -> str:
         "xlsx",
         "json",
         "xml",
+        "dataset",
+        "datasets",
     }
 
     # Split query into words, preserving spacing
@@ -58,6 +60,32 @@ def clean_search_query(query: str) -> str:
     return cleaned_query
 
 
+HVD_DISCLAIMER = (
+    "Disclaimer: This list only represents High-Value Datasets (HVDs) on data.gouv.fr. "
+    "Many other datasets (70,000+) exist on the platform. Please specify a theme or "
+    "keyword and use search_datasets for a broader query."
+)
+
+
+def format_dataset_entries(datasets: list[dict]) -> list[str]:
+    content_parts: list[str] = []
+    for i, ds in enumerate(datasets, 1):
+        content_parts.append(f"{i}. {ds.get('title', 'Untitled')}")
+        content_parts.append(f"   ID: {ds.get('id')}")
+        if ds.get("description_short"):
+            desc = ds.get("description_short", "")[:200]
+            content_parts.append(f"   Description: {desc}...")
+        if ds.get("organization"):
+            content_parts.append(f"   Organization: {ds.get('organization')}")
+        if ds.get("tags"):
+            tags = ", ".join(ds.get("tags", [])[:5])
+            content_parts.append(f"   Tags: {tags}")
+        content_parts.append(f"   Resources: {ds.get('resources_count', 0)}")
+        content_parts.append(f"   URL: {ds.get('url')}")
+        content_parts.append("")
+    return content_parts
+
+
 def register_search_datasets_tool(mcp: FastMCP) -> None:
     @mcp.tool(
         title="Search datasets",
@@ -65,18 +93,22 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
     )
     @log_tool
     async def search_datasets(
-        query: str,
+        query: str = "",
         page: int = 1,
         page_size: int = 20,
         sort: str | None = None,
         last_update_range: str | None = None,
+        tag: str | None = None,
     ) -> str:
         """
         Search for datasets on data.gouv.fr by keywords.
 
         This is typically the first step in exploring data.gouv.fr.
         Use short, specific queries (the API uses AND logic, so generic words
-        like "données" or "fichier" may return zero results).
+        like "données" or "fichier" may return zero results). If the user asks
+        for datasets in general without specifying a theme, leave `query` empty
+        or pass `tag="hvd"` (or call `list_high_value_datasets`) to return
+        High-Value Datasets (HVDs) with a catalog disclaimer.
 
         Use `sort` to order results. Accepted values: created, last_update,
         reuses, followers, views. Optionally prefixed with '-' for descending
@@ -88,6 +120,10 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
         """
         # Clean the query to remove generic stop words that break AND-based searches
         cleaned_query = clean_search_query(query)
+        effective_tag = tag
+        is_hvd_listing = effective_tag == "hvd" or (not cleaned_query and effective_tag is None)
+        if is_hvd_listing and effective_tag is None:
+            effective_tag = "hvd"
 
         # Try with cleaned query first
         result = await datagouv_api_client.search_datasets(
@@ -96,6 +132,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
             page_size=page_size,
             sort=sort,
             last_update_range=last_update_range,
+            tag=effective_tag,
         )
 
         # Format the result as text content
@@ -103,7 +140,7 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
 
         # Fallback: if cleaned query returns no results and it differs from original,
         # try with the original query
-        if not datasets and cleaned_query != query:
+        if not datasets and cleaned_query != query and not is_hvd_listing:
             logger.debug(
                 "No results with cleaned query '%s', trying original query '%s'",
                 cleaned_query,
@@ -115,29 +152,23 @@ def register_search_datasets_tool(mcp: FastMCP) -> None:
                 page_size=page_size,
                 sort=sort,
                 last_update_range=last_update_range,
+                tag=effective_tag,
             )
             datasets = result.get("data", [])
 
         if not datasets:
             return f"No datasets found for query: '{query}'"
 
-        content_parts = [
-            f"Found {result.get('total', len(datasets))} dataset(s) for query: '{query}'",
-            f"Page {result.get('page', 1)} of results:\n",
-        ]
-        for i, ds in enumerate(datasets, 1):
-            content_parts.append(f"{i}. {ds.get('title', 'Untitled')}")
-            content_parts.append(f"   ID: {ds.get('id')}")
-            if ds.get("description_short"):
-                desc = ds.get("description_short", "")[:200]
-                content_parts.append(f"   Description: {desc}...")
-            if ds.get("organization"):
-                content_parts.append(f"   Organization: {ds.get('organization')}")
-            if ds.get("tags"):
-                tags = ", ".join(ds.get("tags", [])[:5])
-                content_parts.append(f"   Tags: {tags}")
-            content_parts.append(f"   Resources: {ds.get('resources_count', 0)}")
-            content_parts.append(f"   URL: {ds.get('url')}")
+        content_parts: list[str] = []
+        if is_hvd_listing:
+            content_parts.append(HVD_DISCLAIMER)
             content_parts.append("")
+        content_parts.extend(
+            [
+                f"Found {result.get('total', len(datasets))} dataset(s) for query: '{query}'",
+                f"Page {result.get('page', 1)} of results:\n",
+            ]
+        )
+        content_parts.extend(format_dataset_entries(datasets))
 
         return "\n".join(content_parts)
