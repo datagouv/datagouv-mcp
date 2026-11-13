@@ -39,6 +39,7 @@ async def test_track_matomo_event_sends_event_fields(matomo_post_route, monkeypa
     assert params["ca"] == ["1"]
     assert params["url"] == ["https://mcp.example/mcp"]
     assert params["ua"] == ["ToolUA/2"]
+    assert params["e_n"] == ["ToolUA"]
     assert "token_auth" not in params
 
 
@@ -106,3 +107,49 @@ async def test_track_matomo_event_action_and_category_override(
     context_params = parse_qs(context_body, strict_parsing=True)
     assert context_params["e_c"] == ["health_check"]
     assert context_params["e_a"] == ["health_check"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("user_agent", "expected"),
+    [
+        ("AssistantIA/1.2.0 (+https://example.org)", "AssistantIA"),
+        ("NoVersionClient", "NoVersionClient"),
+        ("x" * 80, "x" * 50),
+    ],
+)
+async def test_track_matomo_event_sends_client_name(
+    matomo_post_route, monkeypatch, user_agent, expected
+):
+    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
+    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
+    url_tok, ua_tok, cip_tok = matomo.apply_matomo_request_context(
+        {"user-agent": user_agent, "host": "mcp.example"},
+        "/mcp",
+    )
+    try:
+        await matomo.track_matomo_event("search_datasets")
+    finally:
+        matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
+
+    body = matomo_post_route.calls[0].request.body
+    assert parse_qs(body, strict_parsing=True)["e_n"] == [expected]
+
+
+@pytest.mark.asyncio
+async def test_track_matomo_event_omits_client_name_without_user_agent(
+    matomo_post_route, monkeypatch
+):
+    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
+    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
+    url_tok, ua_tok, cip_tok = matomo.apply_matomo_request_context(
+        {"host": "mcp.example"},
+        "/mcp",
+    )
+    try:
+        await matomo.track_matomo_event("search_datasets")
+    finally:
+        matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
+
+    body = matomo_post_route.calls[0].request.body
+    assert "e_n" not in parse_qs(body, strict_parsing=True)
