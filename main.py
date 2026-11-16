@@ -114,7 +114,7 @@ def with_monitoring(
             )
             # Matomo: count MCP session initializations (clients connecting)
             if scope.get("method") == "POST" and path.rstrip("/") == "/mcp":
-                receive = track_initialize_requests(receive)
+                receive, send = track_initialize_requests(receive, send)
             try:
                 await inner_app(scope, receive, send)
             finally:

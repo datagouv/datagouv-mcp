@@ -176,13 +176,11 @@ def test_is_initialize_request(body, expected):
     assert matomo.is_initialize_request(body) is expected
 
 
-def _receive_from(messages: list[dict]):
-    iterator = iter(messages)
-
-    async def receive() -> dict:
-        return next(iterator)
-
-    return receive
+_INITIALIZE_BODY = (
+    b'{"jsonrpc":"2.0","id":1,"method":"initialize",'
+    b'"params":{"protocolVersion":"2025-06-18","capabilities":{},'
+    b'"clientInfo":{"name":"Cursor","version":"2.0"}}}'
+)
 
 
 async def _drain_background_tasks() -> None:
@@ -193,57 +191,91 @@ async def _drain_background_tasks() -> None:
 
 
 @pytest.mark.asyncio
-async def test_track_initialize_requests_sends_session_event(
-    matomo_post_route, monkeypatch
+@pytest.mark.parametrize(
+    ("body", "status", "expected_events"),
+    [
+        (_INITIALIZE_BODY, 200, 1),
+        (_INITIALIZE_BODY, 406, 0),
+        (b'{"jsonrpc":"2.0","id":2,"method":"tools/list"}', 200, 0),
+    ],
+)
+async def test_track_initialize_requests(
+    matomo_post_route, monkeypatch, body, status, expected_events
 ):
     monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
     monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
-    body = (
-        b'{"jsonrpc":"2.0","id":1,"method":"initialize",'
-        b'"params":{"clientInfo":{"name":"Cursor","version":"2.0"}}}'
-    )
+    request = {"type": "http.request", "body": body, "more_body": False}
+    response_start = {"type": "http.response.start", "status": status}
+    sent: list[dict] = []
+
+    async def receive() -> dict:
+        return request
+
+    async def send(message: dict) -> None:
+        sent.append(message)
+
     url_tok, ua_tok, cip_tok = matomo.apply_matomo_request_context(
         {"user-agent": "Cursor/2.0", "host": "mcp.example"},
         "/mcp",
     )
-    message = {"type": "http.request", "body": body, "more_body": False}
-    receive = matomo.track_initialize_requests(_receive_from([message]))
-
+    wrapped_receive, wrapped_send = matomo.track_initialize_requests(receive, send)
     try:
-        received = await receive()
+        received = await wrapped_receive()
+        await wrapped_send(response_start)
     finally:
         matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
     await _drain_background_tasks()
 
-    # Message is passed through unchanged
-    assert received == message
-    assert len(matomo_post_route.calls) == 1
-    params = parse_qs(matomo_post_route.calls[0].request.body, strict_parsing=True)
-    assert params["e_c"] == ["sessions"]
-    assert params["e_a"] == ["initialize"]
-    # e_n stays based on the User-Agent, consistent with tool events
-    assert params["e_n"] == ["Cursor"]
+    # Messages are passed through unchanged
+    assert received == request
+    assert sent == [response_start]
+    assert len(matomo_post_route.calls) == expected_events
+    if expected_events:
+        params = parse_qs(matomo_post_route.calls[0].request.body, strict_parsing=True)
+        assert params["e_c"] == ["sessions"]
+        assert params["e_a"] == ["initialize"]
+        # e_n stays based on the User-Agent, consistent with tool events
+        assert params["e_n"] == ["Cursor"]
 
 
-@pytest.mark.asyncio
-async def test_track_initialize_requests_ignores_other_methods(
-    matomo_post_route, monkeypatch
+@pytest.fixture(scope="module")
+def asgi_client():
+    from starlette.testclient import TestClient
+
+    import main
+
+    # The MCP session manager can only be started once per process
+    with TestClient(main.asgi_app, base_url="http://localhost:8000") as client:
+        yield client
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected_status", "expected_events"),
+    [
+        ({}, 200, 1),
+        ({"host": "evil.example"}, 421, 0),
+        ({"accept": "text/html"}, 406, 0),
+        ({"content-type": "text/plain"}, 400, 0),
+    ],
+)
+def test_initialize_tracking_through_asgi_app(
+    asgi_client, monkeypatch, headers, expected_status, expected_events
 ):
-    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
-    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
-    receive = matomo.track_initialize_requests(
-        _receive_from(
-            [
-                {
-                    "type": "http.request",
-                    "body": b'{"jsonrpc":"2.0","id":2,"method":"tools/list"}',
-                    "more_body": False,
-                }
-            ]
-        )
+    """Only initialize requests accepted by the MCP server are counted."""
+    events: list[tuple[str, str | None]] = []
+
+    async def fake_track_matomo_event(name, action=None, category=None):
+        events.append((name, category))
+
+    monkeypatch.setattr(matomo, "track_matomo_event", fake_track_matomo_event)
+    request_headers = {
+        "accept": "application/json, text/event-stream",
+        "content-type": "application/json",
+        **headers,
+    }
+    response = asgi_client.post(
+        "/mcp", content=_INITIALIZE_BODY, headers=request_headers
     )
 
-    await receive()
-    await _drain_background_tasks()
-
-    assert not matomo_post_route.called
+    assert response.status_code == expected_status
+    assert events == [("initialize", "sessions")] * expected_events
