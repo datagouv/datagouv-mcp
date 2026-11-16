@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  CONTAINER_REGISTRY_NAMESPACE: datagouv_datagouv-mcp
+  DOCKER_IMAGE: datagouv-mcp
+
+jobs:
+  lint:
+    name: 🧹 Lint
+    runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.14-trixie
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies and dev dependencies
+        run: uv sync --frozen
+      - name: Lint and format code and sort imports
+        # ruff check . : check linting without fixing (to fix, use --fix)
+        # ruff format --check . : check code formatting without fixing (to fix, remove --check)
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Type check
+        run: uv run ty check
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.14-trixie
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies and dev dependencies
+        run: uv sync --frozen
+      - name: Run tests
+        run: |
+          mkdir -p test-results
+          uv run pytest -v --junitxml=test-results/junit.xml
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+
+  build:
+    name: 🐳 Build
+    needs: [lint, test]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Log in to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CONTAINER_REGISTRY_SERVER }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+      - name: Build and push
+        env:
+          CONTAINER_REGISTRY_SERVER: ${{ secrets.CONTAINER_REGISTRY_SERVER }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' }}
+          GIT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          : "${CONTAINER_REGISTRY_SERVER:?missing CONTAINER_REGISTRY_SERVER}"
+          version="${GITHUB_SHA:0:7}"
+          REPO="${CONTAINER_REGISTRY_SERVER}/${CONTAINER_REGISTRY_NAMESPACE}/${DOCKER_IMAGE}"
+          DOCKER_TAG_GIT="${GIT_TAG:-$(git describe --tags --exact-match 2>/dev/null || true)}"
+          docker build \
+            -t "${REPO}:${version}" \
+            $([ "$IS_MAIN" = "true" ] && echo -t "${REPO}:latest") \
+            ${DOCKER_TAG_GIT:+-t "${REPO}:${DOCKER_TAG_GIT}"} \
+            .
+          docker push "${REPO}:${version}"
+          if [ "$IS_MAIN" = "true" ]; then
+            docker push "${REPO}:latest"
+          fi
+          if [ -n "$DOCKER_TAG_GIT" ]; then
+            docker push "${REPO}:${DOCKER_TAG_GIT}"
+          fi

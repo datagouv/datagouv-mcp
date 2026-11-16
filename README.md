@@ -5,7 +5,7 @@
 > [!TIP]
 > Got feedback? [Tell us about it here](https://tally.so/r/KYMboX)
 
-[![CircleCI](https://circleci.com/gh/datagouv/datagouv-mcp.svg?style=svg)](https://circleci.com/gh/datagouv/datagouv-mcp)
+[![CI](https://github.com/datagouv/datagouv-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/datagouv/datagouv-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Model Context Protocol (MCP) server that allows AI chatbots (Claude, ChatGPT, Gemini, etc.) to search, explore, and analyze datasets from [data.gouv.fr](https://www.data.gouv.fr), the French national Open Data platform, directly through conversation.
