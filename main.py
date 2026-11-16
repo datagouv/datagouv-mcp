@@ -15,6 +15,7 @@ from helpers.logging import MAIN_LOGGER_NAME, UVICORN_LOGGING_CONFIG
 from helpers.matomo import (
     apply_matomo_request_context,
     reset_matomo_request_context,
+    track_initialize_requests,
 )
 from helpers.sentry import init_sentry
 from tools import register_tools
@@ -111,6 +112,9 @@ def with_monitoring(
             url_token, ua_token, cip_token = apply_matomo_request_context(
                 headers_dict, path
             )
+            # Matomo: count MCP session initializations (clients connecting)
+            if scope.get("method") == "POST" and path.rstrip("/") == "/mcp":
+                receive = track_initialize_requests(receive)
             try:
                 await inner_app(scope, receive, send)
             finally:

@@ -1,5 +1,6 @@
 """Tests for Matomo tracking helpers."""
 
+import asyncio
 from urllib.parse import parse_qs
 
 import pytest
@@ -153,3 +154,96 @@ async def test_track_matomo_event_omits_client_name_without_user_agent(
 
     body = matomo_post_route.calls[0].request.body
     assert "e_n" not in parse_qs(body, strict_parsing=True)
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        (
+            (
+                b'{"jsonrpc":"2.0","id":1,"method":"initialize",'
+                b'"params":{"clientInfo":{"name":"claude-ai","version":"1.0"}}}'
+            ),
+            True,
+        ),
+        (b'{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{}}', False),
+        (b'{"jsonrpc":"2.0","method":"notifications/initialized"}', False),
+        (b'"initialize" not json {', False),
+        (b"", False),
+    ],
+)
+def test_is_initialize_request(body, expected):
+    assert matomo.is_initialize_request(body) is expected
+
+
+def _receive_from(messages: list[dict]):
+    iterator = iter(messages)
+
+    async def receive() -> dict:
+        return next(iterator)
+
+    return receive
+
+
+async def _drain_background_tasks() -> None:
+    current = asyncio.current_task()
+    pending = [t for t in asyncio.all_tasks() if t is not current]
+    if pending:
+        await asyncio.gather(*pending)
+
+
+@pytest.mark.asyncio
+async def test_track_initialize_requests_sends_session_event(
+    matomo_post_route, monkeypatch
+):
+    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
+    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
+    body = (
+        b'{"jsonrpc":"2.0","id":1,"method":"initialize",'
+        b'"params":{"clientInfo":{"name":"Cursor","version":"2.0"}}}'
+    )
+    url_tok, ua_tok, cip_tok = matomo.apply_matomo_request_context(
+        {"user-agent": "Cursor/2.0", "host": "mcp.example"},
+        "/mcp",
+    )
+    message = {"type": "http.request", "body": body, "more_body": False}
+    receive = matomo.track_initialize_requests(_receive_from([message]))
+
+    try:
+        received = await receive()
+    finally:
+        matomo.reset_matomo_request_context(url_tok, ua_tok, cip_tok)
+    await _drain_background_tasks()
+
+    # Message is passed through unchanged
+    assert received == message
+    assert len(matomo_post_route.calls) == 1
+    params = parse_qs(matomo_post_route.calls[0].request.body, strict_parsing=True)
+    assert params["e_c"] == ["sessions"]
+    assert params["e_a"] == ["initialize"]
+    # e_n stays based on the User-Agent, consistent with tool events
+    assert params["e_n"] == ["Cursor"]
+
+
+@pytest.mark.asyncio
+async def test_track_initialize_requests_ignores_other_methods(
+    matomo_post_route, monkeypatch
+):
+    monkeypatch.setattr(matomo, "MATOMO_URL", "https://matomo.example")
+    monkeypatch.setattr(matomo, "MATOMO_SITE_ID", "7")
+    receive = matomo.track_initialize_requests(
+        _receive_from(
+            [
+                {
+                    "type": "http.request",
+                    "body": b'{"jsonrpc":"2.0","id":2,"method":"tools/list"}',
+                    "more_body": False,
+                }
+            ]
+        )
+    )
+
+    await receive()
+    await _drain_background_tasks()
+
+    assert not matomo_post_route.called

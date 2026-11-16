@@ -1,6 +1,9 @@
+import asyncio
+import json
 import logging
 import os
 import random
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar, Token
 
 import niquests
@@ -12,6 +15,7 @@ MATOMO_URL = os.getenv("MATOMO_URL")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH_TOKEN")
 MATOMO_DEFAULT_EVENT_CATEGORY = "tools"
+MATOMO_SESSION_EVENT_CATEGORY = "sessions"
 
 _request_page_url: ContextVar[str] = ContextVar(
     "matomo_request_page_url", default="https://localhost/mcp"
@@ -116,3 +120,39 @@ async def track_matomo_event(
         if cip:
             payload["cip"] = cip
     await _post_matomo(payload)
+
+
+def is_initialize_request(body: bytes) -> bool:
+    """Return True if the body is a JSON-RPC `initialize` request."""
+    if b'"initialize"' not in body:
+        return False
+    try:
+        message = json.loads(body)
+    except Exception:  # noqa: BLE001 - tracking must never break the request
+        return False
+    return isinstance(message, dict) and message.get("method") == "initialize"
+
+
+def track_initialize_requests(
+    receive: Callable[[], Awaitable[dict]],
+) -> Callable[[], Awaitable[dict]]:
+    """
+    Wrap an ASGI `receive` callable to send a Matomo event when the request
+    body is an MCP `initialize` request (i.e. a client connecting to the server).
+
+    The server is stateless, so this counts session initializations, not users:
+    a client may re-initialize many times (new conversation, reconnection...).
+    """
+
+    async def wrapped_receive() -> dict:
+        message = await receive()
+        # `initialize` bodies are small enough to always arrive in one message
+        if message.get("type") == "http.request" and is_initialize_request(
+            message.get("body", b"")
+        ):
+            asyncio.create_task(
+                track_matomo_event("initialize", category=MATOMO_SESSION_EVENT_CATEGORY)
+            )
+        return message
+
+    return wrapped_receive
