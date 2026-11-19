@@ -1,12 +1,12 @@
 import niquests
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from helpers import datagouv_api_client, env_config
 from helpers.logging import log_tool
 from helpers.mcp_tool_defaults import READ_ONLY_EXTERNAL_API_TOOL
 
 
-def register_get_dataset_info_tool(mcp: FastMCP) -> None:
+def register_get_dataset_info_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Get dataset info",
         annotations=READ_ONLY_EXTERNAL_API_TOOL,

@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from tools.get_dataservice_info import register_get_dataservice_info_tool
 from tools.get_dataservice_openapi_spec import (
@@ -14,8 +14,8 @@ from tools.search_datasets import register_search_datasets_tool
 from tools.search_organizations import register_search_organizations_tool
 
 
-def register_tools(mcp: FastMCP) -> None:
-    """Register all MCP tools with the provided FastMCP instance."""
+def register_tools(mcp: MCPServer) -> None:
+    """Register all MCP tools with the provided MCPServer instance."""
     register_search_datasets_tool(mcp)
     register_search_organizations_tool(mcp)
     register_search_dataservices_tool(mcp)

@@ -9,7 +9,7 @@ Returns True if OK, False if the probe failed.
 
 import logging
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from mcp.types import TextContent
 
 from helpers.logging import MAIN_LOGGER_NAME
@@ -21,7 +21,7 @@ from helpers.matomo import (
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 
-async def _run_health_check(mcp: FastMCP) -> bool:
+async def _run_health_check(mcp: MCPServer) -> bool:
     logger.debug("health probe: starting health check")
     try:
         override_token = apply_matomo_event_override(
@@ -29,17 +29,18 @@ async def _run_health_check(mcp: FastMCP) -> bool:
             category="health_check",
         )
         try:
-            content, _ = await mcp.call_tool(
+            result = await mcp.call_tool(
                 "search_datasets",
                 {"query": "transport", "page_size": 1},
             )
         finally:
             reset_matomo_event_override(override_token)
+        content = getattr(result, "content", None)
         # search_datasets always returns a TextContent block
-        if not content or not isinstance(content[0], TextContent):  # type: ignore
+        if not content or not isinstance(content[0], TextContent):
             logger.error("health probe: unexpected response from search_datasets")
             return False
-        if not content[0].text:  # type: ignore
+        if not content[0].text:
             logger.error("health probe: empty response from search_datasets")
             return False
 
