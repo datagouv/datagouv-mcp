@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.3 (2026-11-16)
+
+- build: don't run with dev dependencies ([#139](https://github.com/datagouv/datagouv-mcp/pull/139))
+- chore(deps): upgrade dependencies ([#135](https://github.com/datagouv/datagouv-mcp/pull/135))
+- docs: add l'Assistant, and link to French doc ([#133](https://github.com/datagouv/datagouv-mcp/pull/133))
+- docs: update README for Claude and Mistral instructions ([#130](https://github.com/datagouv/datagouv-mcp/pull/130))
+- feat: extract client user-agent and send it in a Matomo param ([#134](https://github.com/datagouv/datagouv-mcp/pull/134))
+- feat(matomo): count MCP initializations even without tool calling ([#140](https://github.com/datagouv/datagouv-mcp/pull/140))
+- tests: fix tests with working test dataset ID ([#131](https://github.com/datagouv/datagouv-mcp/pull/131))
+
+
 ## 1.0.2 (2026-10-20)
 
 - style: align lint with Ruff 0.17 defaults

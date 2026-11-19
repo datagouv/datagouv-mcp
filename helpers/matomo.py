@@ -1,6 +1,9 @@
+import asyncio
+import json
 import logging
 import os
 import random
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar, Token
 
 import niquests
@@ -12,6 +15,7 @@ MATOMO_URL = os.getenv("MATOMO_URL")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID")
 MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH_TOKEN")
 MATOMO_DEFAULT_EVENT_CATEGORY = "tools"
+MATOMO_SESSION_EVENT_CATEGORY = "sessions"
 
 _request_page_url: ContextVar[str] = ContextVar(
     "matomo_request_page_url", default="https://localhost/mcp"
@@ -95,6 +99,7 @@ async def track_matomo_event(
     Uses e_c / e_a and ca=1 per the HTTP Tracking API.
     """
     action_override, category_override = _matomo_event_override.get()
+    user_agent = _request_user_agent.get()
     payload = {
         "idsite": MATOMO_SITE_ID,
         "rec": 1,
@@ -102,12 +107,66 @@ async def track_matomo_event(
         "ca": 1,
         "e_c": category or category_override or MATOMO_DEFAULT_EVENT_CATEGORY,
         "e_a": action or action_override or name,
-        "ua": _request_user_agent.get(),
+        "ua": user_agent,
         "rand": str(random.randint(10**15, 10**16 - 1)),
     }
+    # Matomo reduces `ua` to browser/OS, so custom MCP clients are only visible through e_n.
+    client_name = user_agent.split("/", 1)[0].strip()[:50]
+    if client_name:
+        payload["e_n"] = client_name
     if MATOMO_AUTH_TOKEN:
         payload["token_auth"] = MATOMO_AUTH_TOKEN
         cip = _request_cip.get()
         if cip:
             payload["cip"] = cip
     await _post_matomo(payload)
+
+
+def is_initialize_request(body: bytes) -> bool:
+    """Return True if the body is a JSON-RPC `initialize` request."""
+    if b'"initialize"' not in body:
+        return False
+    try:
+        message = json.loads(body)
+    except Exception:  # noqa: BLE001 - tracking must never break the request
+        return False
+    return isinstance(message, dict) and message.get("method") == "initialize"
+
+
+def track_initialize_requests(
+    receive: Callable[[], Awaitable[dict]],
+    send: Callable[[dict], Awaitable[None]],
+) -> tuple[Callable[[], Awaitable[dict]], Callable[[dict], Awaitable[None]]]:
+    """
+    Wrap ASGI `receive` and `send` callables to send a Matomo event when the
+    request body is an MCP `initialize` request (i.e. a client connecting to the
+    server) and the server accepts it (2xx response).
+
+    The server is stateless, so this counts session initializations, not users:
+    a client may re-initialize many times (new conversation, reconnection...).
+    """
+    is_initialize = False
+
+    async def wrapped_receive() -> dict:
+        nonlocal is_initialize
+        message = await receive()
+        # `initialize` bodies are small enough to always arrive in one message
+        if message.get("type") == "http.request" and is_initialize_request(
+            message.get("body", b"")
+        ):
+            is_initialize = True
+        return message
+
+    async def wrapped_send(message: dict) -> None:
+        # Only count initializations accepted by the server (not 4xx rejections)
+        if (
+            is_initialize
+            and message.get("type") == "http.response.start"
+            and 200 <= message.get("status", 0) < 300
+        ):
+            asyncio.create_task(
+                track_matomo_event("initialize", category=MATOMO_SESSION_EVENT_CATEGORY)
+            )
+        await send(message)
+
+    return wrapped_receive, wrapped_send
